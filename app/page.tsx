@@ -361,7 +361,7 @@ export default function Home() {
         .order('website', { ascending: false, nullsFirst: false })
         .order('agency_name', { ascending: true })
         .range(from, to)
-        
+
       if (!error && data) {
         setAgencies(data as SponsorAgency[])
         if (count !== null) setTotalAgenciesCount(count)
@@ -1415,4 +1415,4 @@ export default function Home() {
       </main>
     </div>
   )
-}
+} 
