@@ -31,6 +31,7 @@ import {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 let supabaseInstance: ReturnType<typeof createClient> | null = null
+
 export const getSupabaseClient = () => {
   if (!supabaseInstance) {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)
@@ -84,6 +85,7 @@ interface SponsorAgency {
   case_count?: number
   contact_email?: string
   official_website?: string
+  website?: string
   status?: string
   [key: string]: any
 }
@@ -121,11 +123,9 @@ export default function Home() {
   const [jobSearch, setJobSearch] = useState('')
   const [selectedJobState, setSelectedJobState] = useState('ALL')
   const [selectedJobSector, setSelectedJobSector] = useState('ALL')
-
   const [companySearch, setCompanySearch] = useState('')
   const [selectedCompanyState, setSelectedCompanyState] = useState('ALL')
   const [selectedCompanySector, setSelectedCompanySector] = useState('ALL')
-
   const [agencySearch, setAgencySearch] = useState('')
   
   // --- PAGINACIÓN ---
@@ -243,7 +243,7 @@ export default function Home() {
     
     return () => clearTimeout(timer)
   }, [jobSearch, selectedJobState, selectedJobSector, jobPage])
-  
+
   const filteredJobs = jobs
 
   // ==========================================
@@ -279,7 +279,6 @@ export default function Home() {
         else if (sectorVal.includes('procesamiento')) searchTerm = 'Production'
         else if (sectorVal.includes('bodega') || sectorVal.includes('logística')) searchTerm = '48'
         else if (sectorVal.includes('fábrica') || sectorVal.includes('manufactura')) searchTerm = 'Manufacturing'
-
         countQuery = countQuery.or(`naics.ilike.%${searchTerm}%,soc.ilike.%${searchTerm}%`)
       }
       
@@ -320,7 +319,6 @@ export default function Home() {
         else if (sectorVal.includes('procesamiento')) searchTerm = 'Production'
         else if (sectorVal.includes('bodega') || sectorVal.includes('logística')) searchTerm = '48'
         else if (sectorVal.includes('fábrica') || sectorVal.includes('manufactura')) searchTerm = 'Manufacturing'
-
         query = query.or(`naics.ilike.%${searchTerm}%,soc.ilike.%${searchTerm}%`)
       }
       
@@ -358,7 +356,12 @@ export default function Home() {
       if (agencySearch) {
         query = query.or(`agency_name.ilike.%${agencySearch}%,country.ilike.%${agencySearch}%,city.ilike.%${agencySearch}%`)
       }
-      const { data, count, error } = await query.range(from, to)
+      // Ordena primero las que tienen sitio web y luego por nombre
+      const { data, count, error } = await query
+        .order('website', { ascending: false, nullsFirst: false })
+        .order('agency_name', { ascending: true })
+        .range(from, to)
+        
       if (!error && data) {
         setAgencies(data as SponsorAgency[])
         if (count !== null) setTotalAgenciesCount(count)
@@ -438,11 +441,9 @@ export default function Home() {
         </div>
       </div>
 
-      {/* HEADER Y NAVEGACIÓN (ADAPTADO A MÓVIL) */}
+      {/* HEADER Y NAVEGACIÓN */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          {/* Fila superior: Logo y Botón Extraer */}
           <div className="h-16 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-[#0B4079] text-white flex items-center justify-center font-black text-lg shadow-sm">
@@ -456,7 +457,6 @@ export default function Home() {
                 <p className="text-[11px] text-slate-500 leading-none">Sistema Operativo H2B</p>
               </div>
             </div>
-
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => {
@@ -471,7 +471,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Fila de navegación: Se oculta el scrollbar pero permite deslizar en móviles */}
           <nav className="flex items-center gap-1 text-xs sm:text-sm font-medium overflow-x-auto pb-2 scrollbar-none">
             <button
               onClick={() => setActiveTab('dashboard')}
@@ -537,7 +536,6 @@ export default function Home() {
               Checklist
             </button>
           </nav>
-
         </div>
       </header>
 
@@ -567,9 +565,8 @@ export default function Home() {
               </div>
             </div>
             
-            {/* METRICAS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
                 <div>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">OFERTA DE EMPLEO (DOL)</p>
                   <p className="text-2xl font-black text-slate-900 mt-1">{totalJobsCount}</p>
@@ -581,7 +578,7 @@ export default function Home() {
                   <Briefcase className="w-5 h-5" />
                 </div>
               </div>
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
                 <div>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">EMPRESAS USCIS</p>
                   <p className="text-2xl font-black text-slate-900 mt-1">{totalEmployersCount}</p>
@@ -591,7 +588,7 @@ export default function Home() {
                   <Building2 className="w-5 h-5" />
                 </div>
               </div>
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
                 <div>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">AGENCIAS REGULADAS</p>
                   <p className="text-2xl font-black text-slate-900 mt-1">{totalAgenciesCount}</p>
@@ -601,7 +598,7 @@ export default function Home() {
                   <ShieldCheck className="w-5 h-5" />
                 </div>
               </div>
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
                 <div>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">PROGRESO CHECKLIST</p>
                   <p className="text-2xl font-black text-slate-900 mt-1">{checklistPercentage}%</p>
@@ -613,8 +610,7 @@ export default function Home() {
               </div>
             </div>
             
-            {/* EXTRACTOR */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
               <div className="flex justify-between items-center">
                 <h2 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-500" />
@@ -648,7 +644,7 @@ export default function Home() {
         {/* TABLA 1: OFERTAS LABORALES (jobs) */}
         {activeTab === 'jobs' && (
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h1 className="text-2xl font-black text-slate-900">Ofertas Laborales Activas</h1>
@@ -661,7 +657,6 @@ export default function Home() {
                 </span>
               </div>
               
-              {/* BARRA DE BÚSQUEDA Y FILTROS PARA OFERTAS */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
                 <div className="relative">
                   <input
@@ -758,7 +753,6 @@ export default function Home() {
               </div>
             </div>
             
-            {/* LISTADO DE OFERTAS */}
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
@@ -770,7 +764,7 @@ export default function Home() {
                   <div
                     key={job.id || job.job_order_id || idx}
                     onClick={() => setSelectedJob(job)}
-                    className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-4 flex flex-col justify-between hover:border-slate-300 transition-all cursor-pointer"
+                    className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between hover:border-slate-300 transition-all cursor-pointer"
                   >
                     <div className="space-y-3">
                       <div className="flex justify-between items-start">
@@ -818,8 +812,7 @@ export default function Home() {
               </div>
             )}
             
-            {/* PAGINACIÓN OFERTAS */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
               <p className="text-xs text-slate-500">
                 Página <strong className="text-slate-900">{jobPage}</strong> de <strong className="text-slate-900">{totalJobPages}</strong> ({totalJobsCount} ofertas totales)
               </p>
@@ -847,7 +840,7 @@ export default function Home() {
         {/* TABLA 2: EMPRESAS USCIS (employers) */}
         {activeTab === 'employers' && (
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h1 className="text-2xl font-black text-slate-900">Empresas Patrocinadoras (USCIS)</h1>
@@ -860,9 +853,7 @@ export default function Home() {
                 </span>
               </div>
               
-              {/* FILTROS INDEPENDIENTES PARA EMPRESAS */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-                {/* 1. Buscador */}
                 <div className="relative">
                   <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
                   <input
@@ -876,7 +867,6 @@ export default function Home() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                 </div>
-                {/* 2. Selector de Estados (Empresas) */}
                 <select
                   value={selectedCompanyState}
                   onChange={(e) => {
@@ -937,7 +927,6 @@ export default function Home() {
                   <option value="WI">Wisconsin (WI)</option>
                   <option value="WY">Wyoming (WY)</option>
                 </select>
-                {/* 3. Selector de Sectores (Empresas) */}
                 <select
                   value={selectedCompanySector}
                   onChange={(e) => {
@@ -966,7 +955,7 @@ export default function Home() {
                 <p className="text-xs text-slate-500 font-medium">Cargando empresas desde Supabase...</p>
               </div>
             ) : (
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-600">
                     <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
@@ -1006,7 +995,8 @@ export default function Home() {
                 </div>
               </div>
             )}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+            
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
               <p className="text-xs text-slate-500">
                 Página <strong className="text-slate-900">{companyPage}</strong> de <strong className="text-slate-900">{totalCompanyPages}</strong> ({totalEmployersCount} empresas totales)
               </p>
@@ -1033,7 +1023,7 @@ export default function Home() {
         {/* TABLA 3: AGENCIAS DOL (sponsor_agencies) */}
         {activeTab === 'agencies' && (
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <h1 className="text-2xl font-black text-slate-900">Agencias Reguladas</h1>
@@ -1058,6 +1048,7 @@ export default function Home() {
                 />
               </div>
             </div>
+            
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
@@ -1065,43 +1056,55 @@ export default function Home() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {agencies.map((agency, idx) => (
-                  <div key={agency.id || idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs space-y-3 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 inline-block">
-                        ✓ {agency.status || 'Lista Oficial'}
-                      </span>
-                      <h3 className="font-bold text-slate-900 text-sm leading-snug">{agency.agency_name}</h3>
-                      <p className="text-xs text-slate-500">📍 Ubicación: <strong className="text-slate-800">{agency.city || ''} {agency.country || ''}</strong></p>
-                      {agency.case_count !== undefined && (
-                        <p className="text-xs text-slate-500">📋 Casos Registrados: <strong className="text-slate-800">{agency.case_count}</strong></p>
-                      )}
-                      {agency.contact_email && (
-                        <p className="text-[11px] text-slate-500 truncate">✉️ {agency.contact_email}</p>
-                      )}
-                    </div>
-                    {agency.official_website ? (
-                      <a
-                        href={agency.official_website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1"
-                      >
-                        <Globe className="w-3.5 h-3.5" /> Portal Oficial
-                      </a>
-                    ) : (
+                {agencies.map((agency, idx) => {
+                  const webLink = agency.website || agency.official_website
+                  return (
+                    <div key={agency.id || idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 inline-block">
+                          ✓ {agency.status || 'Lista Oficial'}
+                        </span>
+                        <h3 className="font-bold text-slate-900 text-sm leading-snug">{agency.agency_name}</h3>
+                        <p className="text-xs text-slate-500">📍 Ubicación: <strong className="text-slate-800">{agency.city || ''} {agency.country || ''}</strong></p>
+                        
+                        {webLink ? (
+                          <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                            <span>🌐 Sitio web:</span>
+                            <a 
+                              href={webLink.startsWith('http') ? webLink : `https://${webLink}`}
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 hover:underline font-medium truncate max-w-[180px]"
+                              title={webLink}
+                            >
+                              {webLink.replace(/^https?:\/\/(www\.)?/, '')}
+                            </a>
+                          </p>
+                        ) : (
+                          <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
+                            <span>🌐 Sitio web:</span>
+                            <span className="italic">No disponible</span>
+                          </p>
+                        )}
+                        
+                        {agency.contact_email && (
+                          <p className="text-[11px] text-slate-500 truncate mt-1">✉️ {agency.contact_email}</p>
+                        )}
+                      </div>
+                      
                       <button 
                         onClick={() => addToCRM(agency.agency_name, 'Agencia Regulada', agency.country)}
-                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl transition-all"
+                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl transition-all mt-3"
                       >
                         + Guardar Agencia
                       </button>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  )
+                })}
               </div>
             )}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
+            
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
               <p className="text-xs text-slate-500">
                 Página <strong className="text-slate-900">{agencyPage}</strong> de <strong className="text-slate-900">{totalAgencyPages}</strong> ({totalAgenciesCount} agencias totales)
               </p>
@@ -1128,7 +1131,7 @@ export default function Home() {
         {/* MI CRM */}
         {activeTab === 'crm' && (
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-black text-slate-900">CRM de Postulaciones H2B</h1>
                 <p className="text-xs text-slate-500 mt-1">
@@ -1157,7 +1160,7 @@ export default function Home() {
                 </div>
                 <div className="space-y-3 flex-1">
                   {crmItems.filter(i => i.status === 'guardadas').map(item => (
-                    <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-2">
+                    <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
                       <h3 className="font-bold text-slate-900 text-sm">{item.company}</h3>
                       <p className="text-xs text-slate-500">{item.role}</p>
                       <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
@@ -1181,7 +1184,7 @@ export default function Home() {
                 </div>
                 <div className="space-y-3 flex-1">
                   {crmItems.filter(i => i.status === 'postulado').map(item => (
-                    <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-2">
+                    <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
                       <h3 className="font-bold text-slate-900 text-sm">{item.company}</h3>
                       <p className="text-xs text-slate-500">{item.role}</p>
                       <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
@@ -1205,7 +1208,7 @@ export default function Home() {
                 </div>
                 <div className="space-y-3 flex-1">
                   {crmItems.filter(i => i.status === 'entrevista').map(item => (
-                    <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-2">
+                    <div key={item.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-2">
                       <h3 className="font-bold text-slate-900 text-sm">{item.company}</h3>
                       <p className="text-xs text-slate-500">{item.role}</p>
                       <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
@@ -1229,7 +1232,7 @@ export default function Home() {
                 </div>
                 <div className="space-y-3 flex-1">
                   {crmItems.filter(i => i.status === 'aceptado').map(item => (
-                    <div key={item.id} className="bg-white border border-emerald-200 rounded-xl p-4 shadow-2xs space-y-2">
+                    <div key={item.id} className="bg-white border border-emerald-200 rounded-xl p-4 shadow-sm space-y-2">
                       <h3 className="font-bold text-slate-900 text-sm">{item.company}</h3>
                       <p className="text-xs text-slate-500">{item.role}</p>
                       <div className="pt-2 border-t border-slate-100 flex justify-end">
@@ -1248,19 +1251,19 @@ export default function Home() {
         {/* ASISTENTES IA */}
         {activeTab === 'ai' && (
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
               <h1 className="text-2xl font-black text-slate-900">Asistentes IA</h1>
               <p className="text-xs text-slate-500 mt-1">Generación de currículum y carta de presentación adaptados.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
                 <FileText className="w-6 h-6 text-amber-500" />
                 <h3 className="font-bold text-slate-900 text-lg">Generador de CV (EE.UU.)</h3>
                 <button onClick={() => alert('Abriendo Generador de CV...')} className="bg-[#0B4079] text-white font-bold text-xs px-4 py-2.5 rounded-xl">
                   Iniciar Generador CV
                 </button>
               </div>
-              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-2xs">
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
                 <UserCheck className="w-6 h-6 text-blue-500" />
                 <h3 className="font-bold text-slate-900 text-lg">Carta de Presentación (Cover Letter)</h3>
                 <button onClick={() => alert('Abriendo Cover Letter...')} className="bg-[#0B4079] text-white font-bold text-xs px-4 py-2.5 rounded-xl">
@@ -1274,14 +1277,14 @@ export default function Home() {
         {/* CHECKLIST */}
         {activeTab === 'checklist' && (
           <div className="space-y-6">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs flex justify-between items-center">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-black text-slate-900">Checklist H2B</h1>
                 <p className="text-xs text-slate-500 mt-1">Paso a paso de tu proceso visa H2B.</p>
               </div>
               <span className="text-lg font-black text-blue-600">{checklistPercentage}% Completado</span>
             </div>
-            <div className="bg-[#ffffff] border border-slate-200 rounded-2xl p-6 space-y-3 shadow-2xs">
+            <div className="bg-[#ffffff] border border-slate-200 rounded-2xl p-6 space-y-3 shadow-sm">
               {checklist.map((item) => (
                 <div key={item.id} onClick={() => toggleChecklist(item.id)} className={`p-4 border rounded-xl flex items-start gap-3 cursor-pointer ${item.completed ? 'bg-emerald-50/50 border-emerald-200' : 'bg-slate-50/50 border-slate-200'}`}>
                   <input type="checkbox" checked={item.completed} readOnly className="mt-1 h-4 w-4" />
@@ -1408,6 +1411,7 @@ export default function Home() {
             </div>
           </div>
         )}
+
       </main>
     </div>
   )

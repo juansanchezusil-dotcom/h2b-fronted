@@ -13,10 +13,12 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // Consultamos y ordenamos: primero las que tienen sitio web no nulo/vacío
     const { data: agencies, error } = await supabase
       .from('sponsor_agencies')
       .select('*')
-      .order('case_count', { ascending: false })
+      .order('website', { ascending: false, nullsFirst: false })
+      .order('agency_name', { ascending: true })
 
     if (error) {
       console.error('Error de Supabase consultando sponsor_agencies:', error)
