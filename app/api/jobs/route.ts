@@ -1,3 +1,4 @@
+export const revalidate = 0;
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -13,10 +14,14 @@ export async function GET() {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    const { data: jobs, error } = await supabase
-      .from('jobs')
-      .select('*')
-      .order('created_at', { ascending: false })
+    // Filtrar para obtener solo ofertas sincronizadas en los últimos 7 días
+  const recentDate = new Date()
+  recentDate.setDate(recentDate.getDate() - 7)
+
+  const { data: jobs, error } = await supabase
+  .from('jobs')
+  .select('*')
+  .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Error de Supabase consultando jobs:', error)
