@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import OnboardingModal from '@/components/OnboardingModal';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import UserMenu from '@/components/UserMenu';
 import {
   Briefcase,
@@ -95,8 +97,7 @@ const US_STATES = [
 ]
 
 // Cliente Supabase (instancia única para evitar duplicación de cliente)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+import { supabase } from '@/lib/supabaseClient'
 let supabaseInstance: ReturnType<typeof createClient> | null = null
 
 export const getSupabaseClient = () => {
@@ -193,7 +194,9 @@ export default function Home() {
   const [totalAgenciesCount, setTotalAgenciesCount] = useState<number>(0)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [selectedJob, setSelectedJob] = useState<any | null>(null)
-  
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingUserId, setOnboardingUserId] = useState<string>('')
+
   // --- FILTROS DE BÚSQUEDA INDEPENDIENTES ---
   const [jobSearch, setJobSearch] = useState('')
   const [selectedJobState, setSelectedJobState] = useState('ALL')
@@ -271,6 +274,35 @@ export default function Home() {
   setManualStatus('guardado' as any)
   setIsManualModalOpen(false)
 }
+  useEffect(() => {
+  async function checkUserProfile() {
+    console.log('🔍 Verificando perfil...')
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    console.log('👤 Usuario:', user, 'Error de auth:', userError)
+
+    if (user) {
+      setOnboardingUserId(user.id)
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('perfil_completado')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      console.log('📋 Perfil encontrado:', profile, 'Error de consulta:', error)
+
+      if (error || !profile || profile.perfil_completado !== true) {
+        console.log('✅ Debería mostrar el modal ahora')
+        setShowOnboarding(true)
+      } else {
+        console.log('❌ NO se muestra: perfil ya está completado')
+      }
+    } else {
+      console.log('❌ NO hay usuario logueado, el modal nunca se activa')
+    }
+  }
+  checkUserProfile()
+}, [])
 
   // ===== CHECKLIST =====
   const [checklist, setChecklist] = useState<ChecklistItem[]>([])
@@ -2143,6 +2175,14 @@ export default function Home() {
           </div>
         </div>
       )}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        userId={onboardingUserId}
+        onComplete={() => {
+          setShowOnboarding(false)
+          window.location.reload()
+        }}
+      />
     </div>
   )
 }
