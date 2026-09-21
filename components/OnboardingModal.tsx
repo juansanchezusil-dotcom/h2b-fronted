@@ -27,16 +27,16 @@ export default function OnboardingModal({ isOpen, userId, onComplete }: Onboardi
     setLoading(true);
 
     // Guardado en la tabla profiles de Supabase
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        experiencia_industria: formData.experiencia_industria,
-        anos_experiencia: Number(formData.anos_experiencia),
-        nivel_ingles: formData.nivel_ingles,
-        pais_origen: formData.pais_origen,
-        perfil_completado: true,
-      })
-      .eq('id', userId);
+   const { error } = await supabase
+  .from('profiles')
+  .upsert({
+    id: userId,
+    experiencia_industria: formData.experiencia_industria,
+    anos_experiencia: Number(formData.anos_experiencia),
+    nivel_ingles: formData.nivel_ingles,
+    pais_origen: formData.pais_origen,
+    perfil_completado: true,
+  });
 
     setLoading(false);
 
