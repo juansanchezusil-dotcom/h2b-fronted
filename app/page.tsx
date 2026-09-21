@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import UserMenu from '@/components/UserMenu';
 import {
   Briefcase,
   Building2,
@@ -707,6 +708,9 @@ export default function Home() {
                 <p className="text-[11px] text-slate-500 leading-none">Sistema Operativo H2B</p>
               </div>
             </div>
+
+            {/* BOTÓN Y ESTADO DE SESIÓN (EL PORTERO) */}
+            <UserMenu />
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => {

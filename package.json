@@ -10,6 +10,7 @@
     "sync-jobs": "tsx scripts/sync-jobs.ts"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.110.8",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
