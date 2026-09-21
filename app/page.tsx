@@ -1,8 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
+
 import OnboardingModal from '@/components/OnboardingModal';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import UserMenu from '@/components/UserMenu';
 import {
   Briefcase,
