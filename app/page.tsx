@@ -98,16 +98,6 @@ const US_STATES = [
 
 // Cliente Supabase (instancia única para evitar duplicación de cliente)
 import { supabase } from '@/lib/supabaseClient'
-let supabaseInstance: ReturnType<typeof createClient> | null = null
-
-export const getSupabaseClient = () => {
-  if (!supabaseInstance) {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey)
-  }
-  return supabaseInstance
-}
-
-const supabase = getSupabaseClient()
 
 // Interfaces ajustadas a la BBDD real
 interface Job {
