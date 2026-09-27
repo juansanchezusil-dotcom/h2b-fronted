@@ -1,0 +1,273 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { X, Sparkles, Copy, Download, Loader2, Check } from 'lucide-react';
+import { supabase } from '@/lib/supabaseClient';
+
+interface CVBuilderModalProps {
+  isOpen: boolean;
+  userId: string;
+  onClose: () => void;
+  // Se llama cuando el CV queda guardado con éxito, para refrescar el estado del checklist
+  onSaved?: () => void;
+}
+
+interface CVResult {
+  summary: string;
+  experience_bullets: string[];
+  skills: string[];
+  full_text: string;
+  notes_es?: string;
+}
+
+const MIN_CV_LENGTH = 30;
+
+export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVBuilderModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const [targetRole, setTargetRole] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [experienceLevel, setExperienceLevel] = useState('');
+  const [englishLevel, setEnglishLevel] = useState('');
+  const [skillsText, setSkillsText] = useState('');
+  const [baseCvText, setBaseCvText] = useState('');
+  const [result, setResult] = useState<CVResult | null>(null);
+
+  // Carga lo que ya haya guardado, y precarga desde el perfil inicial si es la primera vez
+  useEffect(() => {
+    if (!isOpen || !userId) return;
+    (async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('target_role, industry, experience_level, english_level, skills, base_cv_text, experiencia_industria, nivel_ingles, anos_experiencia')
+        .eq('id', userId)
+        .maybeSingle();
+      if (!data) return;
+      setTargetRole(data.target_role || '');
+      setIndustry(data.industry || data.experiencia_industria || '');
+      setExperienceLevel(data.experience_level || (data.anos_experiencia != null ? `${data.anos_experiencia} años` : ''));
+      setEnglishLevel(data.english_level || data.nivel_ingles || '');
+      setSkillsText((data.skills || []).join(', '));
+      setBaseCvText(data.base_cv_text || '');
+    })();
+  }, [isOpen, userId]);
+
+  if (!isOpen) return null;
+
+  const skills = skillsText.split(',').map((s) => s.trim()).filter(Boolean);
+  const canGenerate = baseCvText.trim().length >= MIN_CV_LENGTH;
+
+  const handleGenerate = async () => {
+    if (!canGenerate) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/cv/adapt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ baseCvText, skills, targetRole, industry, experienceLevel, englishLevel }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'No se pudo generar el CV.');
+      setResult(data);
+    } catch (err: any) {
+      setError(err.message || 'No se pudo generar el CV. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    const { error: dbError } = await supabase.from('profiles').upsert({
+      id: userId,
+      target_role: targetRole,
+      industry,
+      experience_level: experienceLevel,
+      english_level: englishLevel,
+      skills,
+      base_cv_text: baseCvText,
+    });
+    setSaving(false);
+    if (dbError) {
+      setError('No se pudo guardar tu CV. Intenta de nuevo.');
+      return;
+    }
+    onSaved?.();
+    onClose();
+  };
+
+  const handleCopy = async () => {
+    if (!result) return;
+    try {
+      await navigator.clipboard.writeText(result.full_text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      window.prompt('Copia tu CV manualmente:', result.full_text);
+    }
+  };
+
+  const handleDownload = () => {
+    if (!result) return;
+    const blob = new Blob([result.full_text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'CV_H2B.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08131F]/80 backdrop-blur-md p-4">
+      <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white p-6 md:p-8 shadow-2xl border border-slate-100">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 text-lg font-bold"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="mb-5">
+          <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#C89B3C] bg-[#C89B3C]/10 rounded-full mb-3">
+            Adaptador de CV
+          </span>
+          <h2 className="text-2xl font-extrabold text-[#08131F]">Tu currículum en inglés</h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Cuéntanos tu experiencia real, en tus propias palabras. La IA solo la reescribe y ordena en formato
+            americano — nunca agrega experiencia que no diste. Este CV también se usa para personalizar tus correos
+            de postulación.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Puesto al que apuntas</label>
+              <input
+                type="text"
+                placeholder="Ej: Housekeeper"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-sm focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Nivel de inglés</label>
+              <select
+                value={englishLevel}
+                onChange={(e) => setEnglishLevel(e.target.value)}
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-sm focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
+              >
+                <option value="">Selecciona</option>
+                <option value="Ninguno">Ninguno / Muy básico</option>
+                <option value="Intermedio">Intermedio</option>
+                <option value="Avanzado">Avanzado / Fluido</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Habilidades (separadas por coma)</label>
+            <input
+              type="text"
+              placeholder="Ej: housekeeping, trabajo en equipo, manejo de maquinaria"
+              value={skillsText}
+              onChange={(e) => setSkillsText(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-sm focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
+            />
+          </div>
+
+          <div>
+            <div className="flex justify-between items-baseline mb-1">
+              <label className="block text-xs font-semibold text-slate-600">Tu experiencia laboral, en tus palabras</label>
+              <span className={`text-[10px] ${baseCvText.trim().length < MIN_CV_LENGTH ? 'text-rose-500' : 'text-emerald-600'}`}>
+                {baseCvText.trim().length} / {MIN_CV_LENGTH} mínimo
+              </span>
+            </div>
+            <textarea
+              rows={6}
+              placeholder="Ej: Trabajé 3 años en el hotel X limpiando habitaciones, también ayudé a entrenar a compañeros nuevos. Antes trabajé un año en un restaurante como ayudante de cocina..."
+              value={baseCvText}
+              onChange={(e) => setBaseCvText(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              No hace falta que suene perfecto ni en inglés. Mientras más detalle real des (empresas, tiempo, tareas), mejor sale tu CV.
+            </p>
+          </div>
+
+          {error && (
+            <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">{error}</p>
+          )}
+
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={!canGenerate || loading}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#08131F] py-3 text-sm font-bold text-white shadow-md hover:bg-[#08131F]/90 disabled:opacity-50 transition"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-[#C89B3C]" />}
+            {loading ? 'Generando tu CV...' : 'Generar mi CV en inglés con IA'}
+          </button>
+
+          {result && (
+            <div className="border-t border-slate-100 pt-4 space-y-3">
+              <h3 className="text-sm font-bold text-slate-900">Vista previa</h3>
+              <pre className="whitespace-pre-wrap text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-xl p-3.5 max-h-64 overflow-y-auto font-sans">
+                {result.full_text}
+              </pre>
+              {result.notes_es && (
+                <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  💡 {result.notes_es}
+                </p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 rounded-xl py-2 hover:bg-slate-50"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? 'Copiado' : 'Copiar'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 rounded-xl py-2 hover:bg-slate-50"
+                >
+                  <Download className="w-3.5 h-3.5" /> Descargar .txt
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-1/3 rounded-xl border border-slate-300 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
+            >
+              Cerrar
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving || !canGenerate}
+              className="w-2/3 rounded-xl bg-[#C89B3C] py-3 text-sm font-bold text-[#08131F] shadow-md hover:bg-[#b08833] disabled:opacity-50 transition"
+            >
+              {saving ? 'Guardando...' : 'Guardar mi CV'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

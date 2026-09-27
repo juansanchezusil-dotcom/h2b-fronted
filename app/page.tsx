@@ -41,6 +41,7 @@ import RoadmapChecklist, { readChecklistSteps, CHECKLIST_TOTAL_TASKS } from '@/c
 import InfoTooltip from '@/components/InfoTooltip';
 import Pagination from '@/components/Pagination';
 import SponsorHistory from '@/components/SponsorHistory';
+import CVBuilderModal from '@/components/CVBuilderModal';
 // LISTA COMPLETA DE ESTADOS DE EE. UU. Y TERRITORIOS
 const US_STATES = [
   { code: 'AL', name: 'Alabama' },
@@ -236,6 +237,16 @@ export default function Home() {
   const [savingCrmKey, setSavingCrmKey] = useState<string | null>(null)
   const [isSavingManual, setIsSavingManual] = useState(false)
   const [showEmailAssistant, setShowEmailAssistant] = useState(false)
+  const [hasCv, setHasCv] = useState(false)
+  const [showCvBuilder, setShowCvBuilder] = useState(false)
+  // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
+  const [emailDraftFor, setEmailDraftFor] = useState<{ company: string; role: string } | null>(null)
+
+  const refreshHasCv = async (userId: string) => {
+    if (!userId) return
+    const { data } = await supabase.from('profiles').select('base_cv_text').eq('id', userId).maybeSingle()
+    setHasCv((data?.base_cv_text || '').trim().length >= 30)
+  }
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const showToast = (msg: string) => {
@@ -383,6 +394,7 @@ useEffect(() => {
 
     if (user) {
       setOnboardingUserId(user.id)
+      refreshHasCv(user.id)
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('perfil_completado')
@@ -491,8 +503,13 @@ useEffect(() => {
     }
 
     if (jobSearch && jobSearch.trim() !== '') {
-      const term = jobSearch.trim()
-      query = query.ilike('title', `%${term}%`)
+      // Busca en puesto, empresa y ciudad, como promete el campo. Cada palabra puede estar
+      // en cualquiera de los tres ("cook vail" = puesto Cook en Vail). Se quitan comas,
+      // puntos y paréntesis porque rompen la sintaxis del filtro "or" de Supabase.
+      const words = jobSearch.replace(/[,.()]/g, ' ').split(/\s+/).filter(w => w.length >= 2)
+      for (const w of words) {
+        query = query.or(`title.ilike.%${w}%,employer_name.ilike.%${w}%,location.ilike.%${w}%`)
+      }
     }
 
     // Filtro de Temporadas H-2B por fecha de inicio (begin_date)
@@ -789,6 +806,13 @@ const changeCrmStatus = async (id: string, newStatus: CRMItem['status']) => {
     if (previous) setCrmItems(prev => prev.map(item => item.id === id ? previous : item))
     showToast('❌ No se pudo actualizar el estado. Intenta de nuevo.')
   }
+}
+
+// Abre el redactor de correos precargado con la empresa/puesto de esta tarjeta del CRM
+const openEmailFor = (item: CRMItem) => {
+  setEmailDraftFor({ company: item.company, role: item.role })
+  setShowEmailAssistant(true)
+  setActiveTab('ai')
 }
 
 const deleteCrmItem = async (id: string) => {
@@ -1686,8 +1710,14 @@ return (
                         </div>
                       )}
                     </div>
-                    <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                      <span className="text-[9px] text-slate-400">{item.dateLabel}</span>
+                    <div className="pt-2 border-t border-slate-100 flex justify-between items-center gap-1">
+                      <button
+                        onClick={() => openEmailFor(item)}
+                        title="Redactar correo con tu CV"
+                        className="text-[10px] font-bold text-slate-600 flex items-center gap-0.5 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg"
+                      >
+                        ✉️
+                      </button>
                       <button onClick={() => changeCrmStatus(item.id, 'seguimiento')} className="text-[10px] font-bold text-sky-700 flex items-center gap-0.5 bg-sky-50 hover:bg-sky-100 px-2 py-1 rounded-lg">
                         Seguimiento <MoveRight className="w-3 h-3" />
                       </button>
@@ -1742,7 +1772,11 @@ return (
                           <div className="flex justify-between items-center"><span className="text-[10px] text-slate-600 italic truncate max-w-[100px]">{item.notes ? `📝 ${item.notes}` : 'Sin notas'}</span><button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || '') }} className="text-blue-600 font-bold text-[9px]">{item.notes ? 'Editar' : '+ Nota'}</button></div>
                         )}
                       </div>
-                      <div className="pt-2 border-t border-slate-100 flex justify-between items-center"><span className="text-[9px] text-slate-400">Día {daysPassed}</span><button onClick={() => changeCrmStatus(item.id, 'entrevista')} className="text-[10px] font-bold text-amber-700 flex items-center gap-0.5 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-lg">Entrevista <MoveRight className="w-3 h-3" /></button></div>
+                      <div className="pt-2 border-t border-slate-100 flex justify-between items-center gap-1">
+                        <button onClick={() => openEmailFor(item)} title="Redactar correo con tu CV" className="text-[10px] font-bold text-slate-600 flex items-center gap-0.5 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg">✉️</button>
+                        <span className="text-[9px] text-slate-400">Día {daysPassed}</span>
+                        <button onClick={() => changeCrmStatus(item.id, 'entrevista')} className="text-[10px] font-bold text-amber-700 flex items-center gap-0.5 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-lg">Entrevista <MoveRight className="w-3 h-3" /></button>
+                      </div>
                     </div>
                   )
                 })}
@@ -1919,11 +1953,18 @@ return (
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm">Adaptador de CV H2B</h3>
-                  <p className="text-xs text-slate-500">Ajusta tu curriculum vitae al formato exigido por empleadores estadounidenses.</p>
+                  <p className="text-xs text-slate-500">
+                    {hasCv
+                      ? 'Tu CV ya está listo y alimenta el redactor de correos.'
+                      : 'Cuéntanos tu experiencia real y la IA la adapta al formato que esperan los empleadores.'}
+                  </p>
                 </div>
               </div>
-              <button disabled className="w-full bg-slate-100 text-slate-500 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed">
-                Próximamente
+              <button
+                onClick={() => setShowCvBuilder(true)}
+                className="w-full bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-xs py-2.5 rounded-xl transition-all"
+              >
+                {hasCv ? 'Editar mi CV' : 'Generar mi CV con IA'}
               </button>
             </div>
 
@@ -1966,10 +2007,11 @@ return (
 
           {showEmailAssistant && (
             <EmailAssistantTab
-              initialCompanyName=""
-              initialJobTitle=""
-              initialContactEmail=""
-              candidateName="[Tu nombre]"
+              key={`${emailDraftFor?.company || ''}-${emailDraftFor?.role || ''}`}
+              userId={onboardingUserId}
+              initialCompanyName={emailDraftFor?.company || ''}
+              initialJobTitle={emailDraftFor?.role || ''}
+              onOpenCvBuilder={() => setShowCvBuilder(true)}
             />
           )}
         </div>
@@ -1979,7 +2021,9 @@ return (
 {activeTab === 'checklist' && (
   <RoadmapChecklist
   hasCompletedQuiz={profileCompleted}
+  hasCv={hasCv}
   onEditProfile={() => setShowOnboarding(true)}
+  onOpenCvBuilder={() => setShowCvBuilder(true)}
   userId={onboardingUserId}
   onNavigateToTab={(tab) => {
     if ((TABS as string[]).includes(tab)) setActiveTab(tab as Tab)
@@ -2192,6 +2236,13 @@ return (
         window.location.reload()
       }}
       onClose={() => setShowOnboarding(false)}
+    />
+
+    <CVBuilderModal
+      isOpen={showCvBuilder}
+      userId={onboardingUserId}
+      onClose={() => setShowCvBuilder(false)}
+      onSaved={() => refreshHasCv(onboardingUserId)}
     />
 
     {toastMessage && (
