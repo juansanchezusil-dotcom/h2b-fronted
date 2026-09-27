@@ -38,6 +38,9 @@ import {
 import { AnimatedProgressCardDemo } from '@/components/AnimatedProgressCardDemo'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
 import RoadmapChecklist, { readChecklistSteps, CHECKLIST_TOTAL_TASKS } from '@/components/RoadmapChecklist';
+import InfoTooltip from '@/components/InfoTooltip';
+import Pagination from '@/components/Pagination';
+import SponsorHistory from '@/components/SponsorHistory';
 // LISTA COMPLETA DE ESTADOS DE EE. UU. Y TERRITORIOS
 const US_STATES = [
   { code: 'AL', name: 'Alabama' },
@@ -164,6 +167,18 @@ interface CRMItem {
   notes?: string
 }
 
+// Cada oferta viene del scraper diario del DOL o de la carga de CareerOneStop (columna "source")
+const sourceInfo = (source?: string) =>
+  source === 'CareerOneStop'
+    ? {
+        label: 'CareerOneStop',
+        tooltip: 'Oferta H-2B publicada en CareerOneStop, el portal de empleo del Departamento de Trabajo de EE. UU. La revisamos y la reunimos aquí junto a las demás para que no tengas que buscar en varios sitios.',
+      }
+    : {
+        label: 'DOL',
+        tooltip: 'Oferta con certificación laboral H-2B del Departamento de Trabajo de EE. UU. (DOL). La tomamos del registro oficial cada día y la reunimos aquí con sus datos de contacto para que postules directo.',
+      }
+
 type Tab = 'dashboard' | 'jobs' | 'employers' | 'agencies' | 'crm' | 'ai' | 'checklist'
 const TABS: Tab[] = ['dashboard', 'jobs', 'employers', 'agencies', 'crm', 'ai', 'checklist']
 
@@ -190,6 +205,7 @@ export default function Home() {
   const [selectedJobState, setSelectedJobState] = useState('ALL')
   const [selectedJobSector, setSelectedJobSector] = useState('ALL')
   const [selectedSeason, setSelectedSeason] = useState('ALL')
+  const [onlyHiresAbroad, setOnlyHiresAbroad] = useState(false)
 
   const [companySearch, setCompanySearch] = useState('')
   const [selectedCompanyState, setSelectedCompanyState] = useState('ALL')
@@ -201,6 +217,8 @@ export default function Home() {
 
   // --- PAGINACIÓN ---
   const ITEMS_PER_PAGE = 20
+  // Ofertas en bloques de 21: la grilla es de 3 columnas, así cada página llena 7 filas completas
+  const JOBS_PER_PAGE = 21
   const [jobPage, setJobPage] = useState(1)
   const [companyPage, setCompanyPage] = useState(1)
   const [agencyPage, setAgencyPage] = useState(1)
@@ -444,13 +462,27 @@ useEffect(() => {
 useEffect(() => {
   const fetchJobs = async () => {
     setIsLoading(true)
-    const from = (jobPage - 1) * ITEMS_PER_PAGE
-    const to = from + ITEMS_PER_PAGE - 1
+    const from = (jobPage - 1) * JOBS_PER_PAGE
+    const to = from + JOBS_PER_PAGE - 1
+    // Trae el historial de USCIS de la empresa vinculada. Con el filtro activo, el join es
+    // obligatorio (!inner) y solo quedan empresas que tramitaron visas en consulados.
+    const sponsorColumns = 'employer_name, consular_processed, total_approved, cap_type'
     let query = supabase
       .from('jobs')
-      .select('*', { count: 'exact' })
+      .select(
+        onlyHiresAbroad
+          ? `*, sponsor:sponsor_companies!inner(${sponsorColumns})`
+          : `*, sponsor:sponsor_companies(${sponsorColumns})`,
+        { count: 'exact' }
+      )
       .order('begin_date', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false, nullsFirst: false });
+
+    if (onlyHiresAbroad) {
+      query = query
+        .in('sponsor_match', ['exacta', 'probable', 'otro_estado'])
+        .eq('sponsor.consular_processed', 'Yes')
+    }
 
     if (selectedJobState && selectedJobState !== 'ALL') {
       const match = selectedJobState.match(/\(([^)]+)\)/)
@@ -519,7 +551,7 @@ useEffect(() => {
   }, 300)
 
   return () => clearTimeout(timer)
-}, [jobSearch, selectedJobState, selectedJobSector, selectedSeason, jobPage])
+}, [jobSearch, selectedJobState, selectedJobSector, selectedSeason, onlyHiresAbroad, jobPage])
 
 const filteredJobs = jobs
 
@@ -789,7 +821,7 @@ const saveNotes = async (id: string) => {
   setTempNotes('')
 }
 
-const totalJobPages = Math.ceil(totalJobsCount / ITEMS_PER_PAGE) || 1
+const totalJobPages = Math.ceil(totalJobsCount / JOBS_PER_PAGE) || 1
 const totalCompanyPages = Math.ceil(totalEmployersCount / ITEMS_PER_PAGE) || 1
 const totalAgencyPages = Math.ceil(totalAgenciesCount / ITEMS_PER_PAGE) || 1
 const checklistPercentage = Math.round((checklistDone / CHECKLIST_TOTAL_TASKS) * 100)
@@ -800,23 +832,6 @@ const searchHealthPercentage = Math.min(100, Math.round((applicationsThisWeek / 
 
 return (
   <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans">
-
-    {/* BARRA SUPERIOR */}
-    <div className="bg-[#0B1528] text-white text-xs py-2 px-4 border-b border-slate-800 flex justify-between items-center">
-      <div className="flex items-center gap-2">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span className="font-semibold text-emerald-400">Supabase DB Conectado:</span>
-        <span className="bg-emerald-950/80 text-emerald-300 border border-emerald-800/60 px-2 py-0.5 rounded-full font-medium text-[11px]">
-          Sincronización en Vivo
-        </span>
-      </div>
-      <div className="flex items-center gap-4 text-slate-300 text-[11px]">
-        <span className="flex items-center gap-1">
-          <RefreshCw className="w-3 h-3 text-slate-400" />
-          BBDD Activa
-        </span>
-      </div>
-    </div>
 
     {/* HEADER Y NAVEGACIÓN */}
     <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-xs">
@@ -919,13 +934,13 @@ return (
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-[#091E3A] via-[#0F2B48] to-[#1A365D] rounded-2xl p-6 md:p-8 text-white relative overflow-hidden shadow-md">
             <span className="inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold px-3 py-1 rounded-full mb-3">
-              📣 Consulta en directo a Base de Datos
+              📣 Ofertas oficiales del DOL, actualizadas a diario
             </span>
             <h1 className="text-2xl md:text-3xl font-black mb-2 tracking-tight">
               ¡Bienvenido a tu Centro de Control H2B!
             </h1>
             <p className="text-slate-300 text-xs md:text-sm max-w-2xl mb-6 leading-relaxed">
-              Navega a través de todas las ofertas laborales registradas en Supabase, empresas aprobadas por USCIS y agencias reguladas.
+              Encuentra ofertas H-2B oficiales, empresas con visas aprobadas por USCIS y agencias reguladas, y lleva el seguimiento de cada postulación.
             </p>
             {/* BARRA DE PROGRESO — BÚSCALAS / POSTULA / VIAJA */}
             <div className="flex items-center gap-0 mb-6 max-w-md">
@@ -974,7 +989,7 @@ return (
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">OFERTA DE EMPLEO (DOL)</p>
                 <p className="text-2xl font-black text-slate-900 mt-1">{catalogTotals.jobs}</p>
                 <p className="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> Registros en Supabase
+                  <TrendingUp className="w-3 h-3" /> Ofertas publicadas
                 </p>
               </div>
               <div className="w-11 h-11 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center">
@@ -985,7 +1000,7 @@ return (
               <div>
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">EMPRESAS USCIS</p>
                 <p className="text-2xl font-black text-slate-900 mt-1">{catalogTotals.employers}</p>
-                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">● Registros en BBDD</p>
+                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">● En el catálogo</p>
               </div>
               <div className="w-11 h-11 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
@@ -995,7 +1010,7 @@ return (
               <div>
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">AGENCIAS REGULADAS</p>
                 <p className="text-2xl font-black text-slate-900 mt-1">{catalogTotals.agencies}</p>
-                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">● Registros en BBDD</p>
+                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">● En el catálogo</p>
               </div>
               <div className="w-11 h-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5" />
@@ -1054,12 +1069,9 @@ return (
               <div>
                 <h1 className="text-2xl font-black text-slate-900">Ofertas Laborales Activas</h1>
                 <p className="text-xs text-slate-500 mt-1">
-                  Mostrando 20 registros por página de <strong className="text-slate-900">{totalJobsCount} vacantes con estos filtros</strong>.
+                  Mostrando 21 ofertas por página de <strong className="text-slate-900">{totalJobsCount} vacantes con estos filtros</strong>.
                 </p>
               </div>
-              <span className="bg-emerald-50 text-emerald-700 font-bold text-xs px-3 py-1.5 rounded-xl border border-emerald-200 self-start md:self-auto">
-                ● Tabla: jobs
-              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
@@ -1125,12 +1137,30 @@ return (
                 <option value="Fábrica">Fábricas y Manufactura</option>
               </select>
             </div>
+
+            <label className="flex items-start gap-2.5 cursor-pointer bg-sky-50 border border-sky-200 rounded-xl px-3.5 py-2.5">
+              <input
+                type="checkbox"
+                checked={onlyHiresAbroad}
+                onChange={(e) => {
+                  setOnlyHiresAbroad(e.target.checked)
+                  setJobPage(1)
+                }}
+                className="mt-0.5 w-4 h-4 accent-[#0B4079]"
+              />
+              <span className="text-xs text-sky-900">
+                <strong>🌎 Solo empresas que contratan desde el extranjero</strong>
+                <span className="block text-[11px] text-sky-800/80">
+                  Empresas que en 2026 trajeron trabajadores con visa tramitada en un consulado fuera de EE. UU.
+                </span>
+              </span>
+            </label>
           </div>
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-xs text-slate-500 font-medium">Cargando registros desde Supabase...</p>
+              <p className="text-xs text-slate-500 font-medium">Cargando ofertas...</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -1150,27 +1180,39 @@ return (
       const match = job.id != null ? matchScores[String(job.id)] : undefined
       if (!match) return null
       return (
-        <span
-          className={`font-bold text-[10px] px-2 py-0.5 rounded border ${
-            match.score >= 80
-              ? 'bg-red-50 text-red-700 border-red-200'
-              : match.score >= 50
-              ? 'bg-amber-50 text-amber-700 border-amber-200'
-              : 'bg-slate-50 text-slate-500 border-slate-200'
-          }`}
-        >
-          {match.score >= 80 ? '🔥' : match.score >= 50 ? '🟡' : '⚪'} {match.score}% Match
-        </span>
+        <InfoTooltip text="Qué tanto encaja esta oferta con tu perfil (industria, experiencia e inglés). No es la probabilidad de que te den la visa.">
+          <span
+            className={`font-bold text-[10px] px-2 py-0.5 rounded border ${
+              match.score >= 80
+                ? 'bg-red-50 text-red-700 border-red-200'
+                : match.score >= 50
+                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                : 'bg-slate-50 text-slate-500 border-slate-200'
+            }`}
+          >
+            {match.score >= 80 ? '🔥' : match.score >= 50 ? '🟡' : '⚪'} {match.score}% compatible
+          </span>
+        </InfoTooltip>
       )
     })()}
-    <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200">
-      Fuente: DOL
-    </span>
+    {(() => {
+      const source = sourceInfo(job.source)
+      return (
+        <InfoTooltip text={source.tooltip}>
+          <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200">
+            ✓ Verificada · {source.label}
+          </span>
+        </InfoTooltip>
+      )
+    })()}
   </div>
 </div>
                     <div>
                       <h3 className="font-bold text-slate-900 text-base leading-snug">{job.title || 'Oferta de Trabajo'}</h3>
                       <p className="text-xs font-bold text-blue-700 mt-0.5">{job.employer_name || 'Empleador Registrado'}</p>
+                      <div className="mt-2">
+                        <SponsorHistory sponsor={job.sponsor} match={job.sponsor_match} />
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
                       <div className="flex items-center gap-1.5">
@@ -1208,28 +1250,14 @@ return (
             </div>
           )}
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-            <p className="text-xs text-slate-500">
-              Página <strong className="text-slate-900">{jobPage}</strong> de <strong className="text-slate-900">{totalJobPages}</strong> ({totalJobsCount} ofertas totales)
-            </p>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setJobPage(p => Math.max(1, p - 1))}
-                disabled={jobPage === 1 || isLoading}
-                className="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-50 flex items-center gap-1"
-              >
-                <ChevronLeft className="w-4 h-4" /> Anterior
-              </button>
-              <button
-                onClick={() => setJobPage(p => Math.min(totalJobPages, p + 1))}
-                disabled={jobPage === totalJobPages || isLoading}
-                className="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-50 flex items-center gap-1"
-              >
-                Siguiente <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={jobPage}
+            totalPages={totalJobPages}
+            totalItems={totalJobsCount}
+            itemLabel="ofertas"
+            disabled={isLoading}
+            onChange={setJobPage}
+          />
         </div>
       )}
 
@@ -1244,9 +1272,6 @@ return (
                   Mostrando 20 empresas por página de <strong className="text-slate-900">{totalEmployersCount} con estos filtros</strong>.
                 </p>
               </div>
-              <span className="bg-sky-50 text-sky-700 font-bold text-xs px-3 py-1.5 rounded-xl border border-sky-200 self-start md:self-auto">
-                ● Tabla: sponsor_companies
-              </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-2">
@@ -1319,7 +1344,7 @@ return (
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-xs text-slate-500 font-medium">Cargando empresas desde Supabase...</p>
+              <p className="text-xs text-slate-500 font-medium">Cargando empresas...</p>
             </div>
           ) : (
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
@@ -1368,27 +1393,14 @@ return (
             </div>
           )}
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-            <p className="text-xs text-slate-500">
-              Página <strong className="text-slate-900">{companyPage}</strong> de <strong className="text-slate-900">{totalCompanyPages}</strong> ({totalEmployersCount} empresas totales)
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCompanyPage(p => Math.max(1, p - 1))}
-                disabled={companyPage === 1 || isLoading}
-                className="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-50 flex items-center gap-1"
-              >
-                <ChevronLeft className="w-4 h-4" /> Anterior
-              </button>
-              <button
-                onClick={() => setCompanyPage(p => Math.min(totalCompanyPages, p + 1))}
-                disabled={companyPage === totalCompanyPages || isLoading}
-                className="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-50 flex items-center gap-1"
-              >
-                Siguiente <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={companyPage}
+            totalPages={totalCompanyPages}
+            totalItems={totalEmployersCount}
+            itemLabel="empresas"
+            disabled={isLoading}
+            onChange={setCompanyPage}
+          />
         </div>
       )}
 
@@ -1403,9 +1415,6 @@ return (
                   Mostrando 20 agencias por página de <strong className="text-slate-900">{totalAgenciesCount} con estos filtros</strong>.
                 </p>
               </div>
-              <span className="bg-indigo-50 text-indigo-700 font-bold text-xs px-3 py-1.5 rounded-xl border border-indigo-200 self-start md:self-auto">
-                ● Tabla: sponsor_agencies
-              </span>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               <input
@@ -1443,7 +1452,7 @@ return (
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-xs text-slate-500 font-medium">Cargando agencias desde Supabase...</p>
+              <p className="text-xs text-slate-500 font-medium">Cargando agencias...</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1496,27 +1505,14 @@ return (
             </div>
           )}
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-            <p className="text-xs text-slate-500">
-              Página <strong className="text-slate-900">{agencyPage}</strong> de <strong className="text-slate-900">{totalAgencyPages}</strong> ({totalAgenciesCount} agencias totales)
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setAgencyPage(p => Math.max(1, p - 1))}
-                disabled={agencyPage === 1 || isLoading}
-                className="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-50 flex items-center gap-1"
-              >
-                <ChevronLeft className="w-4 h-4" /> Anterior
-              </button>
-              <button
-                onClick={() => setAgencyPage(p => Math.min(totalAgencyPages, p + 1))}
-                disabled={agencyPage === totalAgencyPages || isLoading}
-                className="px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-50 flex items-center gap-1"
-              >
-                Siguiente <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+          <Pagination
+            page={agencyPage}
+            totalPages={totalAgencyPages}
+            totalItems={totalAgenciesCount}
+            itemLabel="agencias"
+            disabled={isLoading}
+            onChange={setAgencyPage}
+          />
         </div>
       )}
 
@@ -2040,6 +2036,9 @@ return (
               </div>
             </div>
 
+            {/* HISTORIAL DE LA EMPRESA EN USCIS */}
+            <SponsorHistory sponsor={selectedJob.sponsor} match={selectedJob.sponsor_match} variant="full" />
+
             {/* RECRUITMENT INFORMATION */}
             <div className="space-y-1 border-t border-slate-100 pt-3 text-left">
               <h3 className="font-bold text-blue-900 text-xs">Recruitment Information</h3>
@@ -2192,6 +2191,7 @@ return (
         setShowOnboarding(false)
         window.location.reload()
       }}
+      onClose={() => setShowOnboarding(false)}
     />
 
     {toastMessage && (
