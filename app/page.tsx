@@ -854,6 +854,96 @@ const weeklyTarget = 15
 const applicationsThisWeek = crmItems.filter(i => i.status !== 'guardadas' && Date.now() - i.lastUpdated < 7 * 24 * 60 * 60 * 1000).length
 const searchHealthPercentage = Math.min(100, Math.round((applicationsThisWeek / weeklyTarget) * 100))
 
+// ===== TU PRIORIDAD (Next Best Action) =====
+// Revisa las señales en orden y muestra solo la más urgente. No se calcula
+// hasta que sepamos quién es el usuario y su CRM haya cargado, para no
+// mostrar "aún no guardaste ninguna oferta" mientras todavía está cargando.
+interface NextAction {
+  icon: React.ElementType
+  title: string
+  desc: string
+  buttonLabel: string
+  onClick: () => void
+}
+
+const getNextAction = (): NextAction | null => {
+  if (!onboardingUserId || crmLoading) return null
+
+  if (!profileCompleted) {
+    return {
+      icon: UserCheck,
+      title: 'Completa tu perfil',
+      desc: 'Con tu industria, experiencia e inglés calculamos qué tan bien encajas con cada oferta.',
+      buttonLabel: 'Completar perfil',
+      onClick: () => setShowOnboarding(true),
+    }
+  }
+
+  if (!hasCv) {
+    return {
+      icon: FileText,
+      title: 'Genera tu CV en inglés',
+      desc: 'Lo necesitas para postular en serio, y el redactor de correos lo usa para personalizar tus mensajes.',
+      buttonLabel: 'Generar mi CV',
+      onClick: () => setShowCvBuilder(true),
+    }
+  }
+
+  const pendingFollowUps = crmItems.filter(
+    (i) => i.status === 'seguimiento' && (Date.now() - i.createdAt) / (1000 * 60 * 60 * 24) >= 7
+  ).length
+  if (pendingFollowUps > 0) {
+    return {
+      icon: Clock,
+      title: pendingFollowUps === 1 ? 'Tienes 1 seguimiento pendiente' : `Tienes ${pendingFollowUps} seguimientos pendientes`,
+      desc: 'Estas empresas no han respondido. Escríbeles para reconfirmar tu interés antes de que se cierre el plazo.',
+      buttonLabel: 'Ir a Mi CRM',
+      onClick: () => setActiveTab('crm'),
+    }
+  }
+
+  if (crmItems.length === 0) {
+    return {
+      icon: Search,
+      title: 'Aún no guardaste ninguna oferta',
+      desc: 'Explora las vacantes disponibles y guarda las que más encajen con tu perfil para empezar tu seguimiento.',
+      buttonLabel: 'Ver Ofertas',
+      onClick: () => setActiveTab('jobs'),
+    }
+  }
+
+  const beyondSaved = crmItems.filter((i) => i.status !== 'guardadas').length
+  if (beyondSaved === 0) {
+    return {
+      icon: Send,
+      title: crmItems.length === 1 ? 'Tienes 1 oferta guardada esperando' : `Tienes ${crmItems.length} ofertas guardadas esperando`,
+      desc: 'Guardarlas es el primer paso. Ahora postula escribiéndole a la empresa para que el proceso avance.',
+      buttonLabel: 'Ir a Mi CRM',
+      onClick: () => setActiveTab('crm'),
+    }
+  }
+
+  if (applicationsThisWeek < weeklyTarget) {
+    return {
+      icon: TrendingUp,
+      title: `Te faltan ${weeklyTarget - applicationsThisWeek} postulaciones para tu meta semanal`,
+      desc: `Llevas ${applicationsThisWeek} de ${weeklyTarget} esta semana. Más postulaciones activas significan más oportunidades de respuesta.`,
+      buttonLabel: 'Ver Ofertas',
+      onClick: () => setActiveTab('jobs'),
+    }
+  }
+
+  return {
+    icon: CheckCircle2,
+    title: '¡Vas al día con tu búsqueda!',
+    desc: 'Cumpliste tu meta semanal y no tienes seguimientos pendientes. Sigue explorando para no perder ritmo.',
+    buttonLabel: 'Ver más Ofertas',
+    onClick: () => setActiveTab('jobs'),
+  }
+}
+
+const nextAction = getNextAction()
+
 return (
   <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans">
 
@@ -1006,6 +1096,26 @@ return (
               </button>
             </div>
           </div>
+
+          {/* TU PRIORIDAD — la única acción que más importa ahora mismo */}
+          {nextAction && (
+            <div className="bg-white border-2 border-[#f5c518]/60 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <nextAction.icon className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <span className="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider">🎯 Tu prioridad</span>
+                <h2 className="text-base font-black text-slate-900 mt-0.5">{nextAction.title}</h2>
+                <p className="text-xs text-slate-500 mt-0.5">{nextAction.desc}</p>
+              </div>
+              <button
+                onClick={nextAction.onClick}
+                className="bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shrink-0 whitespace-nowrap"
+              >
+                {nextAction.buttonLabel}
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
