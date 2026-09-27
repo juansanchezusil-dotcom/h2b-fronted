@@ -71,8 +71,27 @@ ${candidateName}`;
   const subject = getSubject();
 
   // Función para copiar el cuerpo al portapapeles
-  const handleCopy = () => {
-    navigator.clipboard.writeText(emailBody);
+  // Solo confirma "copiado" si de verdad se copió
+  const handleCopy = async () => {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(emailBody);
+      ok = true;
+    } catch {
+      // Respaldo para navegadores que bloquean el API del portapapeles
+      const textarea = document.createElement('textarea');
+      textarea.value = emailBody;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      ok = document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+    if (!ok) {
+      window.prompt('Copia el correo manualmente:', emailBody);
+      return;
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

@@ -48,6 +48,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
+  // 3. La membresía se revisa en cada visita, no solo al iniciar sesión:
+  // si el webhook de pago la desactiva (reembolso/cancelación), el acceso se corta
+  // aunque la sesión siga viva. Las rutas /api se sirven desde el backend.
+  const isPublic = pathname === "/no-acceso" || pathname.startsWith("/auth") || pathname.startsWith("/api");
+  if (user?.email && !isPublic) {
+    const { data: acceso } = await supabase
+      .from("accesos")
+      .select("activo")
+      .eq("email", user.email.trim().toLowerCase())
+      .maybeSingle();
+
+    if (!acceso?.activo) {
+      return NextResponse.redirect(new URL("/no-acceso", request.url));
+    }
+  }
+
   return response;
 }
 

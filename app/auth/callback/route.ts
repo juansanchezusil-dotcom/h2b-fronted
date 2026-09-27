@@ -31,7 +31,13 @@ export async function GET(request: Request) {
 
     const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
 
-    if (!error && session?.user?.email) {
+    // Un fallo técnico del login no es lo mismo que "no tienes membresía"
+    if (error) {
+      console.error("Error intercambiando el código de sesión:", error);
+      return NextResponse.redirect(`${origin}/no-acceso?motivo=error`);
+    }
+
+    if (session?.user?.email) {
       const cleanEmail = session.user.email.trim().toLowerCase();
 
       const { data: acceso } = await supabase
@@ -43,8 +49,11 @@ export async function GET(request: Request) {
       if (acceso?.activo) {
         return response; // <-- Devuelve la respuesta con las cookies guardadas
       }
+
+      // Se pasa el correo para que la persona vea con cuál entró
+      return NextResponse.redirect(`${origin}/no-acceso?correo=${encodeURIComponent(cleanEmail)}`);
     }
   }
 
-  return NextResponse.redirect(`${origin}/no-acceso`);
+  return NextResponse.redirect(`${origin}/no-acceso?motivo=error`);
 }

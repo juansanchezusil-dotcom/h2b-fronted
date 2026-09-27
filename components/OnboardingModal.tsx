@@ -1,25 +1,48 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from 'react'; 
 import { supabase } from '@/lib/supabaseClient';
 
 interface OnboardingModalProps {
   isOpen: boolean;
   userId: string;
   onComplete: () => void;
+  // Cerrar sin guardar (saltar ahora o cancelar la edición del perfil)
+  onClose?: () => void;
 }
 
-export default function OnboardingModal({ isOpen, userId, onComplete }: OnboardingModalProps) {
+export default function OnboardingModal({ isOpen, userId, onComplete, onClose }: OnboardingModalProps) {
   // Todos los Hooks van PRIMERO, antes de cualquier "return" condicional.
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    experiencia_industria: '',
-    anos_experiencia: 0,
-    nivel_ingles: '',
-    pais_origen: '',
-  });
+  const [formData, setFormData] = useState({  
+  experiencia_industria: '',
+  anos_experiencia: 0,
+  nivel_ingles: '',
+  pais_origen: '',
+  has_previous_h2b: null as boolean | null,
+});
+  useEffect(() => {
+    async function loadExistingProfile() {
+      if (!isOpen || !userId) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
+      if (data) {
+        setFormData({
+          experiencia_industria: data.experiencia_industria || '',
+          anos_experiencia: data.anos_experiencia || 0,
+          nivel_ingles: data.nivel_ingles || '',
+          pais_origen: data.pais_origen || '',
+          has_previous_h2b: data.has_previous_h2b ?? null,
+        });
+      }
+    }
+    loadExistingProfile();
+  }, [isOpen, userId]);
   // El "return null" va DESPUÉS de todos los Hooks, nunca antes.
   if (!isOpen) return null;
 
@@ -35,6 +58,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete }: Onboardi
     anos_experiencia: Number(formData.anos_experiencia),
     nivel_ingles: formData.nivel_ingles,
     pais_origen: formData.pais_origen,
+    has_previous_h2b: formData.has_previous_h2b,
     perfil_completado: true,
   });
 
@@ -49,7 +73,18 @@ export default function OnboardingModal({ isOpen, userId, onComplete }: Onboardi
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08131F]/80 backdrop-blur-md p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 md:p-8 shadow-2xl border border-slate-100">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 md:p-8 shadow-2xl border border-slate-100">
+
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Cerrar"
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 text-lg font-bold"
+          >
+            ✕
+          </button>
+        )}
 
         {/* Encabezado y Progreso */}
         <div className="mb-6 text-center">
@@ -115,6 +150,15 @@ export default function OnboardingModal({ isOpen, userId, onComplete }: Onboardi
             >
               Siguiente Paso →
             </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full text-xs font-semibold text-slate-500 hover:text-slate-700 py-2"
+              >
+                Completar después
+              </button>
+            )}
           </div>
         )}
 
@@ -150,6 +194,36 @@ export default function OnboardingModal({ isOpen, userId, onComplete }: Onboardi
               />
             </div>
 
+            <div>
+  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+    ¿Ya has viajado antes con visa H-2B?
+  </label>
+  <div className="flex gap-3">
+    <button
+      type="button"
+      onClick={() => setFormData({ ...formData, has_previous_h2b: true })}
+      className={`flex-1 rounded-xl border py-3 text-sm font-bold transition ${
+        formData.has_previous_h2b === true
+          ? 'border-[#C89B3C] bg-[#C89B3C]/10 text-[#08131F]'
+          : 'border-slate-300 text-slate-600'
+      }`}
+    >
+      Sí
+    </button>
+    <button
+      type="button"
+      onClick={() => setFormData({ ...formData, has_previous_h2b: false })}
+      className={`flex-1 rounded-xl border py-3 text-sm font-bold transition ${
+        formData.has_previous_h2b === false
+          ? 'border-[#C89B3C] bg-[#C89B3C]/10 text-[#08131F]'
+          : 'border-slate-300 text-slate-600'
+      }`}
+    >
+      No
+    </button>
+  </div>
+</div>
+
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
@@ -160,7 +234,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete }: Onboardi
               </button>
               <button
                 type="button"
-                disabled={loading || !formData.nivel_ingles || !formData.pais_origen}
+                disabled={loading || !formData.nivel_ingles || !formData.pais_origen || formData.has_previous_h2b === null}
                 onClick={handleSubmit}
                 className="w-2/3 rounded-xl bg-[#C89B3C] py-3.5 text-sm font-bold text-[#08131F] shadow-md hover:bg-[#b08833] disabled:opacity-50 transition"
               >

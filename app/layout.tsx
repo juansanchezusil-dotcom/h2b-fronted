@@ -15,6 +15,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Juan Te Avisa PRO - Sistema Operativo H2B",
   description: "Encuentra ofertas de trabajo H-2B verificadas, empresas patrocinadoras y agencias reguladas. Tu sistema operativo para el proceso de visa H-2B.",
+  // Vista previa al compartir el enlace (WhatsApp, Instagram, Facebook)
+  openGraph: {
+    title: "Juan Te Avisa PRO - Sistema Operativo H2B",
+    description: "Ofertas H-2B oficiales del DOL, empresas con visas aprobadas y seguimiento de tus postulaciones.",
+    siteName: "Juan Te Avisa PRO",
+    locale: "es_LA",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -24,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
