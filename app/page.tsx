@@ -42,6 +42,7 @@ import InfoTooltip from '@/components/InfoTooltip';
 import Pagination from '@/components/Pagination';
 import SponsorHistory from '@/components/SponsorHistory';
 import CVBuilderModal from '@/components/CVBuilderModal';
+import { useBackToClose } from '@/hooks/useBackToClose';
 // LISTA COMPLETA DE ESTADOS DE EE. UU. Y TERRITORIOS
 const US_STATES = [
   { code: 'AL', name: 'Alabama' },
@@ -197,6 +198,7 @@ export default function Home() {
   const [catalogTotals, setCatalogTotals] = useState({ jobs: 0, employers: 0, agencies: 0 })
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [selectedJob, setSelectedJob] = useState<any | null>(null)
+  useBackToClose(!!selectedJob, () => setSelectedJob(null))
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [profileCompleted, setProfileCompleted] = useState(false)
   const [onboardingUserId, setOnboardingUserId] = useState<string>('')
@@ -333,6 +335,7 @@ const labelForStatus = (status: string) => {
 
   // Modal Postulación Manual
   const [isManualModalOpen, setIsManualModalOpen] = useState(false)
+  useBackToClose(isManualModalOpen, () => setIsManualModalOpen(false))
   const [manualCompany, setManualCompany] = useState('')
   const [manualRole, setManualRole] = useState('')
   const [manualState, setManualState] = useState('')
@@ -2143,16 +2146,19 @@ return (
       {/* MODAL DETALLE DE OFERTA LABORAL (ÚNICO) */}
       {selectedJob && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          {/* overflow-hidden evita el scroll doble de la ventana blanca */}
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative overflow-hidden">
+          {/* Shell fijo max-h-[90vh]: el botón cerrar queda afuera del scroll interno,
+              así nunca se va con el contenido en pantallas de celular */}
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] shadow-2xl relative overflow-hidden">
 
             {/* BOTÓN CERRAR */}
             <button
               onClick={() => setSelectedJob(null)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1 transition-colors z-10"
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1 transition-colors z-20"
             >
               <X className="w-5 h-5" />
             </button>
+
+            <div className="max-h-[90vh] overflow-y-auto p-6 space-y-4">
 
             {/* ENCABEZADO CON ID, TITULO Y FECHAS A LA DERECHA */}
             <div className="flex justify-between items-start gap-4 pr-6">
@@ -2247,6 +2253,7 @@ return (
                 </a>
               )}
             </div>
+            </div>
           </div>
         </div>
       )}
@@ -2254,9 +2261,9 @@ return (
     {/* MODAL DE POSTULACIÓN MANUAL */}
     {isManualModalOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-        <div className="bg-white p-6 rounded-2xl max-w-md w-full shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in duration-200">
+        <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in duration-200">
 
-          <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
+          <div className="sticky top-0 z-10 bg-white flex justify-between items-center px-6 pt-6 pb-2 border-b border-slate-100">
             <h3 className="text-lg font-bold text-slate-800">Agregar Postulación Manual</h3>
             <button
               type="button"
@@ -2267,7 +2274,7 @@ return (
             </button>
           </div>
 
-          <form onSubmit={handleSaveManualItem} className="space-y-4">
+          <form onSubmit={handleSaveManualItem} className="space-y-4 px-6 pb-6 pt-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Empresa *</label>
               <input

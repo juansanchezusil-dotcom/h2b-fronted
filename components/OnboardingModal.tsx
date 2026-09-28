@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react'; 
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useBackToClose } from '@/hooks/useBackToClose';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -43,6 +44,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
     }
     loadExistingProfile();
   }, [isOpen, userId]);
+  useBackToClose(isOpen, onClose);
   // El "return null" va DESPUÉS de todos los Hooks, nunca antes.
   if (!isOpen) return null;
 
@@ -73,18 +75,21 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08131F]/80 backdrop-blur-md p-4">
-      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 md:p-8 shadow-2xl border border-slate-100">
+      {/* Shell fijo (no scrollea): así el botón cerrar no se va con el contenido */}
+      <div className="relative w-full max-w-lg max-h-[90vh] rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden">
 
         {onClose && (
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 text-lg font-bold"
+            className="absolute top-4 right-4 z-20 text-slate-400 hover:text-slate-600 p-1 text-lg font-bold"
           >
             ✕
           </button>
         )}
+
+        <div className="max-h-[90vh] overflow-y-auto p-6 md:p-8">
 
         {/* Encabezado y Progreso */}
         <div className="mb-6 text-center">
@@ -225,6 +230,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
 </div>
 
             <div className="flex gap-3 pt-2">
+
               <button
                 type="button"
                 onClick={() => setStep(1)}
@@ -244,6 +250,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
           </div>
         )}
 
+        </div>
       </div>
     </div>
   );

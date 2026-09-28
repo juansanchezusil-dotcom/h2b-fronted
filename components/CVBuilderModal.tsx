@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { X, Sparkles, Copy, Download, Loader2, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import { useBackToClose } from '@/hooks/useBackToClose';
 
 interface CVBuilderModalProps {
   isOpen: boolean;
@@ -55,6 +56,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
     })();
   }, [isOpen, userId]);
 
+  useBackToClose(isOpen, onClose);
   if (!isOpen) return null;
 
   const skills = skillsText.split(',').map((s) => s.trim()).filter(Boolean);
@@ -125,15 +127,18 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08131F]/80 backdrop-blur-md p-4">
-      <div className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-2xl bg-white p-6 md:p-8 shadow-2xl border border-slate-100">
+      {/* Shell fijo (no scrollea): así el botón cerrar no se va con el contenido */}
+      <div className="relative w-full max-w-2xl max-h-[92vh] rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden">
         <button
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 text-lg font-bold"
+          className="absolute top-4 right-4 z-20 text-slate-400 hover:text-slate-600 p-1 text-lg font-bold"
         >
           <X className="w-5 h-5" />
         </button>
+
+        <div className="max-h-[92vh] overflow-y-auto p-6 md:p-8">
 
         <div className="mb-5">
           <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#C89B3C] bg-[#C89B3C]/10 rounded-full mb-3">
@@ -266,6 +271,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
               {saving ? 'Guardando...' : 'Guardar mi CV'}
             </button>
           </div>
+        </div>
         </div>
       </div>
     </div>
