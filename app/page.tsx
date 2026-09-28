@@ -42,6 +42,7 @@ import InfoTooltip from '@/components/InfoTooltip';
 import Pagination from '@/components/Pagination';
 import SponsorHistory from '@/components/SponsorHistory';
 import CVBuilderModal from '@/components/CVBuilderModal';
+import ApplyFlowModal from '@/components/ApplyFlowModal';
 import { useBackToClose } from '@/hooks/useBackToClose';
 // LISTA COMPLETA DE ESTADOS DE EE. UU. Y TERRITORIOS
 const US_STATES = [
@@ -217,6 +218,7 @@ export default function Home() {
     return month >= 3 && month <= 8 ? 'WINTER' : 'SUMMER'
   })
   const [onlyHiresAbroad, setOnlyHiresAbroad] = useState(false)
+  const [jobSortBy, setJobSortBy] = useState<'recent' | 'match'>('recent')
 
   const [companySearch, setCompanySearch] = useState('')
   const [selectedCompanyState, setSelectedCompanyState] = useState('ALL')
@@ -251,6 +253,8 @@ export default function Home() {
   const [showCvBuilder, setShowCvBuilder] = useState(false)
   // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
   const [emailDraftFor, setEmailDraftFor] = useState<{ company: string; role: string } | null>(null)
+  // Oferta que se está postulando ahora mismo (flujo "Postular ahora" del detalle)
+  const [applyFlowJob, setApplyFlowJob] = useState<{ title: string; employerName: string; location?: string; contactEmail?: string } | null>(null)
 
   const refreshHasCv = async (userId: string) => {
     if (!userId) return
@@ -582,7 +586,11 @@ useEffect(() => {
   return () => clearTimeout(timer)
 }, [jobSearch, selectedJobState, selectedJobSector, selectedSeason, onlyHiresAbroad, jobPage])
 
-const filteredJobs = jobs
+// Orden dentro de la página ya cargada: "match" pone primero lo más compatible
+// con tu perfil (requiere haber completado el perfil, si no todas quedan en 0).
+const filteredJobs = jobSortBy === 'match'
+  ? [...jobs].sort((a, b) => (matchScores[String(b.id)]?.score ?? -1) - (matchScores[String(a.id)]?.score ?? -1))
+  : jobs
 
 // CONSULTAS DE EMPRESAS USCIS
 useEffect(() => {
@@ -818,6 +826,53 @@ const changeCrmStatus = async (id: string, newStatus: CRMItem['status']) => {
     if (previous) setCrmItems(prev => prev.map(item => item.id === id ? previous : item))
     showToast('❌ No se pudo actualizar el estado. Intenta de nuevo.')
   }
+}
+
+// Se llama cuando el flujo de "Postular ahora" confirma que el correo se envió.
+// Si la oferta ya estaba guardada, la avanza a Postulado; si no existía en el
+// CRM, la crea directo ahí — nunca se aplica sin que quede registro.
+const applyJobToCrm = async (job: { title: string; employerName: string; location?: string }) => {
+  if (!onboardingUserId) return
+  const key = crmKey(job.employerName, job.title)
+  const existing = crmItems.find(i => crmKey(i.company, i.role) === key)
+
+  if (existing) {
+    if (existing.status === 'guardadas') await changeCrmStatus(existing.id, 'postulado')
+    return
+  }
+
+  const { data, error } = await supabase
+    .from('applications')
+    .insert({
+      user_id: onboardingUserId,
+      company_name: job.employerName,
+      job_title: job.title,
+      state: job.location || 'US',
+      status: 'postulado',
+      notes: '',
+    })
+    .select()
+    .single()
+
+  if (error || !data) {
+    console.error('Error registrando postulación:', error)
+    showToast('❌ El correo se envió, pero no se pudo guardar en tu CRM.')
+    return
+  }
+
+  const newItem: CRMItem = {
+    id: data.id,
+    company: data.company_name,
+    role: data.job_title,
+    state: data.state,
+    status: 'postulado',
+    dateLabel: labelForStatus('postulado'),
+    lastUpdated: new Date(data.created_at).getTime(),
+    createdAt: new Date(data.created_at).getTime(),
+    notes: '',
+  }
+  setCrmItems(prev => [newItem, ...prev])
+  showToast(`✅ Postulación a "${job.employerName}" registrada en tu CRM.`)
 }
 
 // Abre el redactor de correos precargado con la empresa/puesto de esta tarjeta del CRM
@@ -1303,6 +1358,21 @@ return (
                 </span>
               </span>
             </label>
+
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-500 shrink-0">Ordenar por:</label>
+              <select
+                value={jobSortBy}
+                onChange={(e) => setJobSortBy(e.target.value as 'recent' | 'match')}
+                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              >
+                <option value="recent">Más recientes</option>
+                <option value="match">Mejor compatible con tu perfil</option>
+              </select>
+              {jobSortBy === 'match' && !profileCompleted && (
+                <span className="text-[11px] text-amber-700">Completa tu perfil para ver esto ordenado de verdad.</span>
+              )}
+            </div>
           </div>
 
           {isLoading ? (
@@ -2299,14 +2369,33 @@ return (
 
             {/* BOTÓN POSTULAR */}
             <div className="pt-1">
-              {(selectedJob.email_to_apply || selectedJob.email || selectedJob.recruitment_email || selectedJob.emp_email) && (
-                <a
-                  href={`mailto:${selectedJob.email_to_apply || selectedJob.email || selectedJob.recruitment_email || selectedJob.emp_email}`}
-                  className="w-full bg-[#00A86B] hover:bg-[#008f5b] text-white font-bold text-xs py-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-sm"
-                >
-                  ✉️ Postular por Correo Directo
-                </a>
-              )}
+              {(() => {
+                const key = crmKey(
+                  selectedJob.employer_name || selectedJob.emp_name || '',
+                  selectedJob.title || selectedJob.job_title || ''
+                )
+                const existing = crmItems.find(i => crmKey(i.company, i.role) === key)
+                if (existing && existing.status !== 'guardadas') {
+                  return (
+                    <div className="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs py-3 rounded-xl text-center">
+                      ✓ Ya postulaste — estado: {labelForStatus(existing.status)}
+                    </div>
+                  )
+                }
+                return (
+                  <button
+                    onClick={() => setApplyFlowJob({
+                      title: selectedJob.title || selectedJob.job_title || 'Vacante H2B',
+                      employerName: selectedJob.employer_name || selectedJob.emp_name || 'Empresa Generica',
+                      location: selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim(),
+                      contactEmail: selectedJob.email_to_apply || selectedJob.email || selectedJob.recruitment_email || selectedJob.emp_email || '',
+                    })}
+                    className="w-full bg-[#00A86B] hover:bg-[#008f5b] text-white font-bold text-xs py-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-sm"
+                  >
+                    ✉️ Postular ahora
+                  </button>
+                )
+              })()}
             </div>
             </div>
           </div>
@@ -2415,6 +2504,20 @@ return (
       userId={onboardingUserId}
       onClose={() => setShowCvBuilder(false)}
       onSaved={() => refreshHasCv(onboardingUserId)}
+    />
+
+    <ApplyFlowModal
+      isOpen={!!applyFlowJob}
+      userId={onboardingUserId}
+      job={applyFlowJob}
+      alreadySavedStatus={
+        applyFlowJob
+          ? crmItems.find(i => crmKey(i.company, i.role) === crmKey(applyFlowJob.employerName, applyFlowJob.title))?.status ?? null
+          : null
+      }
+      onClose={() => setApplyFlowJob(null)}
+      onOpenCvBuilder={() => setShowCvBuilder(true)}
+      onApplied={() => applyFlowJob && applyJobToCrm(applyFlowJob)}
     />
 
     {toastMessage && (
