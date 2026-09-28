@@ -1484,50 +1484,94 @@ return (
               <p className="text-xs text-slate-500 font-medium">Cargando empresas...</p>
             </div>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-600">
-                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
-                    <tr>
-                      <th className="p-4">Empresa Patrocinadora</th>
-                      <th className="p-4">Tipo de Cupo (Cap)</th>
-                      <th className="p-4">Ubicación</th>
-                      <th className="p-4">Consular Processed</th>
-                      <th className="p-4">Visas Aprobadas</th>
-                      <th className="p-4 text-right">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-200">
-                    {employers.map((comp, idx) => (
-                      <tr key={comp.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-4 font-bold text-slate-900">{comp.employer_name || 'Sin Nombre'}</td>
-                        <td className="p-4">
-                          <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border border-amber-200' :
-                              comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border border-blue-200' :
-                                comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border border-purple-200' :
-                                  'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                            }`}>
-                            {comp.cap_type || 'General'}
-                          </span>
-                        </td>
-                        <td className="p-4">{comp.worksite_states || comp.state || '-'}</td>
-                        <td className="p-4 font-semibold">{comp.consular_processed ?? 0}</td>
-                        <td className="p-4 font-semibold">{comp.total_approved || 0} visas</td>
-                        <td className="p-4 text-right">
-                          <button
-                            onClick={() => addToCRM(comp.employer_name, 'Empresa USCIS', comp.state)}
-                            disabled={savingCrmKey !== null}
-                            className="disabled:opacity-50 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px] px-3 py-1.5 rounded-lg transition-all"
-                          >
-                            + Guardar
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <>
+              {/* CELULAR: tarjetas apiladas — una tabla de 6 columnas no cabe en 390px */}
+              <div className="md:hidden space-y-3">
+                {employers.map((comp, idx) => {
+                  const abroad = String(comp.consular_processed || '').toLowerCase() === 'yes'
+                  return (
+                    <div key={comp.id || idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-2.5">
+                      <h3 className="font-bold text-slate-900 text-sm leading-snug">{comp.employer_name || 'Sin Nombre'}</h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className={`font-bold px-2 py-0.5 rounded text-[10px] border ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                            comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border-blue-200' :
+                              comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border-purple-200' :
+                                'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          }`}>
+                          {comp.cap_type || 'General'}
+                        </span>
+                        <span className={`font-bold px-2 py-0.5 rounded text-[10px] border ${abroad ? 'bg-sky-50 text-sky-800 border-sky-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                          {abroad ? '🌎 Contrata desde el extranjero' : 'Solo contrató dentro de EE. UU.'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{comp.worksite_states || comp.state || '-'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                          <span>{comp.total_approved || 0} visas aprobadas</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => addToCRM(comp.employer_name, 'Empresa USCIS', comp.state)}
+                        disabled={savingCrmKey !== null}
+                        className="w-full disabled:opacity-50 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl transition-all"
+                      >
+                        + Guardar
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
+
+              {/* ESCRITORIO: tabla completa */}
+              <div className="hidden md:block bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-600">
+                    <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
+                      <tr>
+                        <th className="p-4">Empresa Patrocinadora</th>
+                        <th className="p-4">Tipo de Cupo (Cap)</th>
+                        <th className="p-4">Ubicación</th>
+                        <th className="p-4">Consular Processed</th>
+                        <th className="p-4">Visas Aprobadas</th>
+                        <th className="p-4 text-right">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {employers.map((comp, idx) => (
+                        <tr key={comp.id || idx} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-4 font-bold text-slate-900">{comp.employer_name || 'Sin Nombre'}</td>
+                          <td className="p-4">
+                            <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                                comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border border-blue-200' :
+                                  comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border border-purple-200' :
+                                    'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              }`}>
+                              {comp.cap_type || 'General'}
+                            </span>
+                          </td>
+                          <td className="p-4">{comp.worksite_states || comp.state || '-'}</td>
+                          <td className="p-4 font-semibold">{comp.consular_processed ?? 0}</td>
+                          <td className="p-4 font-semibold">{comp.total_approved || 0} visas</td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => addToCRM(comp.employer_name, 'Empresa USCIS', comp.state)}
+                              disabled={savingCrmKey !== null}
+                              className="disabled:opacity-50 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px] px-3 py-1.5 rounded-lg transition-all"
+                            >
+                              + Guardar
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           )}
 
           <Pagination
