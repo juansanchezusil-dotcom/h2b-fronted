@@ -207,7 +207,15 @@ export default function Home() {
   const [jobSearch, setJobSearch] = useState('')
   const [selectedJobState, setSelectedJobState] = useState('ALL')
   const [selectedJobSector, setSelectedJobSector] = useState('ALL')
-  const [selectedSeason, setSelectedSeason] = useState('ALL')
+  // La contratación H-2B va adelantada a la temporada: en abr-sep se publican y se
+  // llenan las vacantes que EMPIEZAN en octubre (Invierno), y en oct-mar las que
+  // empiezan en abril (Verano). Lo confirmé contra datos reales: en septiembre hay
+  // 1087 vacantes de Invierno por solo 2 de Verano. Por eso el mapeo es al revés
+  // del calendario: se arranca en la temporada que SÍ tiene vacantes activas ahora.
+  const [selectedSeason, setSelectedSeason] = useState(() => {
+    const month = new Date().getMonth() // 0=enero
+    return month >= 3 && month <= 8 ? 'WINTER' : 'SUMMER'
+  })
   const [onlyHiresAbroad, setOnlyHiresAbroad] = useState(false)
 
   const [companySearch, setCompanySearch] = useState('')
@@ -515,14 +523,15 @@ useEffect(() => {
       }
     }
 
-    // Filtro de Temporadas H-2B por fecha de inicio (begin_date)
+    // Filtro de Temporadas H-2B por fecha de inicio (begin_date, texto "DD-Mon-YYYY").
+    // Sin año: mira solo el mes, así no hay que tocar esto cada año.
     if (selectedSeason === 'WINTER') {
-      // Invierno: A partir del 1 de octubre (01/10)
+      // Invierno (1st Half): inicia entre octubre y marzo
       query = query.or(
-        `begin_date.ilike.%Oct%,begin_date.ilike.%Nov%,begin_date.ilike.%Dec%,begin_date.ilike.%Jan%,begin_date.ilike.%Feb%,begin_date.ilike.%Mar%,begin_date.gte.2026-10-01`
+        `begin_date.ilike.%Oct%,begin_date.ilike.%Nov%,begin_date.ilike.%Dec%,begin_date.ilike.%Jan%,begin_date.ilike.%Feb%,begin_date.ilike.%Mar%`
       );
     } else if (selectedSeason === 'SUMMER') {
-      // Verano: A partir del 1 de abril (01/04) hasta antes de octubre
+      // Verano (2nd Half): inicia entre abril y septiembre
       query = query.or(
         `begin_date.ilike.%Apr%,begin_date.ilike.%May%,begin_date.ilike.%Jun%,begin_date.ilike.%Jul%,begin_date.ilike.%Aug%,begin_date.ilike.%Sep%`
       );
@@ -946,6 +955,8 @@ const getNextAction = (): NextAction | null => {
 }
 
 const nextAction = getNextAction()
+// Para la etiqueta "temporada actual" del filtro de Ofertas (ver nota junto a selectedSeason)
+const isSummerNow = (() => { const m = new Date().getMonth(); return !(m >= 3 && m <= 8) })()
 
 return (
   <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans">
@@ -1234,8 +1245,8 @@ return (
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               >
                 <option value="ALL">Todas las Fechas de Inicio</option>
-                <option value="SUMMER">☀️ Verano (A partir del 1 de Abril)</option>
-                <option value="WINTER">❄️ Invierno (A partir del 1 de Octubre)</option>
+                <option value="SUMMER">☀️ Verano (Abril a Septiembre){isSummerNow ? ' — temporada actual' : ''}</option>
+                <option value="WINTER">❄️ Invierno (Octubre a Marzo){!isSummerNow ? ' — temporada actual' : ''}</option>
               </select>
 
               {/* SELECTOR COMPLETO DE ESTADOS PARA OFERTAS */}
