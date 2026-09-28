@@ -2407,7 +2407,11 @@ return (
     />
 
     {toastMessage && (
-      <div className="fixed bottom-6 right-6 z-[100] bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold animate-in fade-in slide-in-from-bottom-4">
+      <div
+        role="status"
+        aria-live="polite"
+        className="fixed z-[100] left-4 right-4 sm:left-auto sm:right-6 bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold text-center sm:text-left animate-in fade-in slide-in-from-bottom-4"
+      >
         {toastMessage}
       </div>
     )}

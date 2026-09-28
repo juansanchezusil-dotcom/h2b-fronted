@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -23,6 +23,14 @@ export const metadata: Metadata = {
     locale: "es_LA",
     type: "website",
   },
+};
+
+// viewport-fit=cover habilita env(safe-area-inset-*): sin esto el toast
+// puede quedar bajo la barra de gestos/notch del celular.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
