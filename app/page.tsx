@@ -2507,7 +2507,10 @@ return (
     />
 
     <ApplyFlowModal
-      isOpen={!!applyFlowJob}
+      // Oculto mientras el constructor de CV está abierto (no dos modales
+      // encimados); al cerrarlo (guardado o no) reaparece solo, continuando
+      // la misma postulación en vez de dejar a la persona botada.
+      isOpen={!!applyFlowJob && !showCvBuilder}
       userId={onboardingUserId}
       job={applyFlowJob}
       alreadySavedStatus={
