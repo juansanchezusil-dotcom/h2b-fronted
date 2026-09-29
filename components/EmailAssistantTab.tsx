@@ -4,12 +4,22 @@ import { useEffect, useMemo, useState } from 'react';
 import { Mail, Copy, ExternalLink, Sparkles, Check, Loader2, FileText } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
+interface SavedOffer {
+  company: string;
+  role: string;
+  state?: string;
+}
+
 interface EmailAssistantProps {
   userId: string;
   initialJobTitle?: string;
   initialCompanyName?: string;
   initialContactEmail?: string;
   initialLocation?: string;
+  // Ofertas ya guardadas en el CRM, para elegir en vez de escribir a mano
+  // (solo tiene sentido cuando se abre el redactor "en blanco", sin una
+  // oferta específica ya precargada).
+  savedOffers?: SavedOffer[];
   // Se llama cuando falta el CV, para que quien lo use abra el constructor de CV
   onOpenCvBuilder?: () => void;
 }
@@ -37,12 +47,26 @@ export function EmailAssistantTab({
   initialCompanyName = '',
   initialContactEmail = '',
   initialLocation = '',
+  savedOffers = [],
   onOpenCvBuilder,
 }: EmailAssistantProps) {
   const [emailType, setEmailType] = useState<EmailType>('initial');
   const [companyName, setCompanyName] = useState(initialCompanyName);
   const [jobTitle, setJobTitle] = useState(initialJobTitle);
+  const [location, setLocation] = useState(initialLocation);
   const [contactEmail, setContactEmail] = useState(initialContactEmail);
+  const [selectedOfferIdx, setSelectedOfferIdx] = useState<string>('-1');
+
+  const handlePickOffer = (value: string) => {
+    setSelectedOfferIdx(value);
+    const idx = Number(value);
+    if (idx < 0) return;
+    const offer = savedOffers[idx];
+    if (!offer) return;
+    setCompanyName(offer.company);
+    setJobTitle(offer.role);
+    setLocation(offer.state || '');
+  };
   const [copied, setCopied] = useState(false);
   const [lang, setLang] = useState<Lang>('en');
 
@@ -86,7 +110,7 @@ export function EmailAssistantTab({
           emailType: type,
           jobTitle: jobTitle || 'the H-2B position',
           companyName: companyName || 'your company',
-          location: initialLocation,
+          location,
           candidateName: candidate.fullName || '[Tu nombre]',
           baseCvText: candidate.baseCvText,
           skills: candidate.skills,
@@ -107,7 +131,7 @@ export function EmailAssistantTab({
   useEffect(() => {
     if (hasCv && !current && !loading) generate(emailType);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emailType, hasCv, companyName, jobTitle]);
+  }, [emailType, hasCv, companyName, jobTitle, location]);
 
   const subject = lang === 'en' ? current?.subject_en : current?.subject_es;
   const body = lang === 'en' ? current?.body_en : current?.body_es;
@@ -225,6 +249,21 @@ export function EmailAssistantTab({
 
           <h3 className="font-semibold text-slate-700 text-sm">2. Datos de la Oferta</h3>
           <div className="space-y-3">
+            {savedOffers.length > 0 && (
+              <div>
+                <label className="text-xs text-slate-500 font-medium">Elegir de tus ofertas guardadas</label>
+                <select
+                  value={selectedOfferIdx}
+                  onChange={(e) => handlePickOffer(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                  <option value="-1">Escribir manualmente...</option>
+                  {savedOffers.map((o, i) => (
+                    <option key={i} value={i}>{o.company} — {o.role}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="text-xs text-slate-500 font-medium">Empresa Patrocinadora</label>
               <input

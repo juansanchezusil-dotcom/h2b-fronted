@@ -2249,6 +2249,7 @@ return (
               userId={onboardingUserId}
               initialCompanyName={emailDraftFor?.company || ''}
               initialJobTitle={emailDraftFor?.role || ''}
+              savedOffers={crmItems.map(i => ({ company: i.company, role: i.role, state: i.state }))}
               onOpenCvBuilder={() => setShowCvBuilder(true)}
             />
           )}
