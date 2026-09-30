@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 
 import OnboardingModal from '@/components/OnboardingModal';
 import UserMenu from '@/components/UserMenu';
+import ThemeToggle from '@/components/ThemeToggle';
 import {
   Briefcase,
   Building2,
@@ -1033,10 +1034,10 @@ const nextAction = getNextAction()
 const isSummerNow = (() => { const m = new Date().getMonth(); return !(m >= 3 && m <= 8) })()
 
 return (
-  <div className="min-h-screen bg-[#F4F6F8] text-slate-900 font-sans">
+  <div className="min-h-screen bg-[#F4F6F8] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
 
     {/* HEADER Y NAVEGACIÓN */}
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-xs">
+    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -1045,20 +1046,23 @@ return (
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-slate-900 text-lg leading-tight">Juan Te Avisa</span>
+                <span className="font-bold text-slate-900 dark:text-white text-lg leading-tight">Juan Te Avisa</span>
                 <span className="font-black text-[#b8860b] text-lg leading-tight">PRO</span>
               </div>
-              <p className="text-[11px] text-slate-500 leading-none">Sistema Operativo H2B</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-none">Sistema Operativo H2B</p>
             </div>
           </div>
 
           {/* BOTÓN Y ESTADO DE SESIÓN (EL PORTERO) */}
-          <UserMenu onEditProfile={() => setShowOnboarding(true)} />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <UserMenu onEditProfile={() => setShowOnboarding(true)} />
+          </div>
         </div>
         <nav className="flex items-center gap-1 text-xs sm:text-sm font-medium overflow-x-auto pb-2 scrollbar-none">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'dashboard' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'dashboard' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
             <Briefcase className="w-4 h-4" />
@@ -1066,7 +1070,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('jobs')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'jobs' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'jobs' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
             <Briefcase className="w-4 h-4 text-emerald-600" />
@@ -1074,7 +1078,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('employers')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'employers' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'employers' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
             <Building2 className="w-4 h-4 text-sky-600" />
@@ -1082,7 +1086,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('agencies')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'agencies' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'agencies' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
             <ShieldCheck className="w-4 h-4 text-indigo-600" />
@@ -1090,7 +1094,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('crm')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'crm' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'crm' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
             <Send className="w-4 h-4" />
@@ -1098,7 +1102,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('ai')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'ai' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'ai' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
             <Sparkles className="w-4 h-4 text-amber-500" />
@@ -1106,7 +1110,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('checklist')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'checklist' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'checklist' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
             <CheckCircle2 className="w-4 h-4" />
@@ -1175,14 +1179,14 @@ return (
 
           {/* TU PRIORIDAD — la única acción que más importa ahora mismo */}
           {nextAction && (
-            <div className="bg-white border-2 border-[#f5c518]/60 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+            <div className="bg-white dark:bg-slate-900 border-2 border-[#f5c518]/60 dark:border-[#f5c518]/40 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                 <nextAction.icon className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <span className="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider">🎯 Tu prioridad</span>
-                <h2 className="text-base font-black text-slate-900 mt-0.5">{nextAction.title}</h2>
-                <p className="text-xs text-slate-500 mt-0.5">{nextAction.desc}</p>
+                <span className="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">🎯 Tu prioridad</span>
+                <h2 className="text-base font-black text-slate-900 dark:text-white mt-0.5">{nextAction.title}</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{nextAction.desc}</p>
               </div>
               <button
                 onClick={nextAction.onClick}
@@ -1194,60 +1198,60 @@ return (
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">OFERTA DE EMPLEO (DOL)</p>
-                <p className="text-2xl font-black text-slate-900 mt-1">{catalogTotals.jobs}</p>
-                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">OFERTA DE EMPLEO (DOL)</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{catalogTotals.jobs}</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> Ofertas publicadas
                 </p>
               </div>
-              <div className="w-11 h-11 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center">
+              <div className="w-11 h-11 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl flex items-center justify-center">
                 <Briefcase className="w-5 h-5" />
               </div>
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">EMPRESAS USCIS</p>
-                <p className="text-2xl font-black text-slate-900 mt-1">{catalogTotals.employers}</p>
-                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">● En el catálogo</p>
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">EMPRESAS USCIS</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{catalogTotals.employers}</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">● En el catálogo</p>
               </div>
-              <div className="w-11 h-11 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center">
+              <div className="w-11 h-11 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
               </div>
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">AGENCIAS REGULADAS</p>
-                <p className="text-2xl font-black text-slate-900 mt-1">{catalogTotals.agencies}</p>
-                <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">● En el catálogo</p>
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AGENCIAS REGULADAS</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{catalogTotals.agencies}</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">● En el catálogo</p>
               </div>
-              <div className="w-11 h-11 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+              <div className="w-11 h-11 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5" />
               </div>
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
               <div>
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">PROGRESO CHECKLIST</p>
-                <p className="text-2xl font-black text-slate-900 mt-1">{checklistPercentage}%</p>
-                <p className="text-[10px] text-indigo-600 font-semibold mt-0.5">
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">PROGRESO CHECKLIST</p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{checklistPercentage}%</p>
+                <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">
                   {checklistDone > 0 ? `${checklistDone} de ${CHECKLIST_TOTAL_TASKS} completados` : 'Sin iniciar'}
                 </p>
               </div>
-              <div className="w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+              <div className="w-11 h-11 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
             <div className="flex justify-between items-center">
-              <h2 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <h2 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-500" />
                 Extraer Oferta con IA
               </h2>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Pega un enlace de seasonaljobs.dol.gov para importar la vacante a tu CRM.
             </p>
             <div className="flex gap-2">
@@ -1256,7 +1260,7 @@ return (
                 value={extractUrl}
                 onChange={(e) => setExtractUrl(e.target.value)}
                 placeholder="https://seasonaljobs.dol.gov/job-order/..."
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button
                 onClick={handleExtract}
