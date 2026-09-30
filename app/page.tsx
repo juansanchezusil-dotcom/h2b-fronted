@@ -139,6 +139,8 @@ interface SponsorCompany {
   total_approved?: number
   fiscal_year?: string
   cap_type?: string
+  // Vacantes del catálogo ya vinculadas a esta empresa (ver linkJobs.ts)
+  jobs?: { id: number; title: string; location: string }[]
   [key: string]: any
 }
 
@@ -643,7 +645,10 @@ useEffect(() => {
 
     const from = (safePage - 1) * ITEMS_PER_PAGE
     const to = from + ITEMS_PER_PAGE - 1
-    let query = supabase.from('sponsor_companies').select('*')
+    // jobs!sponsor_company_id trae las vacantes del catálogo ya vinculadas a esta
+    // empresa (ver src/sponsors/linkJobs.ts en el backend) — sin esto no hay forma
+    // de saber si "guardar" esta empresa lleva a algo real.
+    let query = supabase.from('sponsor_companies').select('*, jobs!sponsor_company_id(id, title, location)')
 
     if (companySearch && companySearch.trim() !== '') {
       const term = companySearch.trim()
@@ -876,6 +881,14 @@ const applyJobToCrm = async (job: { title: string; employerName: string; locatio
 }
 
 // Abre el redactor de correos precargado con la empresa/puesto de esta tarjeta del CRM
+// Salta de Empresas a Ofertas, filtrado por el nombre de esa empresa.
+// La búsqueda de Ofertas ya reconoce empleador, así que solo hace falta esto.
+const viewJobsFor = (employerName: string) => {
+  setJobSearch(employerName)
+  setJobPage(1)
+  setActiveTab('jobs')
+}
+
 const openEmailFor = (item: CRMItem) => {
   setEmailDraftFor({ company: item.company, role: item.role })
   setShowEmailAssistant(true)
@@ -1487,7 +1500,8 @@ return (
               <div>
                 <h1 className="text-2xl font-black text-slate-900">Empresas Patrocinadoras (USCIS)</h1>
                 <p className="text-xs text-slate-500 mt-1">
-                  Mostrando 20 empresas por página de <strong className="text-slate-900">{totalEmployersCount} con estos filtros</strong>.
+                  Historial real de USCIS: <strong className="text-slate-900">{totalEmployersCount} empresas con estos filtros</strong> ya
+                  tuvieron visas H-2B aprobadas. Si tienen una vacante publicada ahora, te llevamos directo a ella.
                 </p>
               </div>
             </div>
@@ -1595,13 +1609,16 @@ return (
                           <span>{comp.total_approved || 0} visas aprobadas</span>
                         </div>
                       </div>
-                      <button
-                        onClick={() => addToCRM(comp.employer_name, 'Empresa USCIS', comp.state)}
-                        disabled={savingCrmKey !== null}
-                        className="w-full disabled:opacity-50 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl transition-all"
-                      >
-                        + Guardar
-                      </button>
+                      {comp.jobs && comp.jobs.length > 0 ? (
+                        <button
+                          onClick={() => viewJobsFor(comp.employer_name || '')}
+                          className="w-full bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-xs py-2 rounded-xl transition-all"
+                        >
+                          Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
+                        </button>
+                      ) : (
+                        <p className="text-[11px] text-slate-400 italic text-center py-1.5">Sin vacantes publicadas ahora</p>
+                      )}
                     </div>
                   )
                 })}
@@ -1638,13 +1655,16 @@ return (
                           <td className="p-4 font-semibold">{comp.consular_processed ?? 0}</td>
                           <td className="p-4 font-semibold">{comp.total_approved || 0} visas</td>
                           <td className="p-4 text-right">
-                            <button
-                              onClick={() => addToCRM(comp.employer_name, 'Empresa USCIS', comp.state)}
-                              disabled={savingCrmKey !== null}
-                              className="disabled:opacity-50 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-[11px] px-3 py-1.5 rounded-lg transition-all"
-                            >
-                              + Guardar
-                            </button>
+                            {comp.jobs && comp.jobs.length > 0 ? (
+                              <button
+                                onClick={() => viewJobsFor(comp.employer_name || '')}
+                                className="bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-[11px] px-3 py-1.5 rounded-lg transition-all"
+                              >
+                                Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 italic">Sin vacantes ahora</span>
+                            )}
                           </td>
                         </tr>
                       ))}
