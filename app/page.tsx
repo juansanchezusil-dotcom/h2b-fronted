@@ -406,10 +406,8 @@ const labelForStatus = (status: string) => {
 }
 useEffect(() => {
   async function checkUserProfile() {
-    console.log('🔍 Verificando perfil...')
-
     const { data: { user }, error: userError } = await supabase.auth.getUser()
-    console.log('👤 Usuario:', user, 'Error de auth:', userError)
+    if (userError) console.error('Error de auth al verificar perfil:', userError)
 
     if (user) {
       setOnboardingUserId(user.id)
@@ -420,19 +418,15 @@ useEffect(() => {
         .eq('id', user.id)
         .maybeSingle()
 
-      console.log('📋 Perfil encontrado:', profile, 'Error de consulta:', error)
+      if (error) console.error('Error consultando perfil:', error)
 
 const isComplete = !error && !!profile && profile.perfil_completado === true
 setProfileCompleted(isComplete)
 
 if (!isComplete) {
-  console.log('✅ Debería mostrar el modal ahora')
   setShowOnboarding(true)
-} else {
-  console.log('❌ NO se muestra: perfil ya está completado')
 }
     } else {
-      console.log('❌ NO hay usuario logueado, el modal nunca se activa')
     }
   }
   checkUserProfile()
@@ -1064,7 +1058,7 @@ return (
         <nav className="flex items-center gap-1 text-xs sm:text-sm font-medium overflow-x-auto pb-2 scrollbar-none">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'dashboard' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'dashboard' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
               }`}
           >
             <Briefcase className="w-4 h-4" />
@@ -1072,7 +1066,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('jobs')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'jobs' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'jobs' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
               }`}
           >
             <Briefcase className="w-4 h-4 text-emerald-600" />
@@ -1080,7 +1074,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('employers')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'employers' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'employers' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
               }`}
           >
             <Building2 className="w-4 h-4 text-sky-600" />
@@ -1088,7 +1082,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('agencies')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'agencies' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'agencies' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
               }`}
           >
             <ShieldCheck className="w-4 h-4 text-indigo-600" />
@@ -1096,7 +1090,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('crm')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'crm' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'crm' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
               }`}
           >
             <Send className="w-4 h-4" />
@@ -1104,7 +1098,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('ai')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'ai' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'ai' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
               }`}
           >
             <Sparkles className="w-4 h-4 text-amber-500" />
@@ -1112,7 +1106,7 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('checklist')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${activeTab === 'checklist' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'checklist' ? 'text-[#1a3a8f] font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 border-b-2 border-transparent'
               }`}
           >
             <CheckCircle2 className="w-4 h-4" />
