@@ -1308,6 +1308,7 @@ return (
               <div className="relative">
                 <input
                   type="text"
+                  aria-label="Buscar por puesto, empresa, ciudad"
                   placeholder="Buscar por puesto, empresa, ciudad..."
                   value={jobSearch}
                   onChange={(e) => {
@@ -1320,6 +1321,7 @@ return (
                 <span className="absolute left-3.5 top-3 text-slate-400 text-xs">🔍</span>
               </div>
               <select
+                aria-label="Temporada H-2B"
                 value={selectedSeason}
                 onChange={(e) => {
                   setSelectedSeason(e.target.value)
@@ -1334,6 +1336,7 @@ return (
 
               {/* SELECTOR COMPLETO DE ESTADOS PARA OFERTAS */}
               <select
+                aria-label="Estado de EE. UU."
                 value={selectedJobState}
                 onChange={(e) => {
                   setSelectedJobState(e.target.value)
@@ -1349,6 +1352,7 @@ return (
                 ))}
               </select>
               <select
+                aria-label="Sector de la oferta"
                 value={selectedJobSector}
                 onChange={(e) => {
                   setSelectedJobSector(e.target.value)
@@ -1388,8 +1392,9 @@ return (
             </label>
 
             <div className="flex items-center gap-2">
-              <label className="text-xs font-semibold text-slate-500 shrink-0">Ordenar por:</label>
+              <label htmlFor="job-sort" className="text-xs font-semibold text-slate-500 shrink-0">Ordenar por:</label>
               <select
+                id="job-sort"
                 value={jobSortBy}
                 onChange={(e) => setJobSortBy(e.target.value as 'recent' | 'match')}
                 className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -1535,6 +1540,7 @@ return (
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
                 <input
                   type="text"
+                  aria-label="Buscar empresa por nombre o ciudad"
                   value={companySearch}
                   onChange={(e) => {
                     setCompanySearch(e.target.value)
@@ -1546,6 +1552,7 @@ return (
               </div>
 
               <select
+                aria-label="Tipo de cupo"
                 value={selectedCapType}
                 onChange={(e) => {
                   setSelectedCapType(e.target.value)
@@ -1561,6 +1568,7 @@ return (
               </select>
               {/* SELECTOR COMPLETO DE ESTADOS PARA EMPRESAS */}
               <select
+                aria-label="Estado de EE. UU."
                 value={selectedCompanyState}
                 onChange={(e) => {
                   setSelectedCompanyState(e.target.value)
@@ -1576,6 +1584,7 @@ return (
                 ))}
               </select>
               <select
+                aria-label="Sector de la empresa"
                 value={selectedCompanySector}
                 onChange={(e) => {
                   setSelectedCompanySector(e.target.value)
@@ -1731,6 +1740,7 @@ return (
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               <input
                 type="text"
+                aria-label="Buscar agencia por nombre o ciudad"
                 value={agencySearch}
                 onChange={(e) => {
                   setAgencySearch(e.target.value)
@@ -1740,6 +1750,7 @@ return (
                 className="w-full sm:w-80 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <select
+                aria-label="País de la agencia"
                 value={selectedAgencyCountry}
                 onChange={(e) => {
                   setSelectedAgencyCountry(e.target.value)
@@ -2459,8 +2470,9 @@ return (
 
           <form onSubmit={handleSaveManualItem} className="space-y-4 px-6 pb-6 pt-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Empresa *</label>
+              <label htmlFor="manual-company" className="block text-xs font-semibold text-slate-600 mb-1">Empresa *</label>
               <input
+                id="manual-company"
                 type="text"
                 required
                 placeholder="Ej: Agro S.A."
@@ -2471,8 +2483,9 @@ return (
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Puesto / Vacante</label>
+              <label htmlFor="manual-role" className="block text-xs font-semibold text-slate-600 mb-1">Puesto / Vacante</label>
               <input
+                id="manual-role"
                 type="text"
                 placeholder="Ej: Operador Agrícola H2B"
                 value={manualRole}
@@ -2482,8 +2495,9 @@ return (
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Estado / Ubicación</label>
+              <label htmlFor="manual-state" className="block text-xs font-semibold text-slate-600 mb-1">Estado / Ubicación</label>
               <input
+                id="manual-state"
                 type="text"
                 placeholder="Ej: TX o Texas"
                 value={manualState}
@@ -2493,8 +2507,9 @@ return (
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Estado de la Postulación</label>
+              <label htmlFor="manual-status" className="block text-xs font-semibold text-slate-600 mb-1">Estado de la Postulación</label>
               <select
+                id="manual-status"
                 value={manualStatus}
                 onChange={(e) => setManualStatus(e.target.value as CRMItem['status'])}
                 className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"

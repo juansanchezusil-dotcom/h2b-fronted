@@ -155,8 +155,9 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Puesto al que apuntas</label>
+              <label htmlFor="cv-target-role" className="block text-xs font-semibold text-slate-600 mb-1">Puesto al que apuntas</label>
               <input
+                id="cv-target-role"
                 type="text"
                 placeholder="Ej: Housekeeper"
                 value={targetRole}
@@ -165,8 +166,9 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Nivel de inglés</label>
+              <label htmlFor="cv-english-level" className="block text-xs font-semibold text-slate-600 mb-1">Nivel de inglés</label>
               <select
+                id="cv-english-level"
                 value={englishLevel}
                 onChange={(e) => setEnglishLevel(e.target.value)}
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-sm focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
@@ -180,8 +182,9 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Habilidades (separadas por coma)</label>
+            <label htmlFor="cv-skills" className="block text-xs font-semibold text-slate-600 mb-1">Habilidades (separadas por coma)</label>
             <input
+              id="cv-skills"
               type="text"
               placeholder="Ej: housekeeping, trabajo en equipo, manejo de maquinaria"
               value={skillsText}
@@ -192,12 +195,13 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
 
           <div>
             <div className="flex justify-between items-baseline mb-1">
-              <label className="block text-xs font-semibold text-slate-600">Tu experiencia laboral, en tus palabras</label>
+              <label htmlFor="cv-base-text" className="block text-xs font-semibold text-slate-600">Tu experiencia laboral, en tus palabras</label>
               <span className={`text-[10px] ${baseCvText.trim().length < MIN_CV_LENGTH ? 'text-rose-500' : 'text-emerald-600'}`}>
                 {baseCvText.trim().length} / {MIN_CV_LENGTH} mínimo
               </span>
             </div>
             <textarea
+              id="cv-base-text"
               rows={6}
               placeholder="Ej: Trabajé 3 años en el hotel X limpiando habitaciones, también ayudé a entrenar a compañeros nuevos. Antes trabajé un año en un restaurante como ayudante de cocina..."
               value={baseCvText}

@@ -114,10 +114,11 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="onboarding-industria" className="block text-sm font-semibold text-slate-700 mb-1.5">
                 ¿En qué industria tienes mayor experiencia?
               </label>
               <select
+                id="onboarding-industria"
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-800 focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
                 value={formData.experiencia_industria}
                 onChange={(e) => setFormData({ ...formData, experiencia_industria: e.target.value })}
@@ -133,10 +134,11 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="onboarding-anos" className="block text-sm font-semibold text-slate-700 mb-1.5">
                 Años totales de experiencia laboral:
               </label>
               <select
+                id="onboarding-anos"
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-800 focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
                 value={formData.anos_experiencia}
                 onChange={(e) => setFormData({ ...formData, anos_experiencia: Number(e.target.value) })}
@@ -171,10 +173,11 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="onboarding-ingles" className="block text-sm font-semibold text-slate-700 mb-1.5">
                 Nivel de Inglés:
               </label>
               <select
+                id="onboarding-ingles"
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-800 focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
                 value={formData.nivel_ingles}
                 onChange={(e) => setFormData({ ...formData, nivel_ingles: e.target.value })}
@@ -187,10 +190,11 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="onboarding-pais" className="block text-sm font-semibold text-slate-700 mb-1.5">
                 País de Ciudadanía / Pasaporte:
               </label>
               <input
+                id="onboarding-pais"
                 type="text"
                 placeholder="Ej. México, Colombia, Guatemala, etc."
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-800 focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
@@ -200,12 +204,13 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
             </div>
 
             <div>
-  <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+  <label id="onboarding-h2b-previo-label" className="block text-sm font-semibold text-slate-700 mb-1.5">
     ¿Ya has viajado antes con visa H-2B?
   </label>
-  <div className="flex gap-3">
+  <div role="group" aria-labelledby="onboarding-h2b-previo-label" className="flex gap-3">
     <button
       type="button"
+      aria-pressed={formData.has_previous_h2b === true}
       onClick={() => setFormData({ ...formData, has_previous_h2b: true })}
       className={`flex-1 rounded-xl border py-3 text-sm font-bold transition ${
         formData.has_previous_h2b === true
@@ -217,6 +222,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
     </button>
     <button
       type="button"
+      aria-pressed={formData.has_previous_h2b === false}
       onClick={() => setFormData({ ...formData, has_previous_h2b: false })}
       className={`flex-1 rounded-xl border py-3 text-sm font-bold transition ${
         formData.has_previous_h2b === false

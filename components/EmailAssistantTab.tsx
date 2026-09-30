@@ -251,8 +251,9 @@ export function EmailAssistantTab({
           <div className="space-y-3">
             {savedOffers.length > 0 && (
               <div>
-                <label className="text-xs text-slate-500 font-medium">Elegir de tus ofertas guardadas</label>
+                <label htmlFor="email-saved-offer" className="text-xs text-slate-500 font-medium">Elegir de tus ofertas guardadas</label>
                 <select
+                  id="email-saved-offer"
                   value={selectedOfferIdx}
                   onChange={(e) => handlePickOffer(e.target.value)}
                   className="w-full mt-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -265,8 +266,9 @@ export function EmailAssistantTab({
               </div>
             )}
             <div>
-              <label className="text-xs text-slate-500 font-medium">Empresa Patrocinadora</label>
+              <label htmlFor="email-company" className="text-xs text-slate-500 font-medium">Empresa Patrocinadora</label>
               <input
+                id="email-company"
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
@@ -274,8 +276,9 @@ export function EmailAssistantTab({
               />
             </div>
             <div>
-              <label className="text-xs text-slate-500 font-medium">Puesto / Vacante</label>
+              <label htmlFor="email-job-title" className="text-xs text-slate-500 font-medium">Puesto / Vacante</label>
               <input
+                id="email-job-title"
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
@@ -283,8 +286,9 @@ export function EmailAssistantTab({
               />
             </div>
             <div>
-              <label className="text-xs text-slate-500 font-medium">Correo del Reclutador</label>
+              <label htmlFor="email-contact" className="text-xs text-slate-500 font-medium">Correo del Reclutador</label>
               <input
+                id="email-contact"
                 type="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
