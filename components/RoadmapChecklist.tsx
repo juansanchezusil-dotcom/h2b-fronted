@@ -120,36 +120,36 @@ export default function RoadmapChecklist({
       <div className="grid gap-6">
 
         {/* ETAPA 1: DIAGNÓSTICO E IDONEIDAD */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl ${hasCompletedQuiz ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-600'}`}>
+              <div className={`p-2.5 rounded-xl ${hasCompletedQuiz ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                 <Award className="w-6 h-6" />
               </div>
               <div>
                 <span className="text-xs font-bold text-[#C89B3C] uppercase tracking-wider">Etapa 1</span>
-                <h3 className="text-lg font-bold text-slate-900">Perfilamiento e Idoneidad H-2B</h3>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Perfilamiento e Idoneidad H-2B</h3>
               </div>
             </div>
             {hasCompletedQuiz && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-full border border-emerald-200 dark:border-emerald-500/30">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 Completado
               </span>
             )}
           </div>
 
-          <div className="mt-6 border-t border-slate-100 pt-4 space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+          <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
               <div className="flex items-center gap-3">
                 {hasCompletedQuiz ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <Circle className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                  <Circle className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                 )}
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Evaluación de Perfil Inicial</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Evaluación de Perfil Inicial</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {hasCompletedQuiz 
                       ? 'Tu diagnóstico inicial fue realizado con éxito para determinar tu Match Score en las vacantes.' 
                       : 'Define tu experiencia, nivel de inglés y país elegible para calcular el Match Score de las ofertas.'}
@@ -168,18 +168,18 @@ export default function RoadmapChecklist({
         </div>
 
         {/* ETAPA 2: PREPARACIÓN DE DOCUMENTOS */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600">
+            <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400">
               <FileText className="w-6 h-6" />
             </div>
             <div>
               <span className="text-xs font-bold text-[#C89B3C] uppercase tracking-wider">Etapa 2</span>
-              <h3 className="text-lg font-bold text-slate-900">Documentación de Candidato</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Documentación de Candidato</h3>
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-4 space-y-3">
+          <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
             {/* Pasaporte */}
             <div
               onClick={() => toggleStep('passport')}
@@ -190,32 +190,32 @@ export default function RoadmapChecklist({
               role="checkbox"
               aria-checked={completedSteps.passport}
               tabIndex={0}
-              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C89B3C] focus-visible:ring-offset-2"
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100/80 dark:hover:bg-slate-800 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C89B3C] focus-visible:ring-offset-2"
             >
               <div className="flex items-center gap-3">
                 {completedSteps.passport ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <Circle className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                  <Circle className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                 )}
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Pasaporte Vigente</p>
-                  <p className="text-xs text-slate-500">Mínimo 6 meses de vigencia contados a partir del inicio de la temporada laboral.</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Pasaporte Vigente</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Mínimo 6 meses de vigencia contados a partir del inicio de la temporada laboral.</p>
                 </div>
               </div>
             </div>
 
             {/* CV en Inglés */}
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50">
               <div className="flex items-center gap-3">
                 {hasCv ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <Circle className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                  <Circle className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                 )}
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Curriculum Vitae Estilo EE. UU. (US Resume)</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Curriculum Vitae Estilo EE. UU. (US Resume)</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {hasCv
                       ? 'Tu CV ya está listo. También se usa para personalizar tus correos de postulación.'
                       : 'Cuéntanos tu experiencia real y la IA la adapta al formato sin foto que esperan los empleadores. También alimenta el redactor de correos.'}
@@ -234,18 +234,18 @@ export default function RoadmapChecklist({
         </div>
 
         {/* ETAPA 3: BÚSQUEDA Y POSTULACIÓN ACTIVA */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600">
+            <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
               <Briefcase className="w-6 h-6" />
             </div>
             <div>
               <span className="text-xs font-bold text-[#C89B3C] uppercase tracking-wider">Etapa 3</span>
-              <h3 className="text-lg font-bold text-slate-900">Postulación Estratégica en el Portal</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Postulación Estratégica en el Portal</h3>
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-4 space-y-3">
+          <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
             <div
               onClick={() => toggleStep('saved_jobs')}
               onKeyDown={(e) => {
@@ -255,17 +255,17 @@ export default function RoadmapChecklist({
               role="checkbox"
               aria-checked={completedSteps.saved_jobs}
               tabIndex={0}
-              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C89B3C] focus-visible:ring-offset-2"
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100/80 dark:hover:bg-slate-800 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C89B3C] focus-visible:ring-offset-2"
             >
               <div className="flex items-center gap-3">
                 {completedSteps.saved_jobs ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <Circle className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                  <Circle className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                 )}
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Guardar al menos 5 Ofertas con Match &gt; 80%</p>
-                  <p className="text-xs text-slate-500">Prioriza vacantes acordes a tu rubro en la pestaña Ofertas para organizarlas en Tu CRM.</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Guardar al menos 5 Ofertas con Match &gt; 80%</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Prioriza vacantes acordes a tu rubro en la pestaña Ofertas para organizarlas en Tu CRM.</p>
                 </div>
               </div>
               <button 
@@ -273,7 +273,7 @@ export default function RoadmapChecklist({
                   e.stopPropagation(); 
                   onNavigateToTab?.('jobs'); 
                 }}
-                className="px-3 py-1.5 text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg transition-colors border border-slate-200 shrink-0"
+                className="px-3 py-1.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 shrink-0"
               >
                 Ver Ofertas
               </button>
@@ -282,18 +282,18 @@ export default function RoadmapChecklist({
         </div>
 
         {/* ETAPA 4: PROCESO CONSULAR Y APROBACIÓN */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2.5 rounded-xl bg-purple-50 text-purple-600">
+            <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">
               <Send className="w-6 h-6" />
             </div>
             <div>
               <span className="text-xs font-bold text-[#C89B3C] uppercase tracking-wider">Etapa 4</span>
-              <h3 className="text-lg font-bold text-slate-900">Contratación y Trámite Consular</h3>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Contratación y Trámite Consular</h3>
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-4 space-y-3">
+          <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
             <div
               onClick={() => toggleStep('ds160')}
               onKeyDown={(e) => {
@@ -303,17 +303,17 @@ export default function RoadmapChecklist({
               role="checkbox"
               aria-checked={completedSteps.ds160}
               tabIndex={0}
-              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C89B3C] focus-visible:ring-offset-2"
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100/80 dark:hover:bg-slate-800 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C89B3C] focus-visible:ring-offset-2"
             >
               <div className="flex items-center gap-3">
                 {completedSteps.ds160 ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <Circle className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                  <Circle className="w-5 h-5 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                 )}
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Llenado de Formulario Consular DS-160</p>
-                  <p className="text-xs text-slate-500">Se completa una vez que el empleador te envíe la petición aprobada I-797 / ETA-9142B.</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Llenado de Formulario Consular DS-160</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Se completa una vez que el empleador te envíe la petición aprobada I-797 / ETA-9142B.</p>
                 </div>
               </div>
             </div>
