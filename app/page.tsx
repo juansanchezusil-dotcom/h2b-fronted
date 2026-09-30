@@ -144,17 +144,17 @@ interface SponsorCompany {
   [key: string]: any
 }
 
+// Lista oficial del DOL de reclutadores/agentes extranjeros declarados para H-2B
+// (transparencia contra fraude, no un directorio de servicios). La tabla real
+// solo trae estas columnas — no hay correo, sitio "oficial" alterno ni estado,
+// aunque el nombre sugiera lo contrario.
 interface SponsorAgency {
   id?: string | number
   agency_name?: string
   city?: string
-  province?: string
   country?: string
   case_count?: number
-  contact_email?: string
-  official_website?: string
   website?: string
-  status?: string
   [key: string]: any
 }
 
@@ -1720,11 +1720,17 @@ return (
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-black text-slate-900">Agencias Reguladas</h1>
+                <h1 className="text-2xl font-black text-slate-900">Verifica un Reclutador</h1>
                 <p className="text-xs text-slate-500 mt-1">
-                  Mostrando 20 agencias por página de <strong className="text-slate-900">{totalAgenciesCount} con estos filtros</strong>.
+                  Lista oficial del DOL de agencias y reclutadores declarados para H-2B —{' '}
+                  <strong className="text-slate-900">{totalAgenciesCount} con estos filtros</strong>. Úsala para revisar si
+                  quien te contactó está en la lista oficial antes de dar tus datos.
                 </p>
               </div>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5 text-xs text-amber-900">
+              ⚠️ ¿Te contactó alguien pidiendo dinero o tus documentos? Aunque aparezca aquí, revísalo con el{' '}
+              <strong>Detector de Estafas</strong> en Asistentes IA antes de responder.
             </div>
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
               <input
@@ -1767,48 +1773,36 @@ return (
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {agencies.map((agency, idx) => {
-                const webLink = agency.website || agency.official_website
+                const webLink = agency.website
+                const location = [agency.city, agency.country].filter(Boolean).join(', ')
                 return (
-                  <div key={agency.id || idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 inline-block">
-                        ✓ {agency.status || 'Lista Oficial'}
-                      </span>
-                      <h3 className="font-bold text-slate-900 text-sm leading-snug">{agency.agency_name}</h3>
-                      <p className="text-xs text-slate-500">📍 Ubicación: <strong className="text-slate-800">{agency.city || ''} {agency.country || ''}</strong></p>
+                  <div key={agency.id || idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
+                    <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 inline-block">
+                      ✓ En la lista oficial del DOL
+                    </span>
+                    <h3 className="font-bold text-slate-900 text-sm leading-snug">{agency.agency_name}</h3>
+                    {location && (
+                      <p className="text-xs text-slate-500">📍 <strong className="text-slate-800">{location}</strong></p>
+                    )}
 
-                      {webLink ? (
-                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                          <span>🌐 Sitio web:</span>
-                          <a
-                            href={webLink.startsWith('http') ? webLink : `https://${webLink}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium truncate max-w-[180px]"
-                            title={webLink}
-                          >
-                            {webLink.replace(/^https?:\/\/(www\.)?/, '')}
-                          </a>
-                        </p>
-                      ) : (
-                        <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
-                          <span>🌐 Sitio web:</span>
-                          <span className="italic">No disponible</span>
-                        </p>
-                      )}
-
-                      {agency.contact_email && (
-                        <p className="text-[11px] text-slate-500 truncate mt-1">✉️ {agency.contact_email}</p>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => addToCRM(agency.agency_name, 'Agencia Regulada', agency.country)}
-                      disabled={savingCrmKey !== null}
-                      className="disabled:opacity-50 w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl transition-all mt-3"
-                    >
-                      + Guardar Agencia
-                    </button>
+                    {webLink ? (
+                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                        <span>🌐</span>
+                        <a
+                          href={webLink.startsWith('http') ? webLink : `https://${webLink}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium truncate max-w-[180px]"
+                          title={webLink}
+                        >
+                          {webLink.replace(/^https?:\/\/(www\.)?/, '')}
+                        </a>
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-slate-400 italic mt-1">
+                        Sin sitio web en la lista oficial — no significa que algo esté mal, el DOL no lo pide para todas.
+                      </p>
+                    )}
                   </div>
                 )
               })}
