@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Search,
   Sparkles,
-  Link as LinkIcon,
   RefreshCw,
   Plus,
   Trash2,
@@ -1061,18 +1060,6 @@ return (
 
           {/* BOTÓN Y ESTADO DE SESIÓN (EL PORTERO) */}
           <UserMenu onEditProfile={() => setShowOnboarding(true)} />
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                setActiveTab('dashboard')
-                window.scrollTo({ top: 300, behavior: 'smooth' })
-              }}
-              className="bg-[#0B4079] hover:bg-[#08305c] text-white text-xs font-semibold px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
-            >
-              <LinkIcon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Extraer Oferta</span>
-            </button>
-          </div>
         </div>
         <nav className="flex items-center gap-1 text-xs sm:text-sm font-medium overflow-x-auto pb-2 scrollbar-none">
           <button
