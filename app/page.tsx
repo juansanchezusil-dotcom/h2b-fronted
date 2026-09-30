@@ -1522,12 +1522,12 @@ return (
       {/* TABLA 2: EMPRESAS USCIS (employers) */}
       {activeTab === 'employers' && (
         <div className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-black text-slate-900">Empresas Patrocinadoras (USCIS)</h1>
-                <p className="text-xs text-slate-500 mt-1">
-                  Historial real de USCIS: <strong className="text-slate-900">{totalEmployersCount} empresas con estos filtros</strong> ya
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white">Empresas Patrocinadoras (USCIS)</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Historial real de USCIS: <strong className="text-slate-900 dark:text-white">{totalEmployersCount} empresas con estos filtros</strong> ya
                   tuvieron visas H-2B aprobadas. Si tienen una vacante publicada ahora, te llevamos directo a ella.
                 </p>
               </div>
@@ -1535,7 +1535,7 @@ return (
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-2">
               <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3.5" />
+                <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-3.5" />
                 <input
                   type="text"
                   aria-label="Buscar empresa por nombre o ciudad"
@@ -1545,7 +1545,7 @@ return (
                     setCompanyPage(1)
                   }}
                   placeholder="Buscar por nombre o ciudad..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
                 />
               </div>
 
@@ -1556,7 +1556,7 @@ return (
                   setSelectedCapType(e.target.value)
                   setCompanyPage(1)
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
               >
                 <option value="ALL">Todas las Temporadas / Cap Type</option>
                 <option value="1st Half">❄️ Invierno (1st Half)</option>
@@ -1572,7 +1572,7 @@ return (
                   setSelectedCompanyState(e.target.value)
                   setCompanyPage(1)
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
               >
                 <option value="ALL">Todos los Estados (EE. UU.)</option>
                 {US_STATES.map((st) => (
@@ -1588,7 +1588,7 @@ return (
                   setSelectedCompanySector(e.target.value)
                   setCompanyPage(1)
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
               >
                 <option value="ALL">Todos los Sectores</option>
                 <option value="Hotelería">Hotelería y Restaurantes</option>
@@ -1605,9 +1605,9 @@ return (
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
+            <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-xs text-slate-500 font-medium">Cargando empresas...</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Cargando empresas...</p>
             </div>
           ) : (
             <>
@@ -1616,27 +1616,27 @@ return (
                 {employers.map((comp, idx) => {
                   const abroad = String(comp.consular_processed || '').toLowerCase() === 'yes'
                   return (
-                    <div key={comp.id || idx} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-2.5">
-                      <h3 className="font-bold text-slate-900 text-sm leading-snug">{comp.employer_name || 'Sin Nombre'}</h3>
+                    <div key={comp.id || idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-2.5">
+                      <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-snug">{comp.employer_name || 'Sin Nombre'}</h3>
                       <div className="flex flex-wrap gap-1.5">
-                        <span className={`font-bold px-2 py-0.5 rounded text-[10px] border ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                            comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border-blue-200' :
-                              comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border-purple-200' :
-                                'bg-emerald-50 text-emerald-800 border-emerald-200'
+                        <span className={`font-bold px-2 py-0.5 rounded text-[10px] border ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
+                            comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' :
+                              comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/30' :
+                                'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
                           }`}>
                           {comp.cap_type || 'General'}
                         </span>
-                        <span className={`font-bold px-2 py-0.5 rounded text-[10px] border ${abroad ? 'bg-sky-50 text-sky-800 border-sky-200' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                        <span className={`font-bold px-2 py-0.5 rounded text-[10px] border ${abroad ? 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/30' : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'}`}>
                           {abroad ? '🌎 Contrata desde el extranjero' : 'Solo contrató dentro de EE. UU.'}
                         </span>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                      <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700">
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                           <span>{comp.worksite_states || comp.state || '-'}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                          <ShieldCheck className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                           <span>{comp.total_approved || 0} visas aprobadas</span>
                         </div>
                       </div>
@@ -1648,7 +1648,7 @@ return (
                           Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
                         </button>
                       ) : (
-                        <p className="text-[11px] text-slate-500 italic text-center py-1.5">Sin vacantes publicadas ahora</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 italic text-center py-1.5">Sin vacantes publicadas ahora</p>
                       )}
                     </div>
                   )
@@ -1656,10 +1656,10 @@ return (
               </div>
 
               {/* ESCRITORIO: tabla completa */}
-              <div className="hidden md:block bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+              <div className="hidden md:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-600">
-                    <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
+                  <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                    <thead className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-[10px]">
                       <tr>
                         <th className="p-4">Empresa Patrocinadora</th>
                         <th className="p-4">Tipo de Cupo (Cap)</th>
@@ -1669,15 +1669,15 @@ return (
                         <th className="p-4 text-right">Acción</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200">
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                       {employers.map((comp, idx) => (
-                        <tr key={comp.id || idx} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="p-4 font-bold text-slate-900">{comp.employer_name || 'Sin Nombre'}</td>
+                        <tr key={comp.id || idx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
+                          <td className="p-4 font-bold text-slate-900 dark:text-white">{comp.employer_name || 'Sin Nombre'}</td>
                           <td className="p-4">
-                            <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border border-amber-200' :
-                                comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border border-blue-200' :
-                                  comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border border-purple-200' :
-                                    'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                            <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
+                                comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' :
+                                  comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/30' :
+                                    'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
                               }`}>
                               {comp.cap_type || 'General'}
                             </span>
@@ -1694,7 +1694,7 @@ return (
                                 Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
                               </button>
                             ) : (
-                              <span className="text-[11px] text-slate-500 italic">Sin vacantes ahora</span>
+                              <span className="text-[11px] text-slate-500 dark:text-slate-400 italic">Sin vacantes ahora</span>
                             )}
                           </td>
                         </tr>
@@ -1720,18 +1720,18 @@ return (
       {/* TABLA 3: AGENCIAS DOL (sponsor_agencies) */}
       {activeTab === 'agencies' && (
         <div className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-black text-slate-900">Verifica un Reclutador</h1>
-                <p className="text-xs text-slate-500 mt-1">
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white">Verifica un Reclutador</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Lista oficial del DOL de agencias y reclutadores declarados para H-2B —{' '}
-                  <strong className="text-slate-900">{totalAgenciesCount} con estos filtros</strong>. Úsala para revisar si
+                  <strong className="text-slate-900 dark:text-white">{totalAgenciesCount} con estos filtros</strong>. Úsala para revisar si
                   quien te contactó está en la lista oficial antes de dar tus datos.
                 </p>
               </div>
             </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5 text-xs text-amber-900">
+            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-300">
               ⚠️ ¿Te contactó alguien pidiendo dinero o tus documentos? Aunque aparezca aquí, revísalo con el{' '}
               <strong>Detector de Estafas</strong> en Asistentes IA antes de responder.
             </div>
@@ -1745,7 +1745,7 @@ return (
                   setAgencyPage(1)
                 }}
                 placeholder="Buscar agencia por nombre o ciudad..."
-                className="w-full sm:w-80 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full sm:w-80 px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <select
                 aria-label="País de la agencia"
@@ -1754,7 +1754,7 @@ return (
                   setSelectedAgencyCountry(e.target.value)
                   setAgencyPage(1)
                 }}
-                className="w-full sm:w-56 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full sm:w-56 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="ALL">Todos los Países</option>
                 <option value="MEXICO">México</option>
@@ -1771,9 +1771,9 @@ return (
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
+            <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-xs text-slate-500 font-medium">Cargando agencias...</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Cargando agencias...</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1781,30 +1781,30 @@ return (
                 const webLink = agency.website
                 const location = [agency.city, agency.country].filter(Boolean).join(', ')
                 return (
-                  <div key={agency.id || idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 inline-block">
+                  <div key={agency.id || idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-2">
+                    <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30 inline-block">
                       ✓ En la lista oficial del DOL
                     </span>
-                    <h3 className="font-bold text-slate-900 text-sm leading-snug">{agency.agency_name}</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-snug">{agency.agency_name}</h3>
                     {location && (
-                      <p className="text-xs text-slate-500">📍 <strong className="text-slate-800">{location}</strong></p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">📍 <strong className="text-slate-800 dark:text-slate-200">{location}</strong></p>
                     )}
 
                     {webLink ? (
-                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1">
                         <span>🌐</span>
                         <a
                           href={webLink.startsWith('http') ? webLink : `https://${webLink}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 hover:underline font-medium truncate max-w-[180px]"
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline font-medium truncate max-w-[180px]"
                           title={webLink}
                         >
                           {webLink.replace(/^https?:\/\/(www\.)?/, '')}
                         </a>
                       </p>
                     ) : (
-                      <p className="text-[11px] text-slate-500 italic mt-1">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic mt-1">
                         Sin sitio web en la lista oficial — no significa que algo esté mal, el DOL no lo pide para todas.
                       </p>
                     )}
