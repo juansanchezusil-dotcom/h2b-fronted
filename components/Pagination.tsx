@@ -35,12 +35,12 @@ export default function Pagination({ page, totalPages, totalItems, itemLabel, di
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const arrow = 'h-9 px-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 disabled:opacity-40 hover:bg-slate-50 flex items-center gap-1';
+  const arrow = 'h-9 px-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-1';
 
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-      <p className="text-xs text-slate-500">
-        Página <strong className="text-slate-900">{page}</strong> de <strong className="text-slate-900">{totalPages}</strong> ({totalItems} {itemLabel})
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Página <strong className="text-slate-900 dark:text-white">{page}</strong> de <strong className="text-slate-900 dark:text-white">{totalPages}</strong> ({totalItems} {itemLabel})
       </p>
 
       <nav aria-label="Paginación" className="flex items-center gap-1 flex-wrap justify-center">
@@ -51,7 +51,7 @@ export default function Pagination({ page, totalPages, totalItems, itemLabel, di
 
         {pageList(page, totalPages).map((p, i) =>
           p === '…' ? (
-            <span key={`gap-${i}`} className="w-6 text-center text-xs text-slate-400">…</span>
+            <span key={`gap-${i}`} className="w-6 text-center text-xs text-slate-400 dark:text-slate-500">…</span>
           ) : (
             <button
               key={p}
@@ -61,7 +61,7 @@ export default function Pagination({ page, totalPages, totalItems, itemLabel, di
               className={`h-9 min-w-9 px-2 rounded-xl text-xs font-bold transition-colors ${
                 p === page
                   ? 'bg-[#0B4079] text-white'
-                  : 'border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40'
+                  : 'border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40'
               }`}
             >
               {p}

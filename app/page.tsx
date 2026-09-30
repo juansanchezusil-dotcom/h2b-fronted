@@ -1278,24 +1278,24 @@ return (
       {/* TABLA 1: OFERTAS LABORALES (jobs) */}
       {activeTab === 'jobs' && (
         <div className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-black text-slate-900">Ofertas Laborales Activas</h1>
-                <p className="text-xs text-slate-500 mt-1">
-                  Mostrando 21 ofertas por página de <strong className="text-slate-900">{totalJobsCount} vacantes con estos filtros</strong>.
+                <h1 className="text-2xl font-black text-slate-900 dark:text-white">Ofertas Laborales Activas</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Mostrando 21 ofertas por página de <strong className="text-slate-900 dark:text-white">{totalJobsCount} vacantes con estos filtros</strong>.
                 </p>
               </div>
             </div>
 
             {sponsorFilter && (
-              <div className="flex items-center justify-between gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3.5 py-2">
-                <span className="text-xs text-blue-900">
+              <div className="flex items-center justify-between gap-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl px-3.5 py-2">
+                <span className="text-xs text-blue-900 dark:text-blue-300">
                   Mostrando solo vacantes de <strong>{sponsorFilter.name}</strong>
                 </span>
                 <button
                   onClick={() => { setSponsorFilter(null); setJobPage(1) }}
-                  className="text-xs font-bold text-blue-700 hover:text-blue-900 shrink-0"
+                  className="text-xs font-bold text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 shrink-0"
                 >
                   Quitar ✕
                 </button>
@@ -1314,9 +1314,9 @@ return (
                     setSponsorFilter(null)
                     setJobPage(1)
                   }}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 pl-10 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 pl-10 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
-                <span className="absolute left-3.5 top-3 text-slate-400 text-xs">🔍</span>
+                <span className="absolute left-3.5 top-3 text-slate-400 dark:text-slate-500 text-xs">🔍</span>
               </div>
               <select
                 aria-label="Temporada H-2B"
@@ -1325,7 +1325,7 @@ return (
                   setSelectedSeason(e.target.value)
                   setJobPage(1)
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               >
                 <option value="ALL">Todas las Fechas de Inicio</option>
                 <option value="SUMMER">☀️ Verano (Abril a Septiembre){isSummerNow ? ' — temporada actual' : ''}</option>
@@ -1340,7 +1340,7 @@ return (
                   setSelectedJobState(e.target.value)
                   setJobPage(1)
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               >
                 <option value="ALL">Todos los Estados (EE. UU.)</option>
                 {US_STATES.map((st) => (
@@ -1356,7 +1356,7 @@ return (
                   setSelectedJobSector(e.target.value)
                   setJobPage(1)
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               >
                 <option value="ALL">Todos los Sectores</option>
                 <option value="Hotelería">Hotelería y Restaurantes</option>
@@ -1371,7 +1371,7 @@ return (
               </select>
             </div>
 
-            <label className="flex items-start gap-2.5 cursor-pointer bg-sky-50 border border-sky-200 rounded-xl px-3.5 py-2.5">
+            <label className="flex items-start gap-2.5 cursor-pointer bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 rounded-xl px-3.5 py-2.5">
               <input
                 type="checkbox"
                 checked={onlyHiresAbroad}
@@ -1381,35 +1381,35 @@ return (
                 }}
                 className="mt-0.5 w-4 h-4 accent-[#0B4079]"
               />
-              <span className="text-xs text-sky-900">
+              <span className="text-xs text-sky-900 dark:text-sky-300">
                 <strong>🌎 Solo empresas que contratan desde el extranjero</strong>
-                <span className="block text-[11px] text-sky-800/80">
+                <span className="block text-[11px] text-sky-800/80 dark:text-sky-400/80">
                   Empresas que en 2026 trajeron trabajadores con visa tramitada en un consulado fuera de EE. UU.
                 </span>
               </span>
             </label>
 
             <div className="flex items-center gap-2">
-              <label htmlFor="job-sort" className="text-xs font-semibold text-slate-500 shrink-0">Ordenar por:</label>
+              <label htmlFor="job-sort" className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Ordenar por:</label>
               <select
                 id="job-sort"
                 value={jobSortBy}
                 onChange={(e) => setJobSortBy(e.target.value as 'recent' | 'match')}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               >
                 <option value="recent">Más recientes</option>
                 <option value="match">Mejor compatible con tu perfil</option>
               </select>
               {jobSortBy === 'match' && !profileCompleted && (
-                <span className="text-[11px] text-amber-700">Completa tu perfil para ver esto ordenado de verdad.</span>
+                <span className="text-[11px] text-amber-700 dark:text-amber-400">Completa tu perfil para ver esto ordenado de verdad.</span>
               )}
             </div>
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-slate-200">
+            <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-xs text-slate-500 font-medium">Cargando ofertas...</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Cargando ofertas...</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -1426,11 +1426,11 @@ return (
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver detalle de ${job.title || 'oferta'} en ${job.employer_name || 'empresa registrada'}`}
-                  className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between hover:border-slate-300 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 >
                   <div className="space-y-3">
                     <div className="flex justify-between items-start gap-2">
-  <span className="bg-slate-100 text-slate-700 font-mono text-[10px] font-bold px-2 py-0.5 rounded">
+  <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded">
     {job.case_number || job.job_order_id || `ID: ${job.id || idx + 1}`}
   </span>
   <div className="flex gap-1.5 flex-wrap justify-end">
@@ -1442,10 +1442,10 @@ return (
           <span
             className={`font-bold text-[10px] px-2 py-0.5 rounded border ${
               match.score >= 80
-                ? 'bg-red-50 text-red-700 border-red-200'
+                ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30'
                 : match.score >= 50
-                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                : 'bg-slate-50 text-slate-500 border-slate-200'
+                ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30'
+                : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
             }`}
           >
             {match.score >= 80 ? '🔥' : match.score >= 50 ? '🟡' : '⚪'} {match.score}% compatible
@@ -1457,7 +1457,7 @@ return (
       const source = sourceInfo(job.source)
       return (
         <InfoTooltip text={source.tooltip}>
-          <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200">
+          <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
             ✓ Verificada · {source.label}
           </span>
         </InfoTooltip>
@@ -1466,27 +1466,27 @@ return (
   </div>
 </div>
                     <div>
-                      <h3 className="font-bold text-slate-900 text-base leading-snug">{job.title || 'Oferta de Trabajo'}</h3>
-                      <p className="text-xs font-bold text-blue-700 mt-0.5">{job.employer_name || 'Empleador Registrado'}</p>
+                      <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">{job.title || 'Oferta de Trabajo'}</h3>
+                      <p className="text-xs font-bold text-blue-700 dark:text-blue-400 mt-0.5">{job.employer_name || 'Empleador Registrado'}</p>
                       <div className="mt-2">
                         <SponsorHistory sponsor={job.sponsor} match={job.sponsor_match} />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
                       <div className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                         <span><strong>Ubicación:</strong> {job.location || `${job.city || ''} ${job.state || ''}` || 'EE.UU.'}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <DollarSign className="w-3.5 h-3.5 text-slate-400" />
+                        <DollarSign className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                         <span><strong>Salario:</strong> {job.wage || 'Según Contrato'}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                         <span><strong>Inicio:</strong> {job.begin_date || 'A convenir'}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-slate-400" />
+                        <Users className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                         <span><strong>Vacantes:</strong> {job.workers_requested || 'Disponibles'}</span>
                       </div>
                     </div>
