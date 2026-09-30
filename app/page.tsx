@@ -2225,20 +2225,20 @@ return (
       {/* TAB 5: ASISTENTES IA */}
       {activeTab === 'ai' && (
         <div className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-2">
-            <h1 className="text-2xl font-black text-slate-900">Asistentes Virtuales IA</h1>
-            <p className="text-xs text-slate-500">Herramientas inteligentes para acelerar tu proceso de postulación laboral H2B.</p>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-2">
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Asistentes Virtuales IA</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Herramientas inteligentes para acelerar tu proceso de postulación laboral H2B.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Adaptador de CV H2B</h3>
-                  <p className="text-xs text-slate-500">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Adaptador de CV H2B</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {hasCv
                       ? 'Tu CV ya está listo y alimenta el redactor de correos.'
                       : 'Cuéntanos tu experiencia real y la IA la adapta al formato que esperan los empleadores.'}
@@ -2254,37 +2254,37 @@ return (
             </div>
 
             {/* Tarjeta 3: Asistente de Correo IA */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start space-x-4 mb-4">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                <div className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
                   <Mail className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800 text-base">Redactor de Correos H2B</h3>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <h3 className="font-bold text-slate-800 dark:text-white text-base">Redactor de Correos H2B</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     Crea emails de postulación y seguimiento profesionales para enviar por Gmail u Outlook.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowEmailAssistant(v => !v)}
-                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors"
+                className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors"
               >
                 {showEmailAssistant ? 'Cerrar Redactor' : 'Abrir Redactor'}
               </button>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-sm">Simulador de Entrevista</h3>
-                  <p className="text-xs text-slate-500">Práctica preguntas habituales de los patrocinadores laborales.</p>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Simulador de Entrevista</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Práctica preguntas habituales de los patrocinadores laborales.</p>
                 </div>
               </div>
-              <button disabled className="w-full bg-slate-100 text-slate-500 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed">
+              <button disabled className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed">
                 Próximamente
               </button>
             </div>

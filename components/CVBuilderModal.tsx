@@ -128,12 +128,12 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08131F]/80 backdrop-blur-md p-4">
       {/* Shell fijo (no scrollea): así el botón cerrar no se va con el contenido */}
-      <div className="relative w-full max-w-2xl max-h-[92vh] rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden">
+      <div className="relative w-full max-w-2xl max-h-[92vh] rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
         <button
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute top-4 right-4 z-20 text-slate-400 hover:text-slate-600 p-1 text-lg font-bold"
+          className="absolute top-4 right-4 z-20 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 p-1 text-lg font-bold"
         >
           <X className="w-5 h-5" />
         </button>
@@ -144,8 +144,8 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
           <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#C89B3C] bg-[#C89B3C]/10 rounded-full mb-3">
             Adaptador de CV
           </span>
-          <h2 className="text-2xl font-extrabold text-[#08131F]">Tu currículum en inglés</h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <h2 className="text-2xl font-extrabold text-[#08131F] dark:text-white">Tu currículum en inglés</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Cuéntanos tu experiencia real, en tus propias palabras. La IA solo la reescribe y ordena en formato
             americano — nunca agrega experiencia que no diste. Este CV también se usa para personalizar tus correos
             de postulación.
@@ -155,23 +155,23 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label htmlFor="cv-target-role" className="block text-xs font-semibold text-slate-600 mb-1">Puesto al que apuntas</label>
+              <label htmlFor="cv-target-role" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Puesto al que apuntas</label>
               <input
                 id="cv-target-role"
                 type="text"
                 placeholder="Ej: Housekeeper"
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-sm focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white p-2.5 text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
               />
             </div>
             <div>
-              <label htmlFor="cv-english-level" className="block text-xs font-semibold text-slate-600 mb-1">Nivel de inglés</label>
+              <label htmlFor="cv-english-level" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Nivel de inglés</label>
               <select
                 id="cv-english-level"
                 value={englishLevel}
                 onChange={(e) => setEnglishLevel(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-sm focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white p-2.5 text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
               >
                 <option value="">Selecciona</option>
                 <option value="Ninguno">Ninguno / Muy básico</option>
@@ -182,21 +182,21 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
           </div>
 
           <div>
-            <label htmlFor="cv-skills" className="block text-xs font-semibold text-slate-600 mb-1">Habilidades (separadas por coma)</label>
+            <label htmlFor="cv-skills" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Habilidades (separadas por coma)</label>
             <input
               id="cv-skills"
               type="text"
               placeholder="Ej: housekeeping, trabajo en equipo, manejo de maquinaria"
               value={skillsText}
               onChange={(e) => setSkillsText(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-sm focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white p-2.5 text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
             />
           </div>
 
           <div>
             <div className="flex justify-between items-baseline mb-1">
-              <label htmlFor="cv-base-text" className="block text-xs font-semibold text-slate-600">Tu experiencia laboral, en tus palabras</label>
-              <span className={`text-[10px] ${baseCvText.trim().length < MIN_CV_LENGTH ? 'text-rose-500' : 'text-emerald-600'}`}>
+              <label htmlFor="cv-base-text" className="block text-xs font-semibold text-slate-600 dark:text-slate-300">Tu experiencia laboral, en tus palabras</label>
+              <span className={`text-[10px] ${baseCvText.trim().length < MIN_CV_LENGTH ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400'}`}>
                 {baseCvText.trim().length} / {MIN_CV_LENGTH} mínimo
               </span>
             </div>
@@ -206,15 +206,15 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
               placeholder="Ej: Trabajé 3 años en el hotel X limpiando habitaciones, también ayudé a entrenar a compañeros nuevos. Antes trabajé un año en un restaurante como ayudante de cocina..."
               value={baseCvText}
               onChange={(e) => setBaseCvText(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white p-3 text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
             />
-            <p className="text-[11px] text-slate-400 mt-1">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
               No hace falta que suene perfecto ni en inglés. Mientras más detalle real des (empresas, tiempo, tareas), mejor sale tu CV.
             </p>
           </div>
 
           {error && (
-            <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg px-3 py-2">{error}</p>
           )}
 
           <button
@@ -228,13 +228,13 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
           </button>
 
           {result && (
-            <div className="border-t border-slate-100 pt-4 space-y-3">
-              <h3 className="text-sm font-bold text-slate-900">Vista previa</h3>
-              <pre className="whitespace-pre-wrap text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-xl p-3.5 max-h-64 overflow-y-auto font-sans">
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-3">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Vista previa</h3>
+              <pre className="whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 max-h-64 overflow-y-auto font-sans">
                 {result.full_text}
               </pre>
               {result.notes_es && (
-                <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
                   💡 {result.notes_es}
                 </p>
               )}
@@ -242,7 +242,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 rounded-xl py-2 hover:bg-slate-50"
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                   {copied ? 'Copiado' : 'Copiar'}
@@ -250,7 +250,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 rounded-xl py-2 hover:bg-slate-50"
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   <Download className="w-3.5 h-3.5" /> Descargar .txt
                 </button>
@@ -258,11 +258,11 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
             </div>
           )}
 
-          <div className="flex gap-3 pt-2 border-t border-slate-100">
+          <div className="flex gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="w-1/3 rounded-xl border border-slate-300 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
+              className="w-1/3 rounded-xl border border-slate-300 dark:border-slate-700 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
             >
               Cerrar
             </button>

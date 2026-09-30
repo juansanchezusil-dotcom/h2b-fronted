@@ -185,7 +185,7 @@ export function EmailAssistantTab({
 
   if (loadingProfile) {
     return (
-      <div className="max-w-4xl mx-auto p-6 flex items-center justify-center gap-2 text-sm text-slate-500">
+      <div className="max-w-4xl mx-auto p-6 flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400">
         <Loader2 className="w-4 h-4 animate-spin" /> Cargando tu perfil...
       </div>
     );
@@ -194,12 +194,12 @@ export function EmailAssistantTab({
   if (!hasCv) {
     return (
       <div className="max-w-2xl mx-auto p-6">
-        <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center space-y-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
             <FileText className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-bold text-slate-900">Completa tu CV primero</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Completa tu CV primero</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             El redactor de correos usa tu experiencia real para escribir un correo personalizado y creíble, en vez
             de una plantilla genérica. Cuéntanos tu experiencia una vez y la usaremos aquí y en tu CV.
           </p>
@@ -216,19 +216,19 @@ export function EmailAssistantTab({
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex items-center space-x-3 border-b border-slate-200 pb-4">
-        <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
+      <div className="flex items-center space-x-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="p-2.5 bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
           <Sparkles className="w-6 h-6" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Asistente de Correo IA</h2>
-          <p className="text-sm text-slate-500">Genera correos personalizados con tu experiencia real, listos para enviar.</p>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">Asistente de Correo IA</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Genera correos personalizados con tu experiencia real, listos para enviar.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="space-y-4 bg-slate-50 p-5 rounded-2xl border border-slate-200">
-          <h3 className="font-semibold text-slate-700 text-sm">1. Tipo de Correo</h3>
+        <div className="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+          <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm">1. Tipo de Correo</h3>
           <div className="space-y-2">
             {emailTypeOptions.map((type) => (
               <button
@@ -237,7 +237,7 @@ export function EmailAssistantTab({
                 className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                   emailType === type.id
                     ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'
                 }`}
               >
                 {type.label}
@@ -245,18 +245,18 @@ export function EmailAssistantTab({
             ))}
           </div>
 
-          <hr className="border-slate-200 my-4" />
+          <hr className="border-slate-200 dark:border-slate-700 my-4" />
 
-          <h3 className="font-semibold text-slate-700 text-sm">2. Datos de la Oferta</h3>
+          <h3 className="font-semibold text-slate-700 dark:text-slate-200 text-sm">2. Datos de la Oferta</h3>
           <div className="space-y-3">
             {savedOffers.length > 0 && (
               <div>
-                <label htmlFor="email-saved-offer" className="text-xs text-slate-500 font-medium">Elegir de tus ofertas guardadas</label>
+                <label htmlFor="email-saved-offer" className="text-xs text-slate-500 dark:text-slate-400 font-medium">Elegir de tus ofertas guardadas</label>
                 <select
                   id="email-saved-offer"
                   value={selectedOfferIdx}
                   onChange={(e) => handlePickOffer(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
                   <option value="-1">Escribir manualmente...</option>
                   {savedOffers.map((o, i) => (
@@ -266,33 +266,33 @@ export function EmailAssistantTab({
               </div>
             )}
             <div>
-              <label htmlFor="email-company" className="text-xs text-slate-500 font-medium">Empresa Patrocinadora</label>
+              <label htmlFor="email-company" className="text-xs text-slate-500 dark:text-slate-400 font-medium">Empresa Patrocinadora</label>
               <input
                 id="email-company"
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full mt-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
             <div>
-              <label htmlFor="email-job-title" className="text-xs text-slate-500 font-medium">Puesto / Vacante</label>
+              <label htmlFor="email-job-title" className="text-xs text-slate-500 dark:text-slate-400 font-medium">Puesto / Vacante</label>
               <input
                 id="email-job-title"
                 type="text"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
-                className="w-full mt-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
             <div>
-              <label htmlFor="email-contact" className="text-xs text-slate-500 font-medium">Correo del Reclutador</label>
+              <label htmlFor="email-contact" className="text-xs text-slate-500 dark:text-slate-400 font-medium">Correo del Reclutador</label>
               <input
                 id="email-contact"
                 type="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
-                className="w-full mt-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
           </div>
@@ -300,7 +300,7 @@ export function EmailAssistantTab({
           <button
             onClick={() => generate(emailType)}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg py-2 disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 border border-blue-200 dark:border-blue-500/30 rounded-lg py-2 disabled:opacity-50"
           >
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
             Volver a generar
@@ -308,21 +308,21 @@ export function EmailAssistantTab({
         </div>
 
         <div className="md:col-span-2 space-y-4 flex flex-col justify-between">
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3 flex-1">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Previsualización</span>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3 flex-1">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Previsualización</span>
               <div className="flex items-center gap-3">
                 {/* Toggle EN/ES: EN es lo que se recomienda enviar; ES es solo para entenderlo */}
-                <div className="flex text-[11px] font-bold rounded-lg border border-slate-200 overflow-hidden">
+                <div className="flex text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
                   <button
                     onClick={() => setLang('en')}
-                    className={`px-2.5 py-1 ${lang === 'en' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                    className={`px-2.5 py-1 ${lang === 'en' ? 'bg-slate-900 text-white' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                   >
                     EN
                   </button>
                   <button
                     onClick={() => setLang('es')}
-                    className={`px-2.5 py-1 ${lang === 'es' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
+                    className={`px-2.5 py-1 ${lang === 'es' ? 'bg-slate-900 text-white' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                   >
                     ES
                   </button>
@@ -330,7 +330,7 @@ export function EmailAssistantTab({
                 <button
                   onClick={handleCopy}
                   disabled={!body}
-                  className="flex items-center space-x-1 text-xs text-blue-600 hover:text-blue-700 font-medium disabled:opacity-40"
+                  className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium disabled:opacity-40"
                 >
                   {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? '¡Copiado!' : 'Copiar Texto'}</span>
@@ -339,25 +339,25 @@ export function EmailAssistantTab({
             </div>
 
             {error && (
-              <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">{error}</p>
+              <p className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg px-3 py-2">{error}</p>
             )}
 
             {lang === 'es' && (
-              <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+              <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-2.5 py-1.5">
                 Esta es la traducción, solo para que entiendas lo que dice. Recomendamos enviarlo en inglés (EN).
               </p>
             )}
 
             {loading && !current ? (
-              <div className="flex items-center justify-center gap-2 text-sm text-slate-500 min-h-[220px]">
+              <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 min-h-[220px]">
                 <Loader2 className="w-4 h-4 animate-spin" /> Escribiendo tu correo...
               </div>
             ) : (
               <>
-                <div className="text-xs text-slate-500">
-                  <strong className="text-slate-700">Asunto:</strong> {subject || '—'}
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  <strong className="text-slate-700 dark:text-slate-200">Asunto:</strong> {subject || '—'}
                 </div>
-                <div className="bg-slate-50 p-4 rounded-xl text-xs text-slate-700 font-mono whitespace-pre-wrap leading-relaxed border border-slate-100 min-h-[220px]">
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed border border-slate-100 dark:border-slate-700 min-h-[220px]">
                   {body || 'Genera el correo para verlo aquí.'}
                 </div>
               </>
