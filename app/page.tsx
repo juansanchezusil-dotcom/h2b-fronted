@@ -1202,7 +1202,7 @@ return (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
               <div>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">OFERTA DE EMPLEO (DOL)</p>
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">OFERTA DE EMPLEO (DOL)</p>
                 <p className="text-2xl font-black text-slate-900 mt-1">{catalogTotals.jobs}</p>
                 <p className="text-[10px] text-emerald-600 font-semibold mt-0.5 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> Ofertas publicadas
@@ -1214,7 +1214,7 @@ return (
             </div>
             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
               <div>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">EMPRESAS USCIS</p>
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">EMPRESAS USCIS</p>
                 <p className="text-2xl font-black text-slate-900 mt-1">{catalogTotals.employers}</p>
                 <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">● En el catálogo</p>
               </div>
@@ -1224,7 +1224,7 @@ return (
             </div>
             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
               <div>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">AGENCIAS REGULADAS</p>
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">AGENCIAS REGULADAS</p>
                 <p className="text-2xl font-black text-slate-900 mt-1">{catalogTotals.agencies}</p>
                 <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">● En el catálogo</p>
               </div>
@@ -1234,7 +1234,7 @@ return (
             </div>
             <div className="bg-white border border-slate-200 rounded-2xl p-4 flex justify-between items-center shadow-sm">
               <div>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">PROGRESO CHECKLIST</p>
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">PROGRESO CHECKLIST</p>
                 <p className="text-2xl font-black text-slate-900 mt-1">{checklistPercentage}%</p>
                 <p className="text-[10px] text-indigo-600 font-semibold mt-0.5">
                   {checklistDone > 0 ? `${checklistDone} de ${CHECKLIST_TOTAL_TASKS} completados` : 'Sin iniciar'}
@@ -1650,7 +1650,7 @@ return (
                           Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
                         </button>
                       ) : (
-                        <p className="text-[11px] text-slate-400 italic text-center py-1.5">Sin vacantes publicadas ahora</p>
+                        <p className="text-[11px] text-slate-500 italic text-center py-1.5">Sin vacantes publicadas ahora</p>
                       )}
                     </div>
                   )
@@ -1696,7 +1696,7 @@ return (
                                 Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
                               </button>
                             ) : (
-                              <span className="text-[11px] text-slate-400 italic">Sin vacantes ahora</span>
+                              <span className="text-[11px] text-slate-500 italic">Sin vacantes ahora</span>
                             )}
                           </td>
                         </tr>
@@ -1806,7 +1806,7 @@ return (
                         </a>
                       </p>
                     ) : (
-                      <p className="text-[11px] text-slate-400 italic mt-1">
+                      <p className="text-[11px] text-slate-500 italic mt-1">
                         Sin sitio web en la lista oficial — no significa que algo esté mal, el DOL no lo pide para todas.
                       </p>
                     )}
@@ -1918,8 +1918,8 @@ return (
                             rows={2}
                           />
                           <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingNotesId(null)} className="px-1 text-[9px] text-slate-500">Cancelar</button>
-                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2 py-0.5 text-[9px] rounded font-bold">Guardar</button>
+                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 text-[10px] text-slate-500">Cancelar</button>
+                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 text-[10px] rounded font-bold">Guardar</button>
                           </div>
                         </div>
                       ) : (
@@ -1934,15 +1934,15 @@ return (
                       )}
                     </div>
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                      <span className="text-[9px] text-slate-400">{item.dateLabel}</span>
-                      <button onClick={() => changeCrmStatus(item.id, 'postulado')} className="text-[10px] font-bold text-blue-600 flex items-center gap-0.5 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded-lg">
+                      <span className="text-[9px] text-slate-500">{item.dateLabel}</span>
+                      <button onClick={() => changeCrmStatus(item.id, 'postulado')} className="text-[10px] font-bold text-blue-600 flex items-center gap-0.5 bg-blue-50 hover:bg-blue-100 px-2.5 py-2 rounded-lg">
                         Postular <MoveRight className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
                 ))}
                 {crmItems.filter(i => i.status === 'guardadas').length === 0 && (
-                  <p className="text-[11px] text-slate-400 italic p-3 text-center leading-relaxed">
+                  <p className="text-[11px] text-slate-500 italic p-3 text-center leading-relaxed">
                     Guarda una oferta desde la pestaña Ofertas para empezar tu seguimiento.
                   </p>
                 )}
@@ -1982,8 +1982,8 @@ return (
                             rows={2}
                           />
                           <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingNotesId(null)} className="px-1 text-[9px]">Cancelar</button>
-                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2 py-0.5 text-[9px] rounded font-bold">Guardar</button>
+                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 text-[10px]">Cancelar</button>
+                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 text-[10px] rounded font-bold">Guardar</button>
                           </div>
                         </div>
                       ) : (
@@ -2001,18 +2001,18 @@ return (
                       <button
                         onClick={() => openEmailFor(item)}
                         title="Redactar correo con tu CV"
-                        className="text-[10px] font-bold text-slate-600 flex items-center gap-0.5 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg"
+                        className="text-[10px] font-bold text-slate-600 flex items-center gap-0.5 bg-slate-100 hover:bg-slate-200 px-2.5 py-2 rounded-lg"
                       >
                         ✉️
                       </button>
-                      <button onClick={() => changeCrmStatus(item.id, 'seguimiento')} className="text-[10px] font-bold text-sky-700 flex items-center gap-0.5 bg-sky-50 hover:bg-sky-100 px-2 py-1 rounded-lg">
+                      <button onClick={() => changeCrmStatus(item.id, 'seguimiento')} className="text-[10px] font-bold text-sky-700 flex items-center gap-0.5 bg-sky-50 hover:bg-sky-100 px-2.5 py-2 rounded-lg">
                         Seguimiento <MoveRight className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
                 ))}
                 {crmItems.filter(i => i.status === 'postulado').length === 0 && (
-                  <p className="text-[11px] text-slate-400 italic p-3 text-center leading-relaxed">
+                  <p className="text-[11px] text-slate-500 italic p-3 text-center leading-relaxed">
                     Cuando postules a una oferta guardada, aparecerá aquí.
                   </p>
                 )}
@@ -2053,22 +2053,22 @@ return (
                         {editingNotesId === item.id ? (
                           <div className="space-y-2">
                             <textarea value={tempNotes} onChange={(e) => setTempNotes(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-[10px]" rows={2} />
-                            <div className="flex gap-1 justify-end"><button onClick={() => setEditingNotesId(null)} className="px-1 text-[9px]">Cancelar</button><button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2 py-0.5 text-[9px] rounded font-bold">Guardar</button></div>
+                            <div className="flex gap-1 justify-end"><button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 text-[10px]">Cancelar</button><button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 text-[10px] rounded font-bold">Guardar</button></div>
                           </div>
                         ) : (
                           <div className="flex justify-between items-center"><span className="text-[10px] text-slate-600 italic truncate max-w-[100px]">{item.notes ? `📝 ${item.notes}` : 'Sin notas'}</span><button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || '') }} className="text-blue-600 font-bold text-[9px]">{item.notes ? 'Editar' : '+ Nota'}</button></div>
                         )}
                       </div>
                       <div className="pt-2 border-t border-slate-100 flex justify-between items-center gap-1">
-                        <button onClick={() => openEmailFor(item)} title="Redactar correo con tu CV" className="text-[10px] font-bold text-slate-600 flex items-center gap-0.5 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-lg">✉️</button>
-                        <span className="text-[9px] text-slate-400">Día {daysPassed}</span>
-                        <button onClick={() => changeCrmStatus(item.id, 'entrevista')} className="text-[10px] font-bold text-amber-700 flex items-center gap-0.5 bg-amber-50 hover:bg-amber-100 px-2 py-1 rounded-lg">Entrevista <MoveRight className="w-3 h-3" /></button>
+                        <button onClick={() => openEmailFor(item)} title="Redactar correo con tu CV" className="text-[10px] font-bold text-slate-600 flex items-center gap-0.5 bg-slate-100 hover:bg-slate-200 px-2.5 py-2 rounded-lg">✉️</button>
+                        <span className="text-[9px] text-slate-500">Día {daysPassed}</span>
+                        <button onClick={() => changeCrmStatus(item.id, 'entrevista')} className="text-[10px] font-bold text-amber-700 flex items-center gap-0.5 bg-amber-50 hover:bg-amber-100 px-2.5 py-2 rounded-lg">Entrevista <MoveRight className="w-3 h-3" /></button>
                       </div>
                     </div>
                   )
                 })}
                 {crmItems.filter(i => i.status === 'seguimiento').length === 0 && (
-                  <p className="text-[11px] text-slate-400 italic p-3 text-center leading-relaxed">
+                  <p className="text-[11px] text-slate-500 italic p-3 text-center leading-relaxed">
                     A los 7 días de postular, la tarjeta pasa aquí sola y te avisamos por correo para que escribas a la empresa.
                   </p>
                 )}
@@ -2108,8 +2108,8 @@ return (
                             rows={2}
                           />
                           <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingNotesId(null)} className="px-1 text-[9px]">Cancelar</button>
-                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2 py-0.5 text-[9px] rounded font-bold">Guardar</button>
+                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 text-[10px]">Cancelar</button>
+                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 text-[10px] rounded font-bold">Guardar</button>
                           </div>
                         </div>
                       ) : (
@@ -2126,13 +2126,13 @@ return (
                     <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-1.5">
                       <button
                         onClick={() => changeCrmStatus(item.id, 'aceptado')}
-                        className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] py-1.5 px-2 rounded-lg border border-emerald-200 flex items-center justify-center gap-1 transition-colors"
+                        className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[10px] py-2 px-2.5 rounded-lg border border-emerald-200 flex items-center justify-center gap-1 transition-colors"
                       >
                         <CheckCircle className="w-3 h-3 text-emerald-600" /> Aceptado
                       </button>
                       <button
                         onClick={() => changeCrmStatus(item.id, 'rechazada')}
-                        className="bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold text-[10px] py-1.5 px-2 rounded-lg border border-rose-200 flex items-center justify-center gap-1 transition-colors"
+                        className="bg-rose-50 hover:bg-rose-100 text-rose-800 font-bold text-[10px] py-2 px-2.5 rounded-lg border border-rose-200 flex items-center justify-center gap-1 transition-colors"
                       >
                         <XCircle className="w-3 h-3 text-rose-600" /> Rechazado
                       </button>
@@ -2140,7 +2140,7 @@ return (
                   </div>
                 ))}
                 {crmItems.filter(i => i.status === 'entrevista').length === 0 && (
-                  <p className="text-[11px] text-slate-400 italic p-3 text-center leading-relaxed">
+                  <p className="text-[11px] text-slate-500 italic p-3 text-center leading-relaxed">
                     Aquí verás las postulaciones en las que te llamaron a entrevista.
                   </p>
                 )}
@@ -2169,12 +2169,12 @@ return (
                       🎉 ¡Proceso USCIS iniciado!
                     </div>
                     <div className="pt-2 border-t border-slate-100 flex justify-end">
-                      <span className="text-[9px] text-slate-400">{item.dateLabel}</span>
+                      <span className="text-[9px] text-slate-500">{item.dateLabel}</span>
                     </div>
                   </div>
                 ))}
                 {crmItems.filter(i => i.status === 'aceptado').length === 0 && (
-                  <p className="text-[11px] text-slate-400 italic p-3 text-center leading-relaxed">
+                  <p className="text-[11px] text-slate-500 italic p-3 text-center leading-relaxed">
                     Aquí verás las ofertas que aceptaste.
                   </p>
                 )}
@@ -2203,10 +2203,10 @@ return (
                       {item.status === 'no_respondido' ? '⌛ Expirado (21 días sin respuesta)' : '❌ Postulación rechazada'}
                     </div>
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-center">
-                      <span className="text-[9px] text-slate-400">{item.dateLabel}</span>
+                      <span className="text-[9px] text-slate-500">{item.dateLabel}</span>
                       <button
                         onClick={() => changeCrmStatus(item.id, 'entrevista')}
-                        className="text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2 py-1 rounded-lg"
+                        className="text-[10px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-2 rounded-lg"
                       >
                         Me respondieron
                       </button>
@@ -2214,7 +2214,7 @@ return (
                   </div>
                 ))}
                 {crmItems.filter(i => i.status === 'no_respondido' || i.status === 'rechazada').length === 0 && (
-                  <p className="text-[11px] text-slate-400 italic p-3 text-center leading-relaxed">
+                  <p className="text-[11px] text-slate-500 italic p-3 text-center leading-relaxed">
                     Si una empresa no responde en 21 días, la tarjeta pasa aquí. Si luego te responden, puedes reactivarla.
                   </p>
                 )}
@@ -2328,7 +2328,8 @@ return (
             {/* BOTÓN CERRAR */}
             <button
               onClick={() => setSelectedJob(null)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1 transition-colors z-20"
+              aria-label="Cerrar"
+              className="absolute top-5 right-5 text-slate-500 hover:text-slate-700 p-2 transition-colors z-20"
             >
               <X className="w-5 h-5" />
             </button>
@@ -2358,15 +2359,15 @@ return (
             {/* GRILLA RESUMEN */}
             <div className="grid grid-cols-3 gap-2 text-xs bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100/80">
               <div>
-                <span className="text-slate-400 block font-medium text-[11px]">Ubicación:</span>
+                <span className="text-slate-500 block font-medium text-[11px]">Ubicación:</span>
                 <strong className="text-slate-800 font-bold">{selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim() || 'N/A'}</strong>
               </div>
               <div>
-                <span className="text-slate-400 block font-medium text-[11px]">Salario:</span>
+                <span className="text-slate-500 block font-medium text-[11px]">Salario:</span>
                 <strong className="text-slate-800 font-bold">{selectedJob.wage || selectedJob.pay_rate || 'N/A'}</strong>
               </div>
               <div>
-                <span className="text-slate-400 block font-medium text-[11px]">Vacantes:</span>
+                <span className="text-slate-500 block font-medium text-[11px]">Vacantes:</span>
                 <strong className="text-slate-800 font-bold">{selectedJob.workers_requested || selectedJob.workers_needed || selectedJob.vacantes || 'N/A'}</strong>
               </div>
             </div>
@@ -2462,7 +2463,8 @@ return (
             <button
               type="button"
               onClick={() => setIsManualModalOpen(false)}
-              className="text-slate-400 hover:text-slate-600 p-1 text-base font-bold"
+              aria-label="Cerrar"
+              className="text-slate-500 hover:text-slate-700 p-2 text-base font-bold"
             >
               ✕
             </button>
