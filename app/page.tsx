@@ -2321,13 +2321,13 @@ return (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           {/* Shell fijo max-h-[90vh]: el botón cerrar queda afuera del scroll interno,
               así nunca se va con el contenido en pantallas de celular */}
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] shadow-2xl relative overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full max-h-[90vh] shadow-2xl relative overflow-hidden">
 
             {/* BOTÓN CERRAR */}
             <button
               onClick={() => setSelectedJob(null)}
               aria-label="Cerrar"
-              className="absolute top-5 right-5 text-slate-500 hover:text-slate-700 p-2 transition-colors z-20"
+              className="absolute top-5 right-5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white p-2 transition-colors z-20"
             >
               <X className="w-5 h-5" />
             </button>
@@ -2337,36 +2337,36 @@ return (
             {/* ENCABEZADO CON ID, TITULO Y FECHAS A LA DERECHA */}
             <div className="flex justify-between items-start gap-4 pr-6">
               <div className="space-y-1">
-                <span className="bg-slate-100 text-slate-700 font-mono text-[11px] font-bold px-2.5 py-0.5 rounded">
+                <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[11px] font-bold px-2.5 py-0.5 rounded">
                   Job Order ID: {selectedJob.case_number || selectedJob.job_order_id || selectedJob.id}
                 </span>
-                <h2 className="text-xl font-black text-slate-900 mt-1">{selectedJob.title || selectedJob.job_title}</h2>
-                <p className="text-xs font-bold text-blue-700">{selectedJob.employer_name || selectedJob.emp_name}</p>
+                <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1">{selectedJob.title || selectedJob.job_title}</h2>
+                <p className="text-xs font-bold text-blue-700 dark:text-blue-400">{selectedJob.employer_name || selectedJob.emp_name}</p>
               </div>
 
               <div className="text-right text-[11px] shrink-0 pt-1 leading-tight">
-                <p className="text-slate-600 font-medium">
+                <p className="text-slate-600 dark:text-slate-300 font-medium">
                   <strong>Begin date:</strong> {selectedJob.begin_date || selectedJob.start_date || selectedJob.fecha_inicio || "N/A"}
                 </p>
-                <p className="text-slate-600 font-medium mt-0.5">
+                <p className="text-slate-600 dark:text-slate-300 font-medium mt-0.5">
                   <strong>End date:</strong> {selectedJob.end_date || selectedJob.fecha_fin || "N/A"}
                 </p>
               </div>
             </div>
 
             {/* GRILLA RESUMEN */}
-            <div className="grid grid-cols-3 gap-2 text-xs bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100/80">
+            <div className="grid grid-cols-3 gap-2 text-xs bg-slate-50/80 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-slate-100/80 dark:border-slate-700/80">
               <div>
-                <span className="text-slate-500 block font-medium text-[11px]">Ubicación:</span>
-                <strong className="text-slate-800 font-bold">{selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim() || 'N/A'}</strong>
+                <span className="text-slate-500 dark:text-slate-400 block font-medium text-[11px]">Ubicación:</span>
+                <strong className="text-slate-800 dark:text-slate-100 font-bold">{selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim() || 'N/A'}</strong>
               </div>
               <div>
-                <span className="text-slate-500 block font-medium text-[11px]">Salario:</span>
-                <strong className="text-slate-800 font-bold">{selectedJob.wage || selectedJob.pay_rate || 'N/A'}</strong>
+                <span className="text-slate-500 dark:text-slate-400 block font-medium text-[11px]">Salario:</span>
+                <strong className="text-slate-800 dark:text-slate-100 font-bold">{selectedJob.wage || selectedJob.pay_rate || 'N/A'}</strong>
               </div>
               <div>
-                <span className="text-slate-500 block font-medium text-[11px]">Vacantes:</span>
-                <strong className="text-slate-800 font-bold">{selectedJob.workers_requested || selectedJob.workers_needed || selectedJob.vacantes || 'N/A'}</strong>
+                <span className="text-slate-500 dark:text-slate-400 block font-medium text-[11px]">Vacantes:</span>
+                <strong className="text-slate-800 dark:text-slate-100 font-bold">{selectedJob.workers_requested || selectedJob.workers_needed || selectedJob.vacantes || 'N/A'}</strong>
               </div>
             </div>
 
@@ -2374,17 +2374,17 @@ return (
             <SponsorHistory sponsor={selectedJob.sponsor} match={selectedJob.sponsor_match} variant="full" />
 
             {/* RECRUITMENT INFORMATION */}
-            <div className="space-y-1 border-t border-slate-100 pt-3 text-left">
-              <h3 className="font-bold text-blue-900 text-xs">Recruitment Information</h3>
-              <p className="text-[11px] text-slate-700">
+            <div className="space-y-1 border-t border-slate-100 dark:border-slate-800 pt-3 text-left">
+              <h3 className="font-bold text-blue-900 dark:text-blue-300 text-xs">Recruitment Information</h3>
+              <p className="text-[11px] text-slate-700 dark:text-slate-300">
                 <strong>Telephone Number to Apply:</strong> {selectedJob.phone_to_apply || selectedJob.phone || selectedJob.recruitment_phone || "N/A"}
               </p>
-              <p className="text-[11px] text-slate-700">
+              <p className="text-[11px] text-slate-700 dark:text-slate-300">
                 <strong>Email address to Apply:</strong>{" "}
                 {(selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email) ? (
                   <a
                     href={`mailto:${selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email}`}
-                    className="text-blue-600 underline font-medium"
+                    className="text-blue-600 dark:text-blue-400 underline font-medium"
                   >
                     {selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email}
                   </a>
@@ -2395,22 +2395,22 @@ return (
             </div>
 
             {/* JOB DESCRIPTION */}
-            <div className="space-y-1 border-t border-slate-100 pt-3 text-left">
-              <h3 className="font-bold text-blue-900 text-xs">Job Description</h3>
-              <p className="text-[11px] text-slate-700">
+            <div className="space-y-1 border-t border-slate-100 dark:border-slate-800 pt-3 text-left">
+              <h3 className="font-bold text-blue-900 dark:text-blue-300 text-xs">Job Description</h3>
+              <p className="text-[11px] text-slate-700 dark:text-slate-300">
                 <strong>Full Time:</strong> {(selectedJob.full_time !== undefined ? (selectedJob.full_time ? "Yes" : "No") : (selectedJob.jornada === 'Tiempo Completo' ? "Yes" : "No"))}
               </p>
-              <p className="text-[11px] text-slate-700">
+              <p className="text-[11px] text-slate-700 dark:text-slate-300">
                 <strong>Number of Workers Requested:</strong> {selectedJob.workers_requested || selectedJob.workers_needed || selectedJob.vacantes || "N/A"}
               </p>
 
-              <div className="text-[11px] text-slate-600 leading-relaxed bg-slate-50/80 p-3 rounded-xl border border-slate-100 mt-2">
+              <div className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50/80 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700 mt-2">
                 <strong>Job Duties:</strong>
-                {/* 
+                {/*
                      - Se removió 'max-h-28' y se cambió a 'max-h-48'
                      - 'overflow-y-auto' muestra scroll SOLO si sobrepasa la altura
                   */}
-                <p className="mt-0.5 max-h-48 overflow-y-auto pr-1 whitespace-pre-line text-slate-600 scrollbar-thin">
+                <p className="mt-0.5 max-h-48 overflow-y-auto pr-1 whitespace-pre-line text-slate-600 dark:text-slate-300 scrollbar-thin">
                   {selectedJob.job_description || selectedJob.job_duties || selectedJob.description || selectedJob.duties || "Sin descripción disponible."}
                 </p>
               </div>
@@ -2454,15 +2454,15 @@ return (
     {/* MODAL DE POSTULACIÓN MANUAL */}
     {isManualModalOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-        <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in duration-200">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
 
-          <div className="sticky top-0 z-10 bg-white flex justify-between items-center px-6 pt-6 pb-2 border-b border-slate-100">
-            <h3 className="text-lg font-bold text-slate-800">Agregar Postulación Manual</h3>
+          <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 flex justify-between items-center px-6 pt-6 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Agregar Postulación Manual</h3>
             <button
               type="button"
               onClick={() => setIsManualModalOpen(false)}
               aria-label="Cerrar"
-              className="text-slate-500 hover:text-slate-700 p-2 text-base font-bold"
+              className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white p-2 text-base font-bold"
             >
               ✕
             </button>
@@ -2470,7 +2470,7 @@ return (
 
           <form onSubmit={handleSaveManualItem} className="space-y-4 px-6 pb-6 pt-4">
             <div>
-              <label htmlFor="manual-company" className="block text-xs font-semibold text-slate-600 mb-1">Empresa *</label>
+              <label htmlFor="manual-company" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Empresa *</label>
               <input
                 id="manual-company"
                 type="text"
@@ -2478,41 +2478,41 @@ return (
                 placeholder="Ej: Agro S.A."
                 value={manualCompany}
                 onChange={(e) => setManualCompany(e.target.value)}
-                className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
 
             <div>
-              <label htmlFor="manual-role" className="block text-xs font-semibold text-slate-600 mb-1">Puesto / Vacante</label>
+              <label htmlFor="manual-role" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Puesto / Vacante</label>
               <input
                 id="manual-role"
                 type="text"
                 placeholder="Ej: Operador Agrícola H2B"
                 value={manualRole}
                 onChange={(e) => setManualRole(e.target.value)}
-                className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
 
             <div>
-              <label htmlFor="manual-state" className="block text-xs font-semibold text-slate-600 mb-1">Estado / Ubicación</label>
+              <label htmlFor="manual-state" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Estado / Ubicación</label>
               <input
                 id="manual-state"
                 type="text"
                 placeholder="Ej: TX o Texas"
                 value={manualState}
                 onChange={(e) => setManualState(e.target.value)}
-                className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
               />
             </div>
 
             <div>
-              <label htmlFor="manual-status" className="block text-xs font-semibold text-slate-600 mb-1">Estado de la Postulación</label>
+              <label htmlFor="manual-status" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Estado de la Postulación</label>
               <select
                 id="manual-status"
                 value={manualStatus}
                 onChange={(e) => setManualStatus(e.target.value as CRMItem['status'])}
-                className="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                className="w-full border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 dark:text-white"
               >
                 <option value="guardadas">Guardadas</option>
                 <option value="postulado">Postulado</option>
@@ -2523,11 +2523,11 @@ return (
               </select>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setIsManualModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 Cancelar
               </button>

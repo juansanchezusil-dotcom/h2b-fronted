@@ -76,14 +76,14 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08131F]/80 backdrop-blur-md p-4">
       {/* Shell fijo (no scrollea): así el botón cerrar no se va con el contenido */}
-      <div className="relative w-full max-w-lg max-h-[90vh] rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden">
+      <div className="relative w-full max-w-lg max-h-[90vh] rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
 
         {onClose && (
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar"
-            className="absolute top-4 right-4 z-20 text-slate-400 hover:text-slate-600 p-1 text-lg font-bold"
+            className="absolute top-4 right-4 z-20 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 p-1 text-lg font-bold"
           >
             ✕
           </button>
@@ -96,17 +96,17 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
           <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#C89B3C] bg-[#C89B3C]/10 rounded-full mb-3">
             Paso {step} de 2 • Diagnóstico Inicial H2B
           </span>
-          <h2 className="text-2xl font-extrabold text-[#08131F]">
+          <h2 className="text-2xl font-extrabold text-[#08131F] dark:text-white">
             {step === 1 ? 'Tu Experiencia Laboral' : 'Detalles de Postulación'}
           </h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Configuramos tu perfil para priorizar las vacantes con mayor compatibilidad.
           </p>
 
           {/* Indicador de pasos */}
           <div className="flex gap-2 mt-4">
-            <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 1 ? 'bg-[#C89B3C]' : 'bg-slate-200'}`} />
-            <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-[#C89B3C]' : 'bg-slate-200'}`} />
+            <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 1 ? 'bg-[#C89B3C]' : 'bg-slate-200 dark:bg-slate-700'}`} />
+            <div className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${step >= 2 ? 'bg-[#C89B3C]' : 'bg-slate-200 dark:bg-slate-700'}`} />
           </div>
         </div>
 
@@ -114,12 +114,12 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <label htmlFor="onboarding-industria" className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="onboarding-industria" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                 ¿En qué industria tienes mayor experiencia?
               </label>
               <select
                 id="onboarding-industria"
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-800 focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
                 value={formData.experiencia_industria}
                 onChange={(e) => setFormData({ ...formData, experiencia_industria: e.target.value })}
               >
@@ -134,12 +134,12 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
             </div>
 
             <div>
-              <label htmlFor="onboarding-anos" className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="onboarding-anos" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                 Años totales de experiencia laboral:
               </label>
               <select
                 id="onboarding-anos"
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-800 focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
                 value={formData.anos_experiencia}
                 onChange={(e) => setFormData({ ...formData, anos_experiencia: Number(e.target.value) })}
               >
@@ -161,7 +161,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full text-xs font-semibold text-slate-500 hover:text-slate-700 py-2"
+                className="w-full text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 py-2"
               >
                 Completar después
               </button>
@@ -173,12 +173,12 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
         {step === 2 && (
           <div className="space-y-4">
             <div>
-              <label htmlFor="onboarding-ingles" className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="onboarding-ingles" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                 Nivel de Inglés:
               </label>
               <select
                 id="onboarding-ingles"
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-800 focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
                 value={formData.nivel_ingles}
                 onChange={(e) => setFormData({ ...formData, nivel_ingles: e.target.value })}
               >
@@ -190,21 +190,21 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
             </div>
 
             <div>
-              <label htmlFor="onboarding-pais" className="block text-sm font-semibold text-slate-700 mb-1.5">
+              <label htmlFor="onboarding-pais" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
                 País de Ciudadanía / Pasaporte:
               </label>
               <input
                 id="onboarding-pais"
                 type="text"
                 placeholder="Ej. México, Colombia, Guatemala, etc."
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-sm text-slate-800 focus:bg-white focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
                 value={formData.pais_origen}
                 onChange={(e) => setFormData({ ...formData, pais_origen: e.target.value })}
               />
             </div>
 
             <div>
-  <label id="onboarding-h2b-previo-label" className="block text-sm font-semibold text-slate-700 mb-1.5">
+  <label id="onboarding-h2b-previo-label" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
     ¿Ya has viajado antes con visa H-2B?
   </label>
   <div role="group" aria-labelledby="onboarding-h2b-previo-label" className="flex gap-3">
@@ -214,8 +214,8 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
       onClick={() => setFormData({ ...formData, has_previous_h2b: true })}
       className={`flex-1 rounded-xl border py-3 text-sm font-bold transition ${
         formData.has_previous_h2b === true
-          ? 'border-[#C89B3C] bg-[#C89B3C]/10 text-[#08131F]'
-          : 'border-slate-300 text-slate-600'
+          ? 'border-[#C89B3C] bg-[#C89B3C]/10 text-[#08131F] dark:text-white'
+          : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300'
       }`}
     >
       Sí
@@ -226,8 +226,8 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
       onClick={() => setFormData({ ...formData, has_previous_h2b: false })}
       className={`flex-1 rounded-xl border py-3 text-sm font-bold transition ${
         formData.has_previous_h2b === false
-          ? 'border-[#C89B3C] bg-[#C89B3C]/10 text-[#08131F]'
-          : 'border-slate-300 text-slate-600'
+          ? 'border-[#C89B3C] bg-[#C89B3C]/10 text-[#08131F] dark:text-white'
+          : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300'
       }`}
     >
       No
@@ -240,7 +240,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="w-1/3 rounded-xl border border-slate-300 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
+                className="w-1/3 rounded-xl border border-slate-300 dark:border-slate-700 py-3.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
               >
                 Atrás
               </button>

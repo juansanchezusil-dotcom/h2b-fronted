@@ -175,38 +175,38 @@ export default function ApplyFlowModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08131F]/80 backdrop-blur-md p-4">
-      <div className="relative w-full max-w-2xl max-h-[92vh] rounded-2xl bg-white shadow-2xl border border-slate-100 overflow-hidden">
+      <div className="relative w-full max-w-2xl max-h-[92vh] rounded-2xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden">
         <button
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute top-4 right-4 z-20 text-slate-400 hover:text-slate-600 p-1"
+          className="absolute top-4 right-4 z-20 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 p-1"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="max-h-[92vh] overflow-y-auto p-6 md:p-8">
           <div className="flex items-center gap-3 mb-5">
-            <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl shrink-0">
+            <div className="p-2.5 bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Postular a {job.title}</h2>
-              <p className="text-xs text-slate-500">{job.employerName}</p>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Postular a {job.title}</h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{job.employerName}</p>
             </div>
           </div>
 
           {loadingProfile ? (
-            <div className="flex items-center justify-center gap-2 text-sm text-slate-500 py-10">
+            <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 py-10">
               <Loader2 className="w-4 h-4 animate-spin" /> Cargando tu perfil...
             </div>
           ) : !hasCv ? (
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center space-y-3">
-              <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center space-y-3">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
                 <FileText className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-slate-900 text-sm">Completa tu CV primero</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Completa tu CV primero</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 El correo se escribe con tu experiencia real, no con una plantilla genérica. Cuéntanos tu experiencia
                 una vez y la usamos aquí y en tu CV.
               </p>
@@ -220,42 +220,42 @@ export default function ApplyFlowModal({
           ) : (
             <div className="space-y-4">
               {!contactEmail && (
-                <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                <p className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
                   Esta oferta no trae un correo de contacto directo. Copia el mensaje y úsalo por el medio que la
                   oferta indique.
                 </p>
               )}
 
-              <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tu correo de postulación</span>
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                  <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tu correo de postulación</span>
                   <div className="flex items-center gap-3">
-                    <div className="flex text-[11px] font-bold rounded-lg border border-slate-200 overflow-hidden">
-                      <button onClick={() => setLang('en')} className={`px-2.5 py-1 ${lang === 'en' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>EN</button>
-                      <button onClick={() => setLang('es')} className={`px-2.5 py-1 ${lang === 'es' ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}>ES</button>
+                    <div className="flex text-[11px] font-bold rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                      <button onClick={() => setLang('en')} className={`px-2.5 py-1 ${lang === 'en' ? 'bg-slate-900 text-white' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>EN</button>
+                      <button onClick={() => setLang('es')} className={`px-2.5 py-1 ${lang === 'es' ? 'bg-slate-900 text-white' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>ES</button>
                     </div>
-                    <button onClick={handleCopy} disabled={!body} className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium disabled:opacity-40">
+                    <button onClick={handleCopy} disabled={!body} className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium disabled:opacity-40">
                       {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                       {copied ? 'Copiado' : 'Copiar'}
                     </button>
                   </div>
                 </div>
 
-                {error && <p className="text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">{error}</p>}
+                {error && <p className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg px-3 py-2">{error}</p>}
                 {lang === 'es' && (
-                  <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                  <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-2.5 py-1.5">
                     Traducción solo para tu referencia. Recomendamos enviarlo en inglés (EN).
                   </p>
                 )}
 
                 {loading || !email ? (
-                  <div className="flex items-center justify-center gap-2 text-sm text-slate-500 min-h-[160px]">
+                  <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 min-h-[160px]">
                     <Loader2 className="w-4 h-4 animate-spin" /> Escribiendo tu correo...
                   </div>
                 ) : (
                   <>
-                    <p className="text-xs text-slate-500"><strong className="text-slate-700">Asunto:</strong> {subject}</p>
-                    <div className="bg-slate-50 p-3.5 rounded-xl text-xs text-slate-700 font-mono whitespace-pre-wrap leading-relaxed border border-slate-100 max-h-56 overflow-y-auto">
+                    <p className="text-xs text-slate-500 dark:text-slate-400"><strong className="text-slate-700 dark:text-slate-200">Asunto:</strong> {subject}</p>
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed border border-slate-100 dark:border-slate-700 max-h-56 overflow-y-auto">
                       {body}
                     </div>
                   </>
@@ -274,13 +274,13 @@ export default function ApplyFlowModal({
                 </button>
               </div>
 
-              <div className="pt-3 border-t border-slate-100">
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
                 {alreadyBeyondSaved ? (
-                  <p className="text-xs text-slate-500 text-center">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
                     Esta postulación ya está en tu CRM (estado: {alreadySavedStatus}). Envía el correo de arriba y listo.
                   </p>
                 ) : marked ? (
-                  <p className="text-xs font-semibold text-emerald-700 text-center">✓ Marcada como postulada en tu CRM.</p>
+                  <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 text-center">✓ Marcada como postulada en tu CRM.</p>
                 ) : (
                   <button
                     onClick={handleConfirmSent}
