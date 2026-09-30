@@ -1414,7 +1414,16 @@ return (
                 <div
                   key={job.id || job.job_order_id || idx}
                   onClick={() => setSelectedJob(job)}
-                  className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between hover:border-slate-300 transition-all cursor-pointer"
+                  onKeyDown={(e) => {
+                    // El botón "Guardar" de adentro también es foco-able; solo abre
+                    // el detalle si Enter/Espacio se presionó sobre la tarjeta misma
+                    if (e.target !== e.currentTarget) return
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedJob(job) }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver detalle de ${job.title || 'oferta'} en ${job.employer_name || 'empresa registrada'}`}
+                  className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between hover:border-slate-300 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                 >
                   <div className="space-y-3">
                     <div className="flex justify-between items-start gap-2">

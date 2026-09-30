@@ -181,9 +181,16 @@ export default function RoadmapChecklist({
 
           <div className="border-t border-slate-100 pt-4 space-y-3">
             {/* Pasaporte */}
-            <div 
+            <div
               onClick={() => toggleStep('passport')}
-              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors"
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStep('passport') }
+              }}
+              role="checkbox"
+              aria-checked={completedSteps.passport}
+              tabIndex={0}
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C89B3C] focus-visible:ring-offset-2"
             >
               <div className="flex items-center gap-3">
                 {completedSteps.passport ? (
@@ -239,9 +246,16 @@ export default function RoadmapChecklist({
           </div>
 
           <div className="border-t border-slate-100 pt-4 space-y-3">
-            <div 
+            <div
               onClick={() => toggleStep('saved_jobs')}
-              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors"
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStep('saved_jobs') }
+              }}
+              role="checkbox"
+              aria-checked={completedSteps.saved_jobs}
+              tabIndex={0}
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C89B3C] focus-visible:ring-offset-2"
             >
               <div className="flex items-center gap-3">
                 {completedSteps.saved_jobs ? (
@@ -280,9 +294,16 @@ export default function RoadmapChecklist({
           </div>
 
           <div className="border-t border-slate-100 pt-4 space-y-3">
-            <div 
+            <div
               onClick={() => toggleStep('ds160')}
-              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors"
+              onKeyDown={(e) => {
+                if (e.target !== e.currentTarget) return
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStep('ds160') }
+              }}
+              role="checkbox"
+              aria-checked={completedSteps.ds160}
+              tabIndex={0}
+              className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-slate-100/80 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C89B3C] focus-visible:ring-offset-2"
             >
               <div className="flex items-center gap-3">
                 {completedSteps.ds160 ? (
