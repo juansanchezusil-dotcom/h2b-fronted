@@ -221,6 +221,9 @@ export default function Home() {
   })
   const [onlyHiresAbroad, setOnlyHiresAbroad] = useState(false)
   const [jobSortBy, setJobSortBy] = useState<'recent' | 'match'>('recent')
+  // Cuando se llega a Ofertas desde "Ver sus vacantes" en Empresas: filtro exacto
+  // por sponsor_company_id, no por nombre de texto (ver nota en viewJobsFor)
+  const [sponsorFilter, setSponsorFilter] = useState<{ id: number; name: string } | null>(null)
 
   const [companySearch, setCompanySearch] = useState('')
   const [selectedCompanyState, setSelectedCompanyState] = useState('ALL')
@@ -513,6 +516,10 @@ useEffect(() => {
         .eq('sponsor.consular_processed', 'Yes')
     }
 
+    if (sponsorFilter) {
+      query = query.eq('sponsor_company_id', sponsorFilter.id)
+    }
+
     if (selectedJobState && selectedJobState !== 'ALL') {
       const match = selectedJobState.match(/\(([^)]+)\)/)
       const stateCode = match ? match[1] : selectedJobState.trim()
@@ -586,7 +593,7 @@ useEffect(() => {
   }, 300)
 
   return () => clearTimeout(timer)
-}, [jobSearch, selectedJobState, selectedJobSector, selectedSeason, onlyHiresAbroad, jobPage])
+}, [jobSearch, selectedJobState, selectedJobSector, selectedSeason, onlyHiresAbroad, sponsorFilter, jobPage])
 
 // Orden dentro de la página ya cargada: "match" pone primero lo más compatible
 // con tu perfil (requiere haber completado el perfil, si no todas quedan en 0).
@@ -883,8 +890,14 @@ const applyJobToCrm = async (job: { title: string; employerName: string; locatio
 // Abre el redactor de correos precargado con la empresa/puesto de esta tarjeta del CRM
 // Salta de Empresas a Ofertas, filtrado por el nombre de esa empresa.
 // La búsqueda de Ofertas ya reconoce empleador, así que solo hace falta esto.
-const viewJobsFor = (employerName: string) => {
-  setJobSearch(employerName)
+// Filtra por sponsor_company_id (el vínculo real que ya arma el backend), no por
+// nombre de texto: el nombre de USCIS trae "DBA..." y a veces queda cortado a
+// media palabra, y la búsqueda por texto exige que cada palabra calce en algún
+// lado — con un nombre así, nunca encuentra la oferta real aunque sea la misma
+// empresa.
+const viewJobsFor = (sponsorId: number, employerName: string) => {
+  setJobSearch('')
+  setSponsorFilter({ id: sponsorId, name: employerName })
   setJobPage(1)
   setActiveTab('jobs')
 }
@@ -1290,6 +1303,20 @@ return (
               </div>
             </div>
 
+            {sponsorFilter && (
+              <div className="flex items-center justify-between gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3.5 py-2">
+                <span className="text-xs text-blue-900">
+                  Mostrando solo vacantes de <strong>{sponsorFilter.name}</strong>
+                </span>
+                <button
+                  onClick={() => { setSponsorFilter(null); setJobPage(1) }}
+                  className="text-xs font-bold text-blue-700 hover:text-blue-900 shrink-0"
+                >
+                  Quitar ✕
+                </button>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
               <div className="relative">
                 <input
@@ -1298,6 +1325,7 @@ return (
                   value={jobSearch}
                   onChange={(e) => {
                     setJobSearch(e.target.value)
+                    setSponsorFilter(null)
                     setJobPage(1)
                   }}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 pl-10 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
@@ -1611,7 +1639,7 @@ return (
                       </div>
                       {comp.jobs && comp.jobs.length > 0 ? (
                         <button
-                          onClick={() => viewJobsFor(comp.employer_name || '')}
+                          onClick={() => viewJobsFor(Number(comp.id), comp.employer_name || '')}
                           className="w-full bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-xs py-2 rounded-xl transition-all"
                         >
                           Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
@@ -1657,7 +1685,7 @@ return (
                           <td className="p-4 text-right">
                             {comp.jobs && comp.jobs.length > 0 ? (
                               <button
-                                onClick={() => viewJobsFor(comp.employer_name || '')}
+                                onClick={() => viewJobsFor(Number(comp.id), comp.employer_name || '')}
                                 className="bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-[11px] px-3 py-1.5 rounded-lg transition-all"
                               >
                                 Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
