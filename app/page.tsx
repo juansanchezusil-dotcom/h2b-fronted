@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import OnboardingModal from '@/components/OnboardingModal';
 import UserMenu from '@/components/UserMenu';
 import ThemeToggle from '@/components/ThemeToggle';
+import ScamDetectorTab from '@/components/ScamDetectorTab';
 import {
   Briefcase,
   Building2,
@@ -34,6 +35,7 @@ import {
   CheckCircle,
   X,
   Mail,
+  ShieldAlert,
 } from 'lucide-react'
 import { AnimatedProgressCardDemo } from '@/components/AnimatedProgressCardDemo'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
@@ -254,6 +256,7 @@ export default function Home() {
   const [savingCrmKey, setSavingCrmKey] = useState<string | null>(null)
   const [isSavingManual, setIsSavingManual] = useState(false)
   const [showEmailAssistant, setShowEmailAssistant] = useState(false)
+  const [showScamDetector, setShowScamDetector] = useState(false)
   const [hasCv, setHasCv] = useState(false)
   const [showCvBuilder, setShowCvBuilder] = useState(false)
   // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
@@ -2288,6 +2291,26 @@ return (
                 Próximamente
               </button>
             </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Detector de Estafas</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Sube una captura o foto sospechosa y revisa si hay señales de fraude H-2B.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowScamDetector(v => !v)}
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all"
+              >
+                {showScamDetector ? 'Cerrar Detector' : 'Abrir Detector'}
+              </button>
+            </div>
           </div>
 
           {showEmailAssistant && (
@@ -2300,6 +2323,8 @@ return (
               onOpenCvBuilder={() => setShowCvBuilder(true)}
             />
           )}
+
+          {showScamDetector && <ScamDetectorTab />}
         </div>
       )}
 
