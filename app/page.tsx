@@ -37,7 +37,6 @@ import {
   Mail,
   ShieldAlert,
 } from 'lucide-react'
-import { AnimatedProgressCardDemo } from '@/components/AnimatedProgressCardDemo'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
 import RoadmapChecklist, { readChecklistSteps, CHECKLIST_TOTAL_TASKS } from '@/components/RoadmapChecklist';
 import InfoTooltip from '@/components/InfoTooltip';
