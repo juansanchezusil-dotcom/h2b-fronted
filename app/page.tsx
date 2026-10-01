@@ -5,6 +5,7 @@ import OnboardingModal from '@/components/OnboardingModal';
 import UserMenu from '@/components/UserMenu';
 import ThemeToggle from '@/components/ThemeToggle';
 import ScamDetectorTab from '@/components/ScamDetectorTab';
+import InterviewSimulatorTab from '@/components/InterviewSimulatorTab';
 import {
   Briefcase,
   Building2,
@@ -256,6 +257,7 @@ export default function Home() {
   const [isSavingManual, setIsSavingManual] = useState(false)
   const [showEmailAssistant, setShowEmailAssistant] = useState(false)
   const [showScamDetector, setShowScamDetector] = useState(false)
+  const [showInterviewSimulator, setShowInterviewSimulator] = useState(false)
   const [hasCv, setHasCv] = useState(false)
   const [showCvBuilder, setShowCvBuilder] = useState(false)
   // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
@@ -2286,8 +2288,11 @@ return (
                   <p className="text-xs text-slate-500 dark:text-slate-400">Práctica preguntas habituales de los patrocinadores laborales.</p>
                 </div>
               </div>
-              <button disabled className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-bold text-xs py-2.5 rounded-xl cursor-not-allowed">
-                Próximamente
+              <button
+                onClick={() => setShowInterviewSimulator(v => !v)}
+                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all"
+              >
+                {showInterviewSimulator ? 'Cerrar Simulador' : 'Practicar Entrevista'}
               </button>
             </div>
 
@@ -2324,6 +2329,10 @@ return (
           )}
 
           {showScamDetector && <ScamDetectorTab />}
+
+          {showInterviewSimulator && (
+            <InterviewSimulatorTab userId={onboardingUserId} onOpenCvBuilder={() => setShowCvBuilder(true)} />
+          )}
         </div>
       )}
 
