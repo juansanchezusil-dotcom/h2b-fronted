@@ -6,6 +6,7 @@ import UserMenu from '@/components/UserMenu';
 import ThemeToggle from '@/components/ThemeToggle';
 import ScamDetectorTab from '@/components/ScamDetectorTab';
 import InterviewSimulatorTab from '@/components/InterviewSimulatorTab';
+import EmptyState from '@/components/EmptyState';
 import {
   Briefcase,
   Building2,
@@ -25,7 +26,6 @@ import {
   MapPin,
   Calendar,
   Users,
-  DollarSign,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -37,6 +37,8 @@ import {
   X,
   Mail,
   ShieldAlert,
+  Check,
+  Plane,
 } from 'lucide-react'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
 import RoadmapChecklist, { readChecklistSteps, CHECKLIST_TOTAL_TASKS } from '@/components/RoadmapChecklist';
@@ -185,6 +187,14 @@ const sourceInfo = (source?: string) =>
         label: 'DOL',
         tooltip: 'Oferta con certificación laboral H-2B del Departamento de Trabajo de EE. UU. (DOL). La tomamos del registro oficial cada día y la reunimos aquí con sus datos de contacto para que postules directo.',
       }
+
+// El scraper guarda el salario como "$21.12 / hour"; se separa para destacar el monto
+const WAGE_UNITS: Record<string, string> = { hour: 'hora', week: 'semana', month: 'mes', year: 'año' }
+const splitWage = (wage?: string | null) => {
+  if (!wage) return null
+  const [amount, unit] = wage.split('/').map(s => s.trim())
+  return { amount, unit: unit ? WAGE_UNITS[unit.toLowerCase()] || unit : '' }
+}
 
 type Tab = 'dashboard' | 'jobs' | 'employers' | 'agencies' | 'crm' | 'ai' | 'checklist'
 const TABS: Tab[] = ['dashboard', 'jobs', 'employers', 'agencies', 'crm', 'ai', 'checklist']
@@ -1141,40 +1151,62 @@ return (
               Encuentra ofertas H-2B oficiales, empresas con visas aprobadas por USCIS y agencias reguladas, y lleva el seguimiento de cada postulación.
             </p>
             {/* BARRA DE PROGRESO — BÚSCALAS / POSTULA / VIAJA */}
-            <div className="flex items-center gap-0 mb-6 max-w-md">
+            <ol aria-label="Tu avance" className="flex items-start mb-6 max-w-md">
               {(() => {
                 const hasApplied = crmItems.some(i => i.status !== 'guardadas')
                 const hasAccepted = crmItems.some(i => i.status === 'aceptado')
                 const currentStep = hasAccepted ? 3 : hasApplied ? 2 : 1
                 const steps = [
-                  { n: 1, label: 'Búscalas' },
-                  { n: 2, label: 'Postula' },
-                  { n: 3, label: 'Viaja' },
+                  { n: 1, label: 'Búscalas', icon: Search },
+                  { n: 2, label: 'Postula', icon: Send },
+                  { n: 3, label: 'Viaja', icon: Plane },
                 ]
-                return steps.map((s, idx) => (
-                  <div key={s.n} className="flex items-center flex-1 last:flex-none">
-                    <div className="flex flex-col items-center gap-1.5">
-                      <div
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${s.n <= currentStep ? 'bg-[#f5c518] text-[#0B2545]' : 'bg-white/15 text-white/50'
-                          }`}
-                      >
-                        {s.n}
+                return steps.map((s, idx) => {
+                  const done = s.n < currentStep
+                  const active = s.n === currentStep
+                  const Icon = done ? Check : s.icon
+                  return (
+                    <li
+                      key={s.n}
+                      aria-current={active ? 'step' : undefined}
+                      className="flex items-start flex-1 last:flex-none"
+                    >
+                      <div className="flex flex-col items-center gap-2 w-16">
+                        <div className="relative">
+                          {active && (
+                            <span className="absolute inset-0 rounded-full bg-[#f5c518]/40 motion-safe:animate-ping" aria-hidden="true" />
+                          )}
+                          <div
+                            className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                              done || active
+                                ? 'bg-[#f5c518] text-[#0B2545]'
+                                : 'bg-white/10 text-white/50 ring-1 ring-white/15'
+                            } ${active ? 'ring-4 ring-[#f5c518]/30' : ''}`}
+                          >
+                            <Icon className="w-4 h-4" strokeWidth={2.5} />
+                          </div>
+                        </div>
+                        <span className={`text-[11px] font-semibold ${done || active ? 'text-white' : 'text-white/50'}`}>
+                          {s.label}
+                        </span>
                       </div>
-                      <span className={`text-[11px] font-semibold ${s.n <= currentStep ? 'text-white' : 'text-white/50'}`}>
-                        {s.label}
-                      </span>
-                    </div>
-                    {idx < steps.length - 1 && (
-                      <div className={`flex-1 h-0.5 mx-2 mb-5 ${s.n < currentStep ? 'bg-[#f5c518]' : 'bg-white/15'}`} />
-                    )}
-                  </div>
-                ))
+                      {idx < steps.length - 1 && (
+                        <div className="flex-1 h-1 mt-[18px] -mx-2 rounded-full bg-white/15 overflow-hidden" aria-hidden="true">
+                          <div
+                            className="h-full bg-[#f5c518] rounded-full transition-all duration-700 ease-out"
+                            style={{ width: done ? '100%' : '0%' }}
+                          />
+                        </div>
+                      )}
+                    </li>
+                  )
+                })
               })()}
-            </div>
+            </ol>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setActiveTab('jobs')}
-                className="bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 shadow-sm"
+                className="bg-[#f5c518] hover:bg-[#e0b30f] text-[#0B2545] font-bold text-xs px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
               >
                 <Search className="w-4 h-4" /> Explora las Vacantes
               </button>
@@ -1415,6 +1447,24 @@ return (
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Cargando ofertas...</p>
             </div>
+          ) : filteredJobs.length === 0 ? (
+            <EmptyState
+              icons={[MapPin, Search, Briefcase]}
+              title="No hay ofertas con estos filtros"
+              description="Prueba con otra temporada, otro estado o quita algún filtro. Cada día entran ofertas nuevas del DOL."
+              action={{
+                label: 'Quitar todos los filtros',
+                onClick: () => {
+                  setJobSearch('')
+                  setSelectedSeason('ALL')
+                  setSelectedJobState('ALL')
+                  setSelectedJobSector('ALL')
+                  setOnlyHiresAbroad(false)
+                  setSponsorFilter(null)
+                  setJobPage(1)
+                },
+              }}
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredJobs.map((job, idx) => (
@@ -1434,79 +1484,90 @@ return (
                 >
                   <div className="space-y-3">
                     <div className="flex justify-between items-start gap-2">
-  <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[10px] font-bold px-2 py-0.5 rounded">
-    {job.case_number || job.job_order_id || `ID: ${job.id || idx + 1}`}
-  </span>
-  <div className="flex gap-1.5 flex-wrap justify-end">
-    {(() => {
-      const match = job.id != null ? matchScores[String(job.id)] : undefined
-      if (!match) return null
-      return (
-        <InfoTooltip text="Qué tanto encaja esta oferta con tu perfil (industria, experiencia e inglés). No es la probabilidad de que te den la visa.">
-          <span
-            className={`font-bold text-[10px] px-2 py-0.5 rounded border ${
-              match.score >= 80
-                ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30'
-                : match.score >= 50
-                ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30'
-                : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-            }`}
-          >
-            {match.score >= 80 ? '🔥' : match.score >= 50 ? '🟡' : '⚪'} {match.score}% compatible
-          </span>
-        </InfoTooltip>
-      )
-    })()}
-    {(() => {
-      const source = sourceInfo(job.source)
-      return (
-        <InfoTooltip text={source.tooltip}>
-          <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
-            ✓ Verificada · {source.label}
-          </span>
-        </InfoTooltip>
-      )
-    })()}
-  </div>
-</div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">{job.title || 'Oferta de Trabajo'}</h3>
-                      <p className="text-xs font-bold text-blue-700 dark:text-blue-400 mt-0.5">{job.employer_name || 'Empleador Registrado'}</p>
-                      <div className="mt-2">
-                        <SponsorHistory sponsor={job.sponsor} match={job.sponsor_match} />
-                      </div>
+                      <p className="text-xs font-bold text-blue-700 dark:text-blue-400 leading-snug">{job.employer_name || 'Empleador Registrado'}</p>
+                      {(() => {
+                        const source = sourceInfo(job.source)
+                        return (
+                          <InfoTooltip text={source.tooltip}>
+                            <span className="shrink-0 bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
+                              ✓ Verificada · {source.label}
+                            </span>
+                          </InfoTooltip>
+                        )
+                      })()}
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-                      <div className="flex items-center gap-1.5">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">{job.title || 'Oferta de Trabajo'}</h3>
+
+                    {(() => {
+                      const wage = splitWage(job.wage)
+                      return wage ? (
+                        <p className="flex items-baseline gap-1">
+                          <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white tabular-nums">{wage.amount}</span>
+                          {wage.unit && <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">/ {wage.unit}</span>}
+                        </p>
+                      ) : (
+                        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Salario según contrato</p>
+                      )
+                    })()}
+
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
+                      <span className="inline-flex items-center gap-1">
                         <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                        <span><strong>Ubicación:</strong> {job.location || `${job.city || ''} ${job.state || ''}` || 'EE.UU.'}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <DollarSign className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                        <span><strong>Salario:</strong> {job.wage || 'Según Contrato'}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                        <span><strong>Inicio:</strong> {job.begin_date || 'A convenir'}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                        <span><strong>Vacantes:</strong> {job.workers_requested || 'Disponibles'}</span>
-                      </div>
+                        {job.location || `${job.city || ''} ${job.state || ''}`.trim() || 'EE. UU.'}
+                      </span>
+                      {job.begin_date && (
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                          Inicia {job.begin_date}
+                        </span>
+                      )}
+                      {Number(job.workers_requested) > 0 && (
+                        <span className="inline-flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                          {job.workers_requested} vacantes
+                        </span>
+                      )}
                     </div>
+
+                    {(() => {
+                      const match = job.id != null ? matchScores[String(job.id)] : undefined
+                      if (!match) return null
+                      return (
+                        <InfoTooltip text="Qué tanto encaja esta oferta con tu perfil (industria, experiencia e inglés). No es la probabilidad de que te den la visa.">
+                          <span
+                            className={`font-bold text-[10px] px-2 py-0.5 rounded border ${
+                              match.score >= 80
+                                ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30'
+                                : match.score >= 50
+                                ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30'
+                                : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                            }`}
+                          >
+                            {match.score >= 80 ? '🔥' : match.score >= 50 ? '🟡' : '⚪'} {match.score}% compatible
+                          </span>
+                        </InfoTooltip>
+                      )
+                    })()}
+
+                    <SponsorHistory sponsor={job.sponsor} match={job.sponsor_match} />
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      addToCRM(job.employer_name, job.title, job.location);
-                    }}
-                    disabled={savingCrmKey !== null}
-                    className="w-full bg-[#0B4079] hover:bg-[#08305c] disabled:opacity-50 text-white font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
-                  >
-                    {crmItems.some(i => crmKey(i.company, i.role) === crmKey(job.employer_name || 'Empresa Generica', job.title || 'Vacante H2B'))
-                      ? '✓ Ya está en tu CRM'
-                      : '+ Guardar Oferta en Mi CRM'}
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCRM(job.employer_name, job.title, job.location);
+                      }}
+                      disabled={savingCrmKey !== null}
+                      className="w-full bg-[#0B4079] hover:bg-[#08305c] disabled:opacity-50 text-white font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                    >
+                      {crmItems.some(i => crmKey(i.company, i.role) === crmKey(job.employer_name || 'Empresa Generica', job.title || 'Vacante H2B'))
+                        ? '✓ Ya está en tu CRM'
+                        : '+ Guardar Oferta en Mi CRM'}
+                    </button>
+                    <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 text-center">
+                      {job.case_number || job.job_order_id || `ID: ${job.id || idx + 1}`}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1888,7 +1949,16 @@ return (
             </div>
           )}
 
-          <div className={`${crmError || crmLoading ? "hidden" : "grid"} grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-start overflow-x-auto pb-4`}>
+          {!crmError && !crmLoading && crmItems.length === 0 && (
+            <EmptyState
+              icons={[Briefcase, Send, CheckCircle2]}
+              title="Tu CRM está vacío"
+              description="Guarda ofertas desde la pestaña Ofertas y aquí verás cada postulación avanzar: postulado, seguimiento, entrevista y aceptado."
+              action={{ label: 'Buscar ofertas', onClick: () => setActiveTab('jobs') }}
+            />
+          )}
+
+          <div className={`${crmError || crmLoading || crmItems.length === 0 ? "hidden" : "grid"} grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-start overflow-x-auto pb-4`}>
             {/* COLUMNA 1: GUARDADAS */}
             <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
