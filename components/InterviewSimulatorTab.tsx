@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Mic, Loader2, FileText, ChevronRight, RotateCcw, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import { aiFetch } from '@/lib/aiFetch';
 
 interface InterviewSimulatorProps {
   userId: string;
@@ -65,7 +66,7 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder }: Inter
     setLoadingQuestions(true);
     setQuestionsError(null);
     try {
-      const res = await fetch('/api/interview', {
+      const res = await aiFetch('/api/interview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -93,7 +94,7 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder }: Inter
     setLoadingFeedback(true);
     setFeedbackError(null);
     try {
-      const res = await fetch('/api/interview', {
+      const res = await aiFetch('/api/interview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

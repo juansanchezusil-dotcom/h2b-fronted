@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { X, Sparkles, Copy, Download, Loader2, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
+import { aiFetch } from '@/lib/aiFetch';
 
 interface CVBuilderModalProps {
   isOpen: boolean;
@@ -67,7 +68,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/cv/adapt', {
+      const res = await aiFetch('/api/cv/adapt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ baseCvText, skills, targetRole, industry, experienceLevel, englishLevel }),

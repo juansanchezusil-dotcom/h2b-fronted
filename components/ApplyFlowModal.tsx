@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { X, Mail, ExternalLink, Copy, Check, Loader2, FileText, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
+import { aiFetch } from '@/lib/aiFetch';
 
 // Flujo único de postulación: genera el correo con el CV real del candidato,
 // lo abre listo para enviar al contacto real de la oferta, y al confirmar que
@@ -92,7 +93,7 @@ export default function ApplyFlowModal({
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/email/generate', {
+        const res = await aiFetch('/api/email/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { ShieldAlert, Upload, X, Loader2, ExternalLink, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { aiFetch } from '@/lib/aiFetch';
 
 const MAX_IMAGES = 5;
 const REPORT_URL = 'https://travel.state.gov/en/report-visa-fraud.html';
@@ -78,7 +79,7 @@ export default function ScamDetectorTab() {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch('/api/analyze-scam-image', {
+      const res = await aiFetch('/api/analyze-scam-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

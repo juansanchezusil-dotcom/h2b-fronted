@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Mail, Copy, ExternalLink, Sparkles, Check, Loader2, FileText } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
+import { aiFetch } from '@/lib/aiFetch';
 
 interface SavedOffer {
   company: string;
@@ -103,7 +104,7 @@ export function EmailAssistantTab({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/email/generate', {
+      const res = await aiFetch('/api/email/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
