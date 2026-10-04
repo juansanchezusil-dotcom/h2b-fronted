@@ -1,5 +1,6 @@
-﻿import { createServerClient } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import { hasActiveMembership } from "@/lib/membership";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -40,13 +41,7 @@ export async function GET(request: Request) {
     if (session?.user?.email) {
       const cleanEmail = session.user.email.trim().toLowerCase();
 
-      const { data: acceso } = await supabase
-        .from("accesos")
-        .select("activo")
-        .eq("email", cleanEmail)
-        .maybeSingle();
-
-      if (acceso?.activo) {
+      if (await hasActiveMembership(supabase, cleanEmail)) {
         return response; // <-- Devuelve la respuesta con las cookies guardadas
       }
 

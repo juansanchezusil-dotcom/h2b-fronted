@@ -1,5 +1,6 @@
-﻿import { createServerClient } from "@supabase/ssr";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { hasActiveMembership } from "@/lib/membership";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -53,13 +54,7 @@ export async function middleware(request: NextRequest) {
   // aunque la sesión siga viva. Las rutas /api se sirven desde el backend.
   const isPublic = pathname === "/no-acceso" || pathname.startsWith("/auth") || pathname.startsWith("/api");
   if (user?.email && !isPublic) {
-    const { data: acceso } = await supabase
-      .from("accesos")
-      .select("activo")
-      .eq("email", user.email.trim().toLowerCase())
-      .maybeSingle();
-
-    if (!acceso?.activo) {
+    if (!(await hasActiveMembership(supabase, user.email))) {
       return NextResponse.redirect(new URL("/no-acceso", request.url));
     }
   }
