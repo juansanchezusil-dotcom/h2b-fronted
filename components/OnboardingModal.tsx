@@ -16,6 +16,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
   // Todos los Hooks van PRIMERO, antes de cualquier "return" condicional.
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [formData, setFormData] = useState({  
   experiencia_industria: '',
   anos_experiencia: 0,
@@ -49,6 +50,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
+    setSaveError(null);
     setLoading(true);
 
     // Guardado en la tabla profiles de Supabase
@@ -69,7 +71,8 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
     if (!error) {
       onComplete();
     } else {
-      alert('Error al guardar el perfil: ' + error.message);
+      console.error('Error al guardar el perfil:', error.message);
+      setSaveError('No pudimos guardar tu perfil. Revisa tu conexión e intenta de nuevo.');
     }
   };
 
@@ -234,6 +237,15 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
     </button>
   </div>
 </div>
+
+            {saveError && (
+              <p
+                role="alert"
+                className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg px-3 py-2"
+              >
+                {saveError}
+              </p>
+            )}
 
             <div className="flex gap-3 pt-2">
 

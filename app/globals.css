@@ -1,4 +1,3 @@
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -20,18 +19,50 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Geist ya se carga en layout.tsx; antes el body forzaba Arial y nunca se usaba */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
-@theme {
-  --color-brand-50: #f0f9ff;
-  --color-brand-100: #e0f2fe;
-  --color-brand-500: #0284c7;
-  --color-brand-600: #0369a1;
-  --color-brand-700: #075985;
-  --color-brand-800: #0c4a6e;
-  --color-brand-900: #0a3651;
+@layer base {
+  /* Anclas con desplazamiento suave, salvo que la persona pida menos movimiento */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  /* Títulos equilibrados, sin palabras sueltas al final, y tracking más cerrado en los grandes */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+  h1,
+  h2 {
+    letter-spacing: -0.015em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Foco visible y consistente al navegar con teclado (los inputs conservan su propio anillo) */
+  :where(a, button, [role='button'], summary, select, input, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #c89b3c;
+    outline-offset: 2px;
+  }
+
+  /* Los botones responden al toque: transición suave y un leve hundimiento al presionar */
+  button {
+    transition-property: scale, color, background-color, border-color, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    button:not(:disabled):active {
+      scale: 0.98;
+    }
+  }
 }

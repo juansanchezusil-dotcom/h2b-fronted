@@ -27,6 +27,8 @@ export default function AdminPage() {
   const [email, setEmail] = useState('')
   const [dias, setDias] = useState(30)
   const [busy, setBusy] = useState(false)
+  // Correo cuya revocación espera confirmación (segundo clic), en vez de un cuadro del navegador
+  const [confirmingRevoke, setConfirmingRevoke] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
@@ -142,13 +144,31 @@ export default function AdminPage() {
                   <RefreshCw className="w-3.5 h-3.5" /> +30 días
                 </button>
                 {a.activo && (
-                  <button
-                    onClick={() => confirm(`¿Revocar el acceso de ${a.email}?`) && send('DELETE', { email: a.email })}
-                    disabled={busy}
-                    className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline disabled:opacity-50"
-                  >
-                    <Ban className="w-3.5 h-3.5" /> Revocar
-                  </button>
+                  confirmingRevoke === a.email ? (
+                    <span className="flex items-center gap-2 text-xs">
+                      <button
+                        onClick={async () => {
+                          await send('DELETE', { email: a.email })
+                          setConfirmingRevoke(null)
+                        }}
+                        disabled={busy}
+                        className="font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg px-2.5 py-1 disabled:opacity-50"
+                      >
+                        Sí, revocar
+                      </button>
+                      <button onClick={() => setConfirmingRevoke(null)} className="font-semibold text-slate-500 dark:text-slate-400 hover:underline">
+                        Cancelar
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmingRevoke(a.email)}
+                      disabled={busy}
+                      className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline disabled:opacity-50"
+                    >
+                      <Ban className="w-3.5 h-3.5" /> Revocar
+                    </button>
+                  )
                 )}
               </li>
             )

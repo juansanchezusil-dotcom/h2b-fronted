@@ -1050,7 +1050,13 @@ const nextAction = getNextAction()
 const isSummerNow = (() => { const m = new Date().getMonth(); return !(m >= 3 && m <= 8) })()
 
 return (
-  <div className="min-h-screen bg-[#F4F6F8] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+  <div className="min-h-dvh bg-[#F4F6F8] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+    <a
+      href="#contenido"
+      className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-60 focus:rounded-lg focus:bg-[#08131F] focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white"
+    >
+      Saltar al contenido
+    </a>
 
     {/* HEADER Y NAVEGACIÓN */}
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-xs">
@@ -1137,7 +1143,7 @@ return (
     </header>
 
     {/* CONTENIDO PRINCIPAL */}
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <main id="contenido" tabIndex={-1} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 outline-none">
 
       {/* DASHBOARD */}
       {activeTab === 'dashboard' && (
@@ -1445,9 +1451,21 @@ return (
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Cargando ofertas...</p>
+            // Esqueletos con la forma de las tarjetas: la lista no "salta" cuando llegan los datos
+            <div role="status" aria-label="Cargando ofertas" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-3 motion-safe:animate-pulse"
+                >
+                  <div className="h-3 w-2/5 rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-4 w-4/5 rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-8 w-1/3 rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-3 w-3/5 rounded bg-slate-100 dark:bg-slate-800/70" />
+                  <div className="h-9 w-full rounded-xl bg-slate-100 dark:bg-slate-800/70" />
+                </div>
+              ))}
+              <span className="sr-only">Cargando ofertas...</span>
             </div>
           ) : filteredJobs.length === 0 ? (
             <EmptyState

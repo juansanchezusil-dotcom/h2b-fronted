@@ -28,7 +28,7 @@ export default async function NoAccesoPage({
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-dvh flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full text-center bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-5">
         {isLoginError ? (
           <div>
