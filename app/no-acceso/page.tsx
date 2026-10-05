@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import SignOutButton from "./SignOutButton";
+import LogoMark from "@/components/LogoMark";
 
 // Enlace de compra opcional: se configura en Vercel sin tocar código
 const MEMBERSHIP_URL = process.env.NEXT_PUBLIC_MEMBERSHIP_URL;
@@ -30,6 +31,7 @@ export default async function NoAccesoPage({
   return (
     <div className="min-h-dvh flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full text-center bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-5">
+        <LogoMark size={48} decorative className="mx-auto rounded-xl shadow-sm" />
         {isLoginError ? (
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">No pudimos iniciar tu sesión</h1>

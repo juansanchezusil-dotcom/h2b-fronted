@@ -46,6 +46,7 @@ import InfoTooltip from '@/components/InfoTooltip';
 import Pagination from '@/components/Pagination';
 import SponsorHistory from '@/components/SponsorHistory';
 import CVBuilderModal from '@/components/CVBuilderModal';
+import LogoMark from '@/components/LogoMark';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
 import { useBackToClose } from '@/hooks/useBackToClose';
 // LISTA COMPLETA DE ESTADOS DE EE. UU. Y TERRITORIOS
@@ -1063,9 +1064,7 @@ return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#0B4079] text-white flex items-center justify-center font-black text-lg shadow-sm">
-              J
-            </div>
+            <LogoMark size={36} decorative className="shrink-0 rounded-xl shadow-sm" />
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-slate-900 dark:text-white text-lg leading-tight">Juan Te Avisa</span>

@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { createBrowserClient } from "@supabase/ssr";
+import LogoMark from "@/components/LogoMark";
 
 export default function LoginPage() {
   const supabase = createBrowserClient(
@@ -23,12 +24,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-dvh flex items-center justify-center bg-gray-50 px-4">
       <div className="max-w-md w-full text-center bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-        <div className="mb-6">
-          <span className="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-            Juan Te Avisa PRO
-          </span>
-          <h1 className="text-2xl font-bold text-gray-900 mt-3">
-            Iniciar Sesión
+        <div className="mb-6 flex flex-col items-center">
+          <LogoMark size={64} decorative className="rounded-2xl shadow-sm" />
+          <p className="mt-4 text-xs font-bold uppercase tracking-[0.22em] text-[#08131F]">
+            Juan Te Avisa <span className="text-[#b8860b]">PRO</span>
+          </p>
+          <h1 className="text-2xl font-bold text-gray-900 mt-5">
+            Iniciar sesión
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Accede al Centro de Control H2B y gestión de vacantes.
