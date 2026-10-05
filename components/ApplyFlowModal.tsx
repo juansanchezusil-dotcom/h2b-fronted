@@ -16,6 +16,7 @@ interface ApplyJob {
   employerName: string;
   location?: string;
   contactEmail?: string;
+  duties?: string;
 }
 
 interface ApplyFlowModalProps {
@@ -26,6 +27,8 @@ interface ApplyFlowModalProps {
   alreadySavedStatus?: string | null;
   onClose: () => void;
   onOpenCvBuilder: () => void;
+  // Abre el constructor de CV para ver cómo encaja la persona con esta oferta antes de enviar
+  onAdaptCv?: () => void;
   onApplied: () => void;
 }
 
@@ -45,6 +48,7 @@ export default function ApplyFlowModal({
   alreadySavedStatus,
   onClose,
   onOpenCvBuilder,
+  onAdaptCv,
   onApplied,
 }: ApplyFlowModalProps) {
   useBackToClose(isOpen, onClose);
@@ -220,6 +224,18 @@ export default function ApplyFlowModal({
             </div>
           ) : (
             <div className="space-y-4">
+              {onAdaptCv && (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-[#C89B3C]/40 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-3">
+                  <p className="text-xs text-amber-900 dark:text-amber-300">¿Quieres ver cómo encajas con esta oferta antes de enviar?</p>
+                  <button
+                    type="button"
+                    onClick={onAdaptCv}
+                    className="shrink-0 text-xs font-bold bg-[#C89B3C] text-[#08131F] rounded-lg px-3 py-1.5 hover:bg-[#b08833]"
+                  >
+                    Ver mi encaje
+                  </button>
+                </div>
+              )}
               {!contactEmail && (
                 <p className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
                   Esta oferta no trae un correo de contacto directo. Copia el mensaje y úsalo por el medio que la

@@ -47,6 +47,7 @@ import Pagination from '@/components/Pagination';
 import SponsorHistory from '@/components/SponsorHistory';
 import CVBuilderModal from '@/components/CVBuilderModal';
 import LogoMark from '@/components/LogoMark';
+import AssistantModal from '@/components/AssistantModal';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
 import { useBackToClose } from '@/hooks/useBackToClose';
 // LISTA COMPLETA DE ESTADOS DE EE. UU. Y TERRITORIOS
@@ -276,7 +277,7 @@ export default function Home() {
   // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
   const [emailDraftFor, setEmailDraftFor] = useState<{ company: string; role: string } | null>(null)
   // Oferta que se está postulando ahora mismo (flujo "Postular ahora" del detalle)
-  const [applyFlowJob, setApplyFlowJob] = useState<{ title: string; employerName: string; location?: string; contactEmail?: string } | null>(null)
+  const [applyFlowJob, setApplyFlowJob] = useState<{ title: string; employerName: string; location?: string; contactEmail?: string; duties?: string } | null>(null)
 
   const refreshHasCv = async (userId: string) => {
     if (!userId) return
@@ -916,7 +917,6 @@ const viewJobsFor = (sponsorId: number, employerName: string) => {
 const openEmailFor = (item: CRMItem) => {
   setEmailDraftFor({ company: item.company, role: item.role })
   setShowEmailAssistant(true)
-  setActiveTab('ai')
 }
 
 const deleteCrmItem = async (id: string) => {
@@ -2360,10 +2360,10 @@ return (
                 </div>
               </div>
               <button
-                onClick={() => setShowEmailAssistant(v => !v)}
+                onClick={() => setShowEmailAssistant(true)}
                 className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors"
               >
-                {showEmailAssistant ? 'Cerrar Redactor' : 'Abrir Redactor'}
+                Abrir Redactor
               </button>
             </div>
 
@@ -2378,10 +2378,10 @@ return (
                 </div>
               </div>
               <button
-                onClick={() => setShowInterviewSimulator(v => !v)}
+                onClick={() => setShowInterviewSimulator(true)}
                 className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all"
               >
-                {showInterviewSimulator ? 'Cerrar Simulador' : 'Practicar Entrevista'}
+                Practicar Entrevista
               </button>
             </div>
 
@@ -2398,30 +2398,13 @@ return (
                 </div>
               </div>
               <button
-                onClick={() => setShowScamDetector(v => !v)}
+                onClick={() => setShowScamDetector(true)}
                 className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all"
               >
-                {showScamDetector ? 'Cerrar Detector' : 'Abrir Detector'}
+                Abrir Detector
               </button>
             </div>
           </div>
-
-          {showEmailAssistant && (
-            <EmailAssistantTab
-              key={`${emailDraftFor?.company || ''}-${emailDraftFor?.role || ''}`}
-              userId={onboardingUserId}
-              initialCompanyName={emailDraftFor?.company || ''}
-              initialJobTitle={emailDraftFor?.role || ''}
-              savedOffers={crmItems.map(i => ({ company: i.company, role: i.role, state: i.state }))}
-              onOpenCvBuilder={() => setShowCvBuilder(true)}
-            />
-          )}
-
-          {showScamDetector && <ScamDetectorTab />}
-
-          {showInterviewSimulator && (
-            <InterviewSimulatorTab userId={onboardingUserId} onOpenCvBuilder={() => setShowCvBuilder(true)} />
-          )}
         </div>
       )}
 
@@ -2538,23 +2521,6 @@ return (
               </div>
             </div>
 
-            {/* BOTÓN ADAPTAR CV */}
-            <button
-              type="button"
-              onClick={() => {
-                setCvJob({
-                  title: selectedJob.title || selectedJob.job_title || 'Vacante H2B',
-                  employerName: selectedJob.employer_name || selectedJob.emp_name || '',
-                  location: selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim(),
-                  duties: selectedJob.job_description || selectedJob.job_duties || selectedJob.description || selectedJob.duties || '',
-                })
-                setShowCvBuilder(true)
-              }}
-              className="w-full border border-[#C89B3C] text-[#08131F] dark:text-amber-300 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 font-bold text-xs py-3 rounded-xl transition-all text-center flex items-center justify-center gap-2"
-            >
-              ✨ Adaptar mi CV a esta oferta
-            </button>
-
             {/* BOTÓN POSTULAR */}
             <div className="pt-1">
               {(() => {
@@ -2577,6 +2543,7 @@ return (
                       employerName: selectedJob.employer_name || selectedJob.emp_name || 'Empresa Generica',
                       location: selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim(),
                       contactEmail: selectedJob.email_to_apply || selectedJob.email || selectedJob.recruitment_email || selectedJob.emp_email || '',
+                      duties: selectedJob.job_description || selectedJob.job_duties || selectedJob.description || selectedJob.duties || '',
                     })}
                     className="w-full bg-[#00A86B] hover:bg-[#008f5b] text-white font-bold text-xs py-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-sm"
                   >
@@ -2692,6 +2659,36 @@ return (
       onClose={() => setShowOnboarding(false)}
     />
 
+    <AssistantModal
+      isOpen={showEmailAssistant && !showCvBuilder}
+      label="Redactor de correos"
+      onClose={() => {
+        setShowEmailAssistant(false)
+        setEmailDraftFor(null)
+      }}
+    >
+      <EmailAssistantTab
+        key={`${emailDraftFor?.company || ''}-${emailDraftFor?.role || ''}`}
+        userId={onboardingUserId}
+        initialCompanyName={emailDraftFor?.company || ''}
+        initialJobTitle={emailDraftFor?.role || ''}
+        savedOffers={crmItems.map(i => ({ company: i.company, role: i.role, state: i.state }))}
+        onOpenCvBuilder={() => setShowCvBuilder(true)}
+      />
+    </AssistantModal>
+
+    <AssistantModal isOpen={showScamDetector} label="Detector de estafas" onClose={() => setShowScamDetector(false)}>
+      <ScamDetectorTab />
+    </AssistantModal>
+
+    <AssistantModal
+      isOpen={showInterviewSimulator && !showCvBuilder}
+      label="Simulador de entrevista"
+      onClose={() => setShowInterviewSimulator(false)}
+    >
+      <InterviewSimulatorTab userId={onboardingUserId} onOpenCvBuilder={() => setShowCvBuilder(true)} />
+    </AssistantModal>
+
     <CVBuilderModal
       isOpen={showCvBuilder}
       userId={onboardingUserId}
@@ -2717,6 +2714,16 @@ return (
       }
       onClose={() => setApplyFlowJob(null)}
       onOpenCvBuilder={() => setShowCvBuilder(true)}
+      onAdaptCv={() => {
+        if (!applyFlowJob) return
+        setCvJob({
+          title: applyFlowJob.title,
+          employerName: applyFlowJob.employerName,
+          location: applyFlowJob.location,
+          duties: applyFlowJob.duties,
+        })
+        setShowCvBuilder(true)
+      }}
       onApplied={() => applyFlowJob && applyJobToCrm(applyFlowJob)}
     />
 
