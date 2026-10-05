@@ -224,7 +224,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     const res = await aiFetch('/api/cv/interview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, job: jobPayload }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'No se pudo procesar tu respuesta. Intenta de nuevo.');
@@ -433,6 +433,23 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     } finally {
       setDownloading(null);
     }
+  };
+
+  // Con una oferta, al volver a la conversación se ofrece de entrada lo que todavía no se puede respaldar
+  const backToChat = () => {
+    const open = (result?.requirements || []).filter((r) => r.status === 'UNKNOWN' || r.status === 'MISSING');
+    const alreadyAsked = turns[turns.length - 1]?.text.startsWith('Para esta oferta');
+    if (job && open.length > 0 && !alreadyAsked) {
+      const list = open.slice(0, 4).map((r) => `• ${r.requirement_es}`).join('\n');
+      setTurns((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: `Para esta oferta todavía no puedo respaldar:\n${list}\n\n¿Has hecho algo parecido, aunque haya sido informal o por poco tiempo? Cuéntame qué hacías, solo lo que de verdad hiciste.`,
+        },
+      ]);
+    }
+    setStage('chat');
   };
 
   const restart = () => {
@@ -798,7 +815,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
             <div className="flex gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
-                onClick={() => setStage('chat')}
+                onClick={backToChat}
                 className="w-1/3 flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-700 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
               >
                 <ArrowLeft className="w-4 h-4" /> Seguir editando
