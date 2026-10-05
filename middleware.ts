@@ -52,6 +52,15 @@ export async function middleware(request: NextRequest) {
   // 3. La membresía se revisa en cada visita, no solo al iniciar sesión:
   // si el webhook de pago la desactiva (reembolso/cancelación), el acceso se corta
   // aunque la sesión siga viva. Las rutas /api se sirven desde el backend.
+  // /admin solo existe para los correos de ADMIN_EMAILS; al resto se le manda a la app sin mostrarle nada.
+  // (Los datos igual están protegidos en el backend; esto solo evita que vean la página.)
+  if (user?.email && pathname.startsWith("/admin")) {
+    const admins = (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+    if (!admins.includes(user.email.trim().toLowerCase())) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  }
+
   const isPublic = pathname === "/no-acceso" || pathname.startsWith("/auth") || pathname.startsWith("/api");
   if (user?.email && !isPublic) {
     if (!(await hasActiveMembership(supabase, user.email))) {
