@@ -270,6 +270,8 @@ export default function Home() {
   const [showInterviewSimulator, setShowInterviewSimulator] = useState(false)
   const [hasCv, setHasCv] = useState(false)
   const [showCvBuilder, setShowCvBuilder] = useState(false)
+  // Oferta a la que se adapta el CV (null = CV general)
+  const [cvJob, setCvJob] = useState<{ title: string; employerName: string; location?: string; duties?: string } | null>(null)
   // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
   const [emailDraftFor, setEmailDraftFor] = useState<{ company: string; role: string } | null>(null)
   // Oferta que se está postulando ahora mismo (flujo "Postular ahora" del detalle)
@@ -2519,6 +2521,23 @@ return (
               </div>
             </div>
 
+            {/* BOTÓN ADAPTAR CV */}
+            <button
+              type="button"
+              onClick={() => {
+                setCvJob({
+                  title: selectedJob.title || selectedJob.job_title || 'Vacante H2B',
+                  employerName: selectedJob.employer_name || selectedJob.emp_name || '',
+                  location: selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim(),
+                  duties: selectedJob.job_description || selectedJob.job_duties || selectedJob.description || selectedJob.duties || '',
+                })
+                setShowCvBuilder(true)
+              }}
+              className="w-full border border-[#C89B3C] text-[#08131F] dark:text-amber-300 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 font-bold text-xs py-3 rounded-xl transition-all text-center flex items-center justify-center gap-2"
+            >
+              ✨ Adaptar mi CV a esta oferta
+            </button>
+
             {/* BOTÓN POSTULAR */}
             <div className="pt-1">
               {(() => {
@@ -2659,7 +2678,11 @@ return (
     <CVBuilderModal
       isOpen={showCvBuilder}
       userId={onboardingUserId}
-      onClose={() => setShowCvBuilder(false)}
+      job={cvJob}
+      onClose={() => {
+        setShowCvBuilder(false)
+        setCvJob(null)
+      }}
       onSaved={() => refreshHasCv(onboardingUserId)}
     />
 

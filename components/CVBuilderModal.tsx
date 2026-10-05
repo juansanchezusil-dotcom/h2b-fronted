@@ -12,6 +12,20 @@ interface CVBuilderModalProps {
   onClose: () => void;
   // Se llama cuando el CV queda guardado con éxito, para refrescar el estado del checklist
   onSaved?: () => void;
+  // Oferta a la que se adapta el CV (null/undefined = CV general)
+  job?: JobTarget | null;
+}
+
+interface JobTarget {
+  title: string;
+  employerName: string;
+  location?: string;
+  duties?: string;
+}
+
+interface Requirement {
+  requirement_es: string;
+  status: 'MATCH' | 'TRANSFERABLE' | 'MISSING' | 'UNKNOWN';
 }
 
 interface Experience {
@@ -78,6 +92,12 @@ interface CVResult {
   full_text: string;
   base_cv_text: string;
   removed: number;
+  requirements?: Requirement[];
+}
+
+interface Letter {
+  letter: string;
+  notes_es: string;
 }
 
 type Stage = 'start' | 'chat' | 'result';
@@ -86,6 +106,13 @@ const ROUTE_LABELS: Record<string, string> = {
   A: 'Experiencia directa',
   B: 'Experiencia transferible',
   C: 'Experiencia práctica',
+};
+
+const REQUIREMENT_STYLES: Record<Requirement['status'], { label: string; style: string }> = {
+  MATCH: { label: 'Coincide', style: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' },
+  TRANSFERABLE: { label: 'Transferible', style: 'bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400' },
+  MISSING: { label: 'Te falta', style: 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400' },
+  UNKNOWN: { label: 'Por confirmar', style: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' },
 };
 
 const CRITICAL_TOTAL = 4; // nombre, puesto, una experiencia completa y la ruta
@@ -111,7 +138,7 @@ function readAsBase64(file: File): Promise<string> {
   });
 }
 
-export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVBuilderModalProps) {
+export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }: CVBuilderModalProps) {
   const [stage, setStage] = useState<Stage>('start');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -136,6 +163,9 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const [result, setResult] = useState<CVResult | null>(null);
+  const [letter, setLetter] = useState<Letter | null>(null);
+  const [letterLoading, setLetterLoading] = useState(false);
+  const [copiedLetter, setCopiedLetter] = useState(false);
 
   // Cada vez que se abre: vuelve al inicio y precarga lo que ya haya guardado
   useEffect(() => {
@@ -143,6 +173,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
     setStage('start');
     setError(null);
     setResult(null);
+    setLetter(null);
     setFile(null);
     setPastedCv('');
     (async () => {
@@ -253,6 +284,58 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
     setStage('chat');
   };
 
+  // Con una oferta y un perfil ya guardado no hace falta entrevistar de nuevo: se genera directo.
+  // Si el perfil no alcanza, el servidor lo dice y la persona puede seguir la conversación.
+  const adaptFromDraft = async () => {
+    if (!savedDraft) return;
+    setProfile(savedDraft.profile);
+    setTurns(savedDraft.turns);
+    setGaps(savedDraft.gaps || []);
+    setReady(!!savedDraft.ready);
+    await handleGenerate(savedDraft.profile);
+  };
+
+  const handleLetter = async () => {
+    setError(null);
+    setLetterLoading(true);
+    try {
+      const res = await aiFetch('/api/cv/cover-letter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile, job: jobPayload }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo generar la carta.');
+      setLetter(data);
+    } catch (err: any) {
+      setError(err.message || 'No se pudo generar la carta. Intenta de nuevo.');
+    } finally {
+      setLetterLoading(false);
+    }
+  };
+
+  const handleCopyLetter = async () => {
+    if (!letter) return;
+    try {
+      await navigator.clipboard.writeText(letter.letter);
+      setCopiedLetter(true);
+      setTimeout(() => setCopiedLetter(false), 2000);
+    } catch {
+      window.prompt('Copia tu carta manualmente:', letter.letter);
+    }
+  };
+
+  const handleDownloadLetter = () => {
+    if (!letter) return;
+    const blob = new Blob([letter.letter], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Cover_Letter_H2B.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || loading) return;
@@ -273,18 +356,21 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
     }
   };
 
-  const handleGenerate = async () => {
+  const jobPayload = job ? { title: job.title, employer_name: job.employerName, job_duties: job.duties } : undefined;
+
+  const handleGenerate = async (profileArg?: CandidateProfile) => {
     setError(null);
     setLoading(true);
     try {
       const res = await aiFetch('/api/cv/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile }),
+        body: JSON.stringify({ profile: profileArg || profile, job: jobPayload }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo generar el CV.');
       setResult(data);
+      setLetter(null);
       setStage('result');
     } catch (err: any) {
       setError(err.message || 'No se pudo generar el CV. Intenta de nuevo.');
@@ -307,6 +393,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
       cv_route: result.ruta || null,
       cv_en: { cv: result.cv, full_text: result.full_text },
       cv_draft: { profile, turns: turns.slice(-30), gaps, ready },
+      ...(letter ? { cover_letter_en: letter.letter } : {}),
     });
     setSaving(false);
     if (dbError) {
@@ -363,7 +450,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
 
         <div className="px-6 pt-6 pb-3 pr-14 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-2xl font-extrabold text-[#08131F] dark:text-white">
-            {stage === 'result' ? 'Tu currículum en inglés' : 'Arma tu CV'}
+            {stage === 'result' ? 'Tu currículum en inglés' : job ? 'Adapta tu CV a esta oferta' : 'Arma tu CV'}
           </h2>
           {stage === 'chat' && (
             <div className="mt-2 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
@@ -381,6 +468,26 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Te hago unas preguntas sobre tu experiencia real y armo tu CV en inglés. Nada se inventa: solo usamos lo que tú nos cuentes.
             </p>
+
+            {job && (
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 space-y-2">
+                <p className="text-xs text-slate-700 dark:text-slate-300">
+                  Vas a adaptar tu CV a: <strong>{job.title}</strong>
+                  {job.employerName ? ` — ${job.employerName}` : ''}
+                </p>
+                {savedDraft && (
+                  <button
+                    type="button"
+                    onClick={adaptFromDraft}
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs py-2.5"
+                  >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    {loading ? 'Adaptando...' : 'Usar mi perfil guardado y adaptar el CV'}
+                  </button>
+                )}
+              </div>
+            )}
 
             {savedDraft && (
               <div className="rounded-xl border border-[#C89B3C]/40 bg-amber-50 dark:bg-amber-500/10 p-3 flex items-center justify-between gap-3">
@@ -510,7 +617,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
                   <p className="text-xs text-emerald-800 dark:text-emerald-300">Ya tengo lo necesario. Puedes generar tu CV o seguir agregando detalle.</p>
                   <button
                     type="button"
-                    onClick={handleGenerate}
+                    onClick={() => handleGenerate()}
                     disabled={loading}
                     className="shrink-0 flex items-center gap-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-lg px-3 py-1.5"
                   >
@@ -569,6 +676,22 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
               </div>
             )}
 
+            {result.requirements && result.requirements.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Tu perfil frente a la oferta</h3>
+                <ul className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  {result.requirements.map((r, i) => (
+                    <li key={i} className="flex items-center justify-between gap-3 px-3 py-2">
+                      <span className="text-xs text-slate-700 dark:text-slate-300">{r.requirement_es}</span>
+                      <span className={`shrink-0 text-[11px] font-bold rounded-full px-2 py-0.5 ${REQUIREMENT_STYLES[r.status].style}`}>
+                        {REQUIREMENT_STYLES[r.status].label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="space-y-2">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">Vista previa</h3>
               <pre className="whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 max-h-72 overflow-y-auto font-sans">
@@ -610,7 +733,56 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
               </button>
             </div>
 
+            <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Carta de presentación</h3>
+              {!letter ? (
+                <button
+                  type="button"
+                  onClick={handleLetter}
+                  disabled={letterLoading}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {letterLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                  {letterLoading ? 'Escribiendo tu carta...' : 'Crear mi carta de presentación'}
+                </button>
+              ) : (
+                <>
+                  <pre className="whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 max-h-64 overflow-y-auto font-sans">
+                    {letter.letter}
+                  </pre>
+                  {letter.notes_es && (
+                    <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
+                      💡 {letter.notes_es}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyLetter}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      {copiedLetter ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copiedLetter ? 'Copiada' : 'Copiar carta'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadLetter}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Descargar .txt
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
             {error && <p className={errorClass}>{error}</p>}
+
+            {job && (
+              <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                Esta versión es solo para esta oferta: cópiala o descárgala. No reemplaza tu CV guardado.
+              </p>
+            )}
 
             <div className="flex gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
               <button
@@ -620,14 +792,24 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved }: CVB
               >
                 <ArrowLeft className="w-4 h-4" /> Seguir editando
               </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="w-2/3 rounded-xl bg-[#C89B3C] py-3 text-sm font-bold text-[#08131F] shadow-md hover:bg-[#b08833] disabled:opacity-50 transition"
-              >
-                {saving ? 'Guardando...' : 'Guardar mi CV'}
-              </button>
+              {job ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="w-2/3 rounded-xl bg-[#C89B3C] py-3 text-sm font-bold text-[#08131F] shadow-md hover:bg-[#b08833] transition"
+                >
+                  Listo
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-2/3 rounded-xl bg-[#C89B3C] py-3 text-sm font-bold text-[#08131F] shadow-md hover:bg-[#b08833] disabled:opacity-50 transition"
+                >
+                  {saving ? 'Guardando...' : 'Guardar mi CV'}
+                </button>
+              )}
             </div>
           </div>
         )}
