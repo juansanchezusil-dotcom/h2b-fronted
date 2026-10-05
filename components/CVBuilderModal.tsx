@@ -5,6 +5,7 @@ import { X, Sparkles, Copy, Download, Loader2, Check, Send, Upload, FileText, Ro
 import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
 import { aiFetch } from '@/lib/aiFetch';
+import { buildCvDocx, buildLetterDocx, docxFileName, downloadBlob, type BuiltCv } from '@/lib/cvDocx';
 
 interface CVBuilderModalProps {
   isOpen: boolean;
@@ -88,7 +89,7 @@ interface CVResult {
   diagnostico_es: string;
   estrategia_es: string;
   recomendaciones_es: string[];
-  cv: { skills: string[] };
+  cv: BuiltCv;
   full_text: string;
   base_cv_text: string;
   removed: number;
@@ -166,6 +167,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
   const [letter, setLetter] = useState<Letter | null>(null);
   const [letterLoading, setLetterLoading] = useState(false);
   const [copiedLetter, setCopiedLetter] = useState(false);
+  const [downloading, setDownloading] = useState<'cv' | 'letter' | null>(null);
 
   // Cada vez que se abre: vuelve al inicio y precarga lo que ya haya guardado
   useEffect(() => {
@@ -325,15 +327,18 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     }
   };
 
-  const handleDownloadLetter = () => {
+  const handleDownloadLetter = async () => {
     if (!letter) return;
-    const blob = new Blob([letter.letter], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'Cover_Letter_H2B.txt';
-    a.click();
-    URL.revokeObjectURL(url);
+    setDownloading('letter');
+    setError(null);
+    try {
+      downloadBlob(await buildLetterDocx(letter.letter, profile.fullName), docxFileName(profile.fullName, 'Cover_Letter'));
+    } catch (err) {
+      console.error('No se pudo crear el Word de la carta:', err);
+      setError('No se pudo crear el archivo Word. Usa Copiar y pégala en Word.');
+    } finally {
+      setDownloading(null);
+    }
   };
 
   const handleSend = async () => {
@@ -415,15 +420,19 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     }
   };
 
-  const handleDownload = () => {
+  // El Word se arma en el navegador: la librería se descarga solo la primera vez que se pide
+  const handleDownload = async () => {
     if (!result) return;
-    const blob = new Blob([result.full_text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'CV_H2B.txt';
-    a.click();
-    URL.revokeObjectURL(url);
+    setDownloading('cv');
+    setError(null);
+    try {
+      downloadBlob(await buildCvDocx(result.cv), docxFileName(result.cv.header.fullName, 'CV'));
+    } catch (err) {
+      console.error('No se pudo crear el Word del CV:', err);
+      setError('No se pudo crear el archivo Word. Usa Copiar y pégalo en Word.');
+    } finally {
+      setDownloading(null);
+    }
   };
 
   const restart = () => {
@@ -727,9 +736,10 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
               <button
                 type="button"
                 onClick={handleDownload}
+                disabled={downloading === 'cv'}
                 className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
-                <Download className="w-3.5 h-3.5" /> Descargar .txt
+                {downloading === 'cv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar Word
               </button>
             </div>
 
@@ -767,9 +777,10 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                     <button
                       type="button"
                       onClick={handleDownloadLetter}
+                      disabled={downloading === 'letter'}
                       className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
                     >
-                      <Download className="w-3.5 h-3.5" /> Descargar .txt
+                      {downloading === 'letter' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar Word
                     </button>
                   </div>
                 </>
