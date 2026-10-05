@@ -14,6 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // Las imágenes de compartir (opengraph-image, twitter-image) necesitan una URL base absoluta.
+  // Si algún día usas tu propio dominio, cámbiala con NEXT_PUBLIC_SITE_URL en Vercel.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://h2b-fronted.vercel.app"),
+  twitter: { card: "summary_large_image" },
   title: "Juan Te Avisa PRO - Sistema Operativo H2B",
   description: "Encuentra ofertas de trabajo H-2B verificadas, empresas patrocinadoras y agencias reguladas. Tu sistema operativo para el proceso de visa H-2B.",
   // Vista previa al compartir el enlace (WhatsApp, Instagram, Facebook)
