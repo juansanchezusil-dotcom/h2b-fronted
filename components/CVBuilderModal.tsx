@@ -216,7 +216,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     // Sin await a propósito: si falla el guardado del borrador la entrevista sigue igual
     supabase
       .from('profiles')
-      .upsert({ id: userId, cv_draft: { ...draft, turns: draft.turns.slice(-30) } })
+      .upsert({ id: userId, cv_draft: { ...draft, turns: draft.turns.slice(-30) }, ...(draft.profile?.fullName?.trim() ? { full_name: draft.profile.fullName.trim() } : {}) })
       .then((r: { error: { message: string } | null }) => r.error && console.error('No se pudo guardar el borrador del CV:', r.error.message));
   };
 
@@ -390,6 +390,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     setError(null);
     const { error: dbError } = await supabase.from('profiles').upsert({
       id: userId,
+      ...(profile.fullName?.trim() ? { full_name: profile.fullName.trim() } : {}),
       target_role: profile.targetRole,
       industry: profile.industry,
       english_level: profile.englishLevel,

@@ -61,6 +61,10 @@ export default function LoginPage() {
           </svg>
           Continuar con Google
         </button>
+        <p className="mt-4 text-center text-xs text-slate-500">
+          Al continuar aceptas el uso de tus datos según nuestra{" "}
+          <a href="/privacidad" className="underline">política de privacidad</a>.
+        </p>
       </div>
     </div>
   );

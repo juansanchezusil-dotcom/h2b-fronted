@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
 
   // 1. Si NO ha iniciado sesión y quiere entrar a cualquier ruta protegida (incluyendo la raíz `/`),
   // lo redirige inmediatamente a /login
-  if (!user && pathname !== "/login" && pathname !== "/no-acceso" && !pathname.startsWith("/auth")) {
+  if (!user && pathname !== "/login" && pathname !== "/no-acceso" && pathname !== "/privacidad" && !pathname.startsWith("/auth")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -61,7 +61,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const isPublic = pathname === "/no-acceso" || pathname.startsWith("/auth") || pathname.startsWith("/api");
+  const isPublic = pathname === "/no-acceso" || pathname === "/privacidad" || pathname.startsWith("/auth") || pathname.startsWith("/api");
   if (user?.email && !isPublic) {
     if (!(await hasActiveMembership(supabase, user.email))) {
       return NextResponse.redirect(new URL("/no-acceso", request.url));
