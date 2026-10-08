@@ -78,7 +78,7 @@ function vence(m: Miembro) {
 function compromiso(m: Miembro, commitmentDays: number) {
   const c = m.compromiso
   if (!c.llegoAlDia30) return c.dia === null ? '—' : `Día ${c.dia} de ${commitmentDays}`
-  return c.califica ? 'Califica para diagnóstico' : `No califica: falta ${c.faltan.join(', ')}`
+  return c.califica ? 'Completó el reto' : `Aún le falta: ${c.faltan.join(', ')}`
 }
 
 function contacto(m: Miembro) {
@@ -234,7 +234,7 @@ export default function RadarPanel() {
           </div>
 
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Compromiso de PRO a los {data.config.commitmentDays} días: califican <strong>{data.resumen.califican}</strong>, no califican{' '}
+            Reto de {data.config.commitmentDays} días: lo completaron <strong>{data.resumen.califican}</strong>, aún no{' '}
             <strong>{data.resumen.noCalifican}</strong>. La meta es {data.config.goal} postulaciones a empresas distintas, más perfil y CV.
           </p>
 
@@ -276,7 +276,7 @@ export default function RadarPanel() {
                     <dd className="font-medium text-slate-700 dark:text-slate-200">{vence(m)}</dd>
                   </div>
                   <div>
-                    <dt className="text-slate-400 dark:text-slate-500">Compromiso</dt>
+                    <dt className="text-slate-400 dark:text-slate-500">Reto de 30 días</dt>
                     <dd className="font-medium text-slate-700 dark:text-slate-200">{compromiso(m, data.config.commitmentDays)}</dd>
                   </div>
                 </dl>

@@ -40,7 +40,7 @@ export function NoticesView({ notices, renewUrl }: { notices: Notices; renewUrl?
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm">
         <div className="flex items-center gap-2">
           <Target className="w-4 h-4 text-[#C89B3C]" aria-hidden="true" />
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white">Tu Compromiso de PRO</h2>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white">Tu Reto de 30 días</h2>
           {enCurso && (
             <span className="text-xs text-slate-500 dark:text-slate-400">
               · Día {notices.dia} de {COMMITMENT_DAYS}
@@ -64,14 +64,23 @@ export function NoticesView({ notices, renewUrl }: { notices: Notices; renewUrl?
         </div>
         {/* Una sola cadena: con expresiones seguidas de texto en varias líneas el compilador se comía el espacio */}
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          {`Para la revisión de tu caso a los ${COMMITMENT_DAYS} días cuentan: perfil completo, CV hecho y ${COMMITMENT_GOAL} postulaciones a empresas distintas. Se registran cuando postulas desde la app o mueves una oferta fuera de “guardadas”.`}
+          {`El reto: perfil completo, CV hecho y ${COMMITMENT_GOAL} postulaciones a empresas distintas en ${COMMITMENT_DAYS} días. Es tu avance, no una promesa de resultado. Se registran cuando postulas desde la app o mueves una oferta fuera de “guardadas”.`}
         </p>
+        {notices.postulaciones >= COMMITMENT_GOAL ? (
+          <p role="status" className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+            {`Llegaste a las ${COMMITMENT_GOAL} postulaciones. Esto lo hiciste tú. Sigue con tu seguimiento 7-14-21.`}
+          </p>
+        ) : notices.dia !== null && notices.dia >= COMMITMENT_DAYS ? (
+          <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+            {`Llevas ${notices.postulaciones} de ${COMMITMENT_GOAL}. No pasa nada: cuéntame qué te frenó respondiendo cualquier correo mío y lo vemos juntos.`}
+          </p>
+        ) : null}
       </div>
     </div>
   )
 }
 
-// Dos avisos para la persona, debajo de "Tu prioridad": cuánto lleva de su Compromiso de PRO y, solo
+// Dos avisos para la persona, debajo de "Tu prioridad": cuánto lleva de su Reto de 30 días y, solo
 // cuando faltan 7 días o menos, que su acceso está por vencer. Son datos reales, sin urgencia inventada.
 export default function MembershipNotices({ userId }: { userId: string }) {
   const notices = useMembershipNotices(userId)
