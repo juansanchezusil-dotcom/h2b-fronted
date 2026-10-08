@@ -114,6 +114,7 @@ const US_STATES = [
 
 // Cliente Supabase (instancia única para evitar duplicación de cliente)
 import { supabase } from '@/lib/supabaseClient'
+import { goalFor } from '@/lib/goals'
 
 // Interfaces ajustadas a la BBDD real
 interface Job {
@@ -222,6 +223,8 @@ export default function Home() {
   useBackToClose(!!selectedJob, () => setSelectedJob(null))
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [profileCompleted, setProfileCompleted] = useState(false)
+  const [profileIndustry, setProfileIndustry] = useState('')
+  const [profileRole, setProfileRole] = useState('')
   const [onboardingUserId, setOnboardingUserId] = useState<string>('')
   // Registra la última visita (como máximo una vez por hora) para el seguimiento de actividad
   useLastSeen(onboardingUserId)
@@ -439,7 +442,7 @@ useEffect(() => {
       refreshHasCv(user.id)
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('perfil_completado')
+        .select('perfil_completado, industry, target_role')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -447,6 +450,8 @@ useEffect(() => {
 
 const isComplete = !error && !!profile && profile.perfil_completado === true
 setProfileCompleted(isComplete)
+setProfileIndustry(profile?.industry || '')
+setProfileRole(profile?.target_role || '')
 
 if (!isComplete) {
   setShowOnboarding(true)
@@ -960,7 +965,7 @@ const totalAgencyPages = Math.ceil(totalAgenciesCount / ITEMS_PER_PAGE) || 1
 // Mismos 5 elementos que el Mapa: perfil, CV, pasaporte, 5 ofertas guardadas y DS-160
 const checklistDone = [profileCompleted, hasCv, manualSteps.passport, crmItems.length >= 5, manualSteps.ds160].filter(Boolean).length
 const checklistPercentage = Math.round((checklistDone / CHECKLIST_TOTAL_TASKS) * 100)
-const weeklyTarget = 15
+const weeklyTarget = goalFor(profileIndustry, profileRole).perWeek
 // Postulaciones movidas fuera de "guardadas" en los últimos 7 días (no el total histórico)
 const applicationsThisWeek = crmItems.filter(i => i.status !== 'guardadas' && Date.now() - i.lastUpdated < 7 * 24 * 60 * 60 * 1000).length
 const searchHealthPercentage = Math.min(100, Math.round((applicationsThisWeek / weeklyTarget) * 100))

@@ -2,7 +2,7 @@
 // avance del Compromiso). Función pura, sin base ni navegador, para poder probarla. Los textos no
 // prometen visa, patrocinio, entrevista ni empleo: describen dónde está la persona y qué sigue.
 
-export const MAP_GOAL = 10 // postulaciones a empresas distintas en 30 días (mismo número que el Compromiso de PRO)
+import { goalFor, type Goal } from './goals'
 const DAY = 24 * 60 * 60 * 1000
 
 export type StageId = 'prepare' | 'search' | 'apply' | 'followup' | 'interview'
@@ -61,6 +61,7 @@ export interface H2BMapData {
   englishNote: string | null
   nextSteps: NextStep[]
   plan: PlanWeek[]
+  goal: Goal
   stats: { guardadas: number; postuladas: number; seguimiento: number; entrevistas: number; aceptadas: number }
   progress: { done: number; total: number }
 }
@@ -119,6 +120,9 @@ export function englishNoteFor(targetRole: string, industry: string, englishLeve
 
 export function buildMap(input: MapInput): H2BMapData {
   const { profile, hasCv, crm, steps, now } = input
+  const goal = goalFor(profile.industry, profile.targetRole)
+  const MAP_GOAL = goal.perMonth
+  const part = (pct: number) => Math.max(5, Math.round((MAP_GOAL * pct) / 100))
 
   const count = (status: string) => crm.filter((i) => i.status === status).length
   const guardadas = count('guardadas')
@@ -237,7 +241,7 @@ export function buildMap(input: MapInput): H2BMapData {
       week: 2,
       title: 'Primeras postulaciones',
       current: week === 2,
-      items: [{ label: '5 postulaciones a empresas distintas', done: input.applied30 >= 5 }],
+      items: [{ label: `${part(30)} postulaciones a empresas distintas`, done: input.applied30 >= part(30) }],
     },
     {
       week: 3,
@@ -245,7 +249,7 @@ export function buildMap(input: MapInput): H2BMapData {
       current: week === 3,
       items: [
         { label: 'Seguimiento a las postulaciones de 7 días', done: applied > 0 && pendingFollowUps === 0 },
-        { label: `${MAP_GOAL} postulaciones a empresas distintas`, done: input.applied30 >= MAP_GOAL },
+        { label: `${part(70)} postulaciones a empresas distintas`, done: input.applied30 >= part(70) },
       ],
     },
     {
@@ -253,6 +257,7 @@ export function buildMap(input: MapInput): H2BMapData {
       title: 'Revisa y ajusta',
       current: week === 4,
       items: [
+        { label: `Llegar a ${MAP_GOAL} postulaciones a empresas distintas`, done: input.applied30 >= MAP_GOAL },
         { label: 'Revisar qué empresas respondieron', done: entrevistas + aceptadas + count('rechazada') > 0 },
         { label: 'Ajustar tu CV o tus ofertas según lo que veas', done: false },
       ],
@@ -269,6 +274,7 @@ export function buildMap(input: MapInput): H2BMapData {
     englishNote,
     nextSteps,
     plan,
+    goal,
     stats: { guardadas, postuladas: applied, seguimiento, entrevistas, aceptadas },
     progress: { done: checks.filter(Boolean).length, total: checks.length },
   }

@@ -4,7 +4,7 @@
 // Mismos números que usa el radar del administrador (backend: src/admin/radar.ts, constante RADAR).
 // Si se cambian allá, cambiarlos aquí también.
 export const COMMITMENT_DAYS = 30
-export const COMMITMENT_GOAL = 10
+export { COMMITMENT_FLOOR as COMMITMENT_GOAL } from './goals'
 export const RENEWAL_NOTICE_DAYS = 7
 
 const DAY = 24 * 60 * 60 * 1000

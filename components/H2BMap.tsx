@@ -288,6 +288,7 @@ export default function H2BMap({
             Tu plan de 30 días
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">Lo que ya hiciste se marca solo con tus datos.</p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{`Meta recomendada para ${map.goal.label}: unas ${map.goal.perWeek} postulaciones por semana a empresas distintas (${map.goal.perMonth} en 30 días). El primer día es para tu perfil, tu CV y conocer tu Mapa. Prioriza ofertas verificadas sobre cantidad.`}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {map.plan.map((w) => (
