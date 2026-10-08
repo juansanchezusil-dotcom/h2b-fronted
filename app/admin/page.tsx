@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Loader2, UserPlus, RefreshCw, Ban } from 'lucide-react'
 import { aiFetch } from '@/lib/aiFetch'
+import RadarPanel from '@/components/RadarPanel'
 
 interface Acceso {
   email: string
@@ -69,13 +70,15 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
+    <div className="max-w-5xl mx-auto p-6 space-y-8">
       <div>
         <h1 className="text-xl font-bold text-slate-800 dark:text-white">Membresías</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Cuando alguien pague en Skool, agrega su correo aquí. El acceso se corta solo al llegar la fecha de vencimiento.
         </p>
       </div>
+
+      <RadarPanel />
 
       <form
         onSubmit={add}
