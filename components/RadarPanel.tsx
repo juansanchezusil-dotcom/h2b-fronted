@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Loader2, RefreshCw, Radar } from 'lucide-react'
+import { Loader2, RefreshCw, Radar, Check } from 'lucide-react'
 import { aiFetch } from '@/lib/aiFetch'
 
 type Estado = 'activo' | 'enfriandose' | 'en_riesgo' | 'inactivo' | 'nunca_entro'
@@ -20,10 +20,16 @@ interface Miembro {
   porVencer: boolean
   prioridadRenovacion: boolean
   compromiso: { dia: number | null; llegoAlDia30: boolean; califica: boolean | null; faltan: string[] }
+  acelerador: { candidato: boolean; motivos: string[] }
+  casoExito: boolean
+  contactadoEl: string | null
+  diasDesdeContacto: number | null
+  nota: string | null
+  porContactar: boolean
 }
 
 interface RadarData {
-  config: { goal: number; commitmentDays: number; coolingDays: number; riskDays: number; inactiveDays: number }
+  config: { goal: number; commitmentDays: number; coolingDays: number; riskDays: number; inactiveDays: number; contactCooldownDays: number }
   resumen: {
     total: number
     porEstado: Record<Estado, number>
@@ -33,12 +39,15 @@ interface RadarData {
     prioridadRenovacion: number
     califican: number
     noCalifican: number
+    porContactar: number
+    candidatosAcelerador: number
+    casosExito: number
   }
   miembros: Miembro[]
   generado: string
 }
 
-type Filtro = 'todos' | Estado | 'por_vencer' | 'renovacion' | 'sin_arrancar' | 'estancado'
+type Filtro = 'todos' | Estado | 'por_contactar' | 'acelerador' | 'exito' | 'por_vencer' | 'renovacion' | 'sin_arrancar' | 'estancado'
 
 const ESTADOS: Record<Estado, { label: string; badge: string }> = {
   activo: { label: 'Activo', badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' },
@@ -47,6 +56,9 @@ const ESTADOS: Record<Estado, { label: string; badge: string }> = {
   inactivo: { label: 'Inactivo', badge: 'bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400' },
   nunca_entro: { label: 'Nunca entró', badge: 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300' },
 }
+
+const tag = 'text-[11px] font-bold rounded-full px-2 py-0.5'
+const neutralTag = `${tag} bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300`
 
 const pluralDias = (n: number) => `${n} ${n === 1 ? 'día' : 'días'}`
 
@@ -69,10 +81,22 @@ function compromiso(m: Miembro, commitmentDays: number) {
   return c.califica ? 'Califica para diagnóstico' : `No califica: falta ${c.faltan.join(', ')}`
 }
 
+function contacto(m: Miembro) {
+  if (m.diasDesdeContacto === null) return 'Sin contactar'
+  const cuando = m.diasDesdeContacto === 0 ? 'hoy' : m.diasDesdeContacto === 1 ? 'ayer' : `hace ${pluralDias(m.diasDesdeContacto)}`
+  return `Contactado ${cuando}`
+}
+
 function pasaFiltro(m: Miembro, f: Filtro) {
   switch (f) {
     case 'todos':
       return true
+    case 'por_contactar':
+      return m.porContactar
+    case 'acelerador':
+      return m.acelerador.candidato
+    case 'exito':
+      return m.casoExito
     case 'por_vencer':
       return m.porVencer
     case 'renovacion':
@@ -91,6 +115,10 @@ export default function RadarPanel() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [filtro, setFiltro] = useState<Filtro>('todos')
+  // Correo al que se le está escribiendo la nota de contacto, y la nota
+  const [editando, setEditando] = useState<string | null>(null)
+  const [nota, setNota] = useState('')
+  const [guardando, setGuardando] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -111,9 +139,32 @@ export default function RadarPanel() {
     load()
   }, [load])
 
+  const guardarContacto = async (email: string, deshacer = false) => {
+    setGuardando(true)
+    setError(null)
+    try {
+      const res = await aiFetch('/api/admin/contacto', {
+        method: deshacer ? 'DELETE' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(deshacer ? { email } : { email, nota }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body.error || 'No se pudo guardar.')
+      setEditando(null)
+      setNota('')
+      await load()
+    } catch (err: any) {
+      setError(err.message || 'No se pudo guardar.')
+    } finally {
+      setGuardando(false)
+    }
+  }
+
   const chips: { id: Filtro; label: string; n: number }[] = data
     ? [
         { id: 'todos', label: 'Todos', n: data.resumen.total },
+        { id: 'por_contactar', label: 'Por contactar', n: data.resumen.porContactar },
+        { id: 'acelerador', label: 'Candidatos Accelerator', n: data.resumen.candidatosAcelerador },
         { id: 'renovacion', label: 'Renovación urgente', n: data.resumen.prioridadRenovacion },
         { id: 'por_vencer', label: 'Por vencer', n: data.resumen.porVencer },
         { id: 'nunca_entro', label: 'Nunca entró', n: data.resumen.porEstado.nunca_entro },
@@ -123,6 +174,7 @@ export default function RadarPanel() {
         { id: 'enfriandose', label: 'Enfriándose', n: data.resumen.porEstado.enfriandose },
         { id: 'estancado', label: 'Estancados', n: data.resumen.estancados },
         { id: 'activo', label: 'Activos', n: data.resumen.porEstado.activo },
+        { id: 'exito', label: 'Casos de éxito', n: data.resumen.casosExito },
       ]
     : []
 
@@ -136,7 +188,7 @@ export default function RadarPanel() {
             <Radar className="w-5 h-5 text-[#C89B3C]" aria-hidden="true" /> Radar de actividad
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Quién se está enfriando y a quién renovar. Ordenado por prioridad.
+            Quién se está enfriando, a quién renovar y a quién escribirle. Ordenado por prioridad.
           </p>
         </div>
         <button
@@ -196,21 +248,18 @@ export default function RadarPanel() {
                     <p className="text-xs text-slate-500 dark:text-slate-400 break-all">{m.email}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
-                    {m.prioridadRenovacion && (
-                      <span className="text-[11px] font-bold rounded-full px-2 py-0.5 bg-[#C89B3C] text-[#08131F]">Renovación urgente</span>
-                    )}
+                    {m.casoExito && <span className={`${tag} bg-emerald-600 text-white`}>Caso de éxito</span>}
+                    {m.acelerador.candidato && <span className={`${tag} bg-[#0B4079] text-white`}>Candidato Accelerator</span>}
+                    {m.prioridadRenovacion && <span className={`${tag} bg-[#C89B3C] text-[#08131F]`}>Renovación urgente</span>}
                     {m.porVencer && !m.prioridadRenovacion && (
-                      <span className="text-[11px] font-bold rounded-full px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">Por vencer</span>
+                      <span className={`${tag} bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-300`}>Por vencer</span>
                     )}
-                    {m.sinArrancar && (
-                      <span className="text-[11px] font-bold rounded-full px-2 py-0.5 bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">Sin arrancar</span>
-                    )}
-                    {m.estancado && (
-                      <span className="text-[11px] font-bold rounded-full px-2 py-0.5 bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">Estancado</span>
-                    )}
-                    <span className={`text-[11px] font-bold rounded-full px-2 py-0.5 ${ESTADOS[m.estado].badge}`}>{ESTADOS[m.estado].label}</span>
+                    {m.sinArrancar && <span className={neutralTag}>Sin arrancar</span>}
+                    {m.estancado && <span className={neutralTag}>Estancado</span>}
+                    <span className={`${tag} ${ESTADOS[m.estado].badge}`}>{ESTADOS[m.estado].label}</span>
                   </div>
                 </div>
+
                 <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-xs">
                   <div>
                     <dt className="text-slate-400 dark:text-slate-500">Última visita</dt>
@@ -231,6 +280,85 @@ export default function RadarPanel() {
                     <dd className="font-medium text-slate-700 dark:text-slate-200">{compromiso(m, data.config.commitmentDays)}</dd>
                   </div>
                 </dl>
+
+                {m.acelerador.candidato && (
+                  <ul className="text-xs text-blue-900 dark:text-blue-200 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg px-3 py-2 space-y-0.5 list-disc list-inside">
+                    {m.acelerador.motivos.map((motivo) => (
+                      <li key={motivo}>{motivo}</li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                  {editando === m.email ? (
+                    <form
+                      className="flex flex-1 flex-wrap items-center gap-2"
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        guardarContacto(m.email)
+                      }}
+                    >
+                      <label className="sr-only" htmlFor={`nota-${m.email}`}>
+                        Nota del contacto
+                      </label>
+                      <input
+                        id={`nota-${m.email}`}
+                        type="text"
+                        value={nota}
+                        onChange={(e) => setNota(e.target.value)}
+                        maxLength={500}
+                        placeholder="Nota opcional: cómo y qué hablaron"
+                        className="flex-1 min-w-[12rem] rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/30"
+                      />
+                      <button
+                        type="submit"
+                        disabled={guardando}
+                        className="flex items-center gap-1 rounded-lg bg-[#0B4079] hover:bg-[#08305c] disabled:opacity-50 text-white text-xs font-bold px-3 py-1.5"
+                      >
+                        {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Guardar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditando(null)
+                          setNota('')
+                        }}
+                        className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:underline"
+                      >
+                        Cancelar
+                      </button>
+                    </form>
+                  ) : (
+                    <>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 min-w-0">
+                        <span className="font-semibold text-slate-600 dark:text-slate-300">{contacto(m)}</span>
+                        {m.nota ? `: ${m.nota}` : ''}
+                      </p>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {m.contactadoEl && (
+                          <button
+                            type="button"
+                            onClick={() => guardarContacto(m.email, true)}
+                            disabled={guardando}
+                            className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:underline disabled:opacity-50"
+                          >
+                            Deshacer
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditando(m.email)
+                            setNota('')
+                          }}
+                          className="text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] hover:underline"
+                        >
+                          {m.contactadoEl ? 'Volver a marcar' : 'Marcar contactado'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </li>
             ))}
           </ul>
@@ -238,7 +366,8 @@ export default function RadarPanel() {
           <p className="text-[11px] text-slate-400 dark:text-slate-500">
             La última visita viene de la app; si aún no hay, del último inicio de sesión. Las postulaciones cuentan empresas distintas que
             salieron de &quot;guardadas&quot;; el historial empezó el 7 de octubre de 2026, así que antes de esa fecha es aproximado. Quien postula
-            por correo sin registrarlo en el CRM no se refleja aquí.
+            por correo sin registrarlo en el CRM no se refleja aquí. Tras marcar un contacto, la persona deja de salir como pendiente durante{' '}
+            {data.config.contactCooldownDays} días.
           </p>
         </>
       )}

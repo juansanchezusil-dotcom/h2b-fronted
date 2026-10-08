@@ -48,6 +48,7 @@ import SponsorHistory from '@/components/SponsorHistory';
 import CVBuilderModal from '@/components/CVBuilderModal';
 import LogoMark from '@/components/LogoMark';
 import AssistantModal from '@/components/AssistantModal';
+import MembershipNotices from '@/components/MembershipNotices';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
 import { useBackToClose } from '@/hooks/useBackToClose';
 import { useLastSeen } from '@/hooks/useLastSeen';
@@ -1242,6 +1243,9 @@ return (
               </button>
             </div>
           )}
+
+          {/* Avance del Compromiso de PRO y, si falta poco, aviso de vencimiento */}
+          <MembershipNotices userId={onboardingUserId} />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
