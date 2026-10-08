@@ -50,6 +50,7 @@ import LogoMark from '@/components/LogoMark';
 import AssistantModal from '@/components/AssistantModal';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
 import { useBackToClose } from '@/hooks/useBackToClose';
+import { useLastSeen } from '@/hooks/useLastSeen';
 // LISTA COMPLETA DE ESTADOS DE EE. UU. Y TERRITORIOS
 const US_STATES = [
   { code: 'AL', name: 'Alabama' },
@@ -219,6 +220,8 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [profileCompleted, setProfileCompleted] = useState(false)
   const [onboardingUserId, setOnboardingUserId] = useState<string>('')
+  // Registra la última visita (como máximo una vez por hora) para el seguimiento de actividad
+  useLastSeen(onboardingUserId)
 
   // --- FILTROS DE BÚSQUEDA INDEPENDIENTES ---
   const [jobSearch, setJobSearch] = useState('')
