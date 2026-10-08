@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Mail, ExternalLink, Copy, Check, Loader2, FileText, Sparkles } from 'lucide-react';
+import { X, Mail, ExternalLink, Copy, Check, Loader2, FileText, Sparkles, Target } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
 import { aiFetch } from '@/lib/aiFetch';
@@ -57,6 +57,8 @@ export default function ApplyFlowModal({
   const [hasCv, setHasCv] = useState(false);
   const [candidate, setCandidate] = useState<{ fullName: string; baseCvText: string; skills: string[]; englishLevel: string } | null>(null);
 
+  // 'fit': primero ver cómo encaja con la oferta. 'email': ya eligió pasar al correo. Sin la opción de encaje, va directo al correo.
+  const [step, setStep] = useState<'fit' | 'email'>('fit');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState<GeneratedEmail | null>(null);
@@ -69,6 +71,7 @@ export default function ApplyFlowModal({
   useEffect(() => {
     if (!isOpen || !userId) return;
     setLoadingProfile(true);
+    setStep(onAdaptCv ? 'fit' : 'email');
     setEmail(null);
     setSent(false);
     setMarked(false);
@@ -92,7 +95,7 @@ export default function ApplyFlowModal({
   }, [isOpen, userId]);
 
   useEffect(() => {
-    if (!isOpen || !job || !candidate || !hasCv || email || loading) return;
+    if (!isOpen || !job || !candidate || !hasCv || step !== 'email' || email || loading) return;
     (async () => {
       setLoading(true);
       setError(null);
@@ -120,7 +123,7 @@ export default function ApplyFlowModal({
         setLoading(false);
       }
     })();
-  }, [isOpen, job, candidate, hasCv, email, loading]);
+  }, [isOpen, job, candidate, hasCv, step, email, loading]);
 
   if (!isOpen || !job) return null;
 
@@ -222,20 +225,36 @@ export default function ApplyFlowModal({
                 Completar mi CV
               </button>
             </div>
+          ) : step === 'fit' ? (
+            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center space-y-4">
+              <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-[#C89B3C] flex items-center justify-center mx-auto">
+                <Target className="w-5 h-5" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Antes de enviar, mira cómo encajas</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Tu correo y tu CV salen de lo que cuentas de tu experiencia. Revisamos esta oferta contra tu perfil y te decimos qué reforzar antes de postular.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={onAdaptCv}
+                  className="w-full sm:w-auto bg-[#C89B3C] hover:bg-[#b08833] text-[#08131F] font-bold text-xs px-5 py-2.5 rounded-xl transition-all"
+                >
+                  Ver mi encaje
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep('email')}
+                  className="w-full sm:w-auto text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-4 py-2.5"
+                >
+                  Ir directo al correo
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
-              {onAdaptCv && (
-                <div className="flex items-center justify-between gap-3 rounded-xl border border-[#C89B3C]/40 bg-amber-50 dark:bg-amber-500/10 px-3.5 py-3">
-                  <p className="text-xs text-amber-900 dark:text-amber-300">¿Quieres ver cómo encajas con esta oferta antes de enviar?</p>
-                  <button
-                    type="button"
-                    onClick={onAdaptCv}
-                    className="shrink-0 text-xs font-bold bg-[#C89B3C] text-[#08131F] rounded-lg px-3 py-1.5 hover:bg-[#b08833]"
-                  >
-                    Ver mi encaje
-                  </button>
-                </div>
-              )}
               {!contactEmail && (
                 <p className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
                   Esta oferta no trae un correo de contacto directo. Copia el mensaje y úsalo por el medio que la
