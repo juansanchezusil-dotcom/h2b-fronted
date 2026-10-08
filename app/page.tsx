@@ -39,9 +39,11 @@ import {
   ShieldAlert,
   Check,
   Plane,
+  Compass,
 } from 'lucide-react'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
-import RoadmapChecklist, { readChecklistSteps, CHECKLIST_TOTAL_TASKS } from '@/components/RoadmapChecklist';
+import H2BMap from '@/components/H2BMap';
+import { readChecklistSteps, CHECKLIST_TOTAL_TASKS } from '@/lib/checklistSteps';
 import InfoTooltip from '@/components/InfoTooltip';
 import Pagination from '@/components/Pagination';
 import SponsorHistory from '@/components/SponsorHistory';
@@ -455,14 +457,13 @@ if (!isComplete) {
   checkUserProfile()
 }, [])
 
-// ===== CHECKLIST =====
-// El avance vive en RoadmapChecklist (guardado en el navegador); aquí solo se lee
-// para el recuadro del dashboard, cada vez que se vuelve a una pestaña.
-const [checklistDone, setChecklistDone] = useState(0)
+// ===== MI MAPA =====
+// Los pasos manuales (pasaporte y DS-160) viven en el navegador; aquí solo se leen para el recuadro
+// del dashboard, cada vez que se vuelve a una pestaña.
+const [manualSteps, setManualSteps] = useState({ passport: false, ds160: false })
 useEffect(() => {
-  const manual = Object.values(readChecklistSteps(onboardingUserId)).filter(Boolean).length
-  setChecklistDone((profileCompleted ? 1 : 0) + manual)
-}, [activeTab, onboardingUserId, profileCompleted])
+  setManualSteps(readChecklistSteps(onboardingUserId))
+}, [activeTab, onboardingUserId])
 
 const [matchScores, setMatchScores] = useState<Record<string, { score: number; breakdown: any }>>({})
 
@@ -956,6 +957,8 @@ const saveNotes = async (id: string) => {
 const totalJobPages = Math.ceil(totalJobsCount / JOBS_PER_PAGE) || 1
 const totalCompanyPages = Math.ceil(totalEmployersCount / ITEMS_PER_PAGE) || 1
 const totalAgencyPages = Math.ceil(totalAgenciesCount / ITEMS_PER_PAGE) || 1
+// Mismos 5 elementos que el Mapa: perfil, CV, pasaporte, 5 ofertas guardadas y DS-160
+const checklistDone = [profileCompleted, hasCv, manualSteps.passport, crmItems.length >= 5, manualSteps.ds160].filter(Boolean).length
 const checklistPercentage = Math.round((checklistDone / CHECKLIST_TOTAL_TASKS) * 100)
 const weeklyTarget = 15
 // Postulaciones movidas fuera de "guardadas" en los últimos 7 días (no el total histórico)
@@ -1138,8 +1141,8 @@ return (
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'checklist' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
-            <CheckCircle2 className="w-4 h-4" />
-            Checklist
+            <Compass className="w-4 h-4" />
+            Mi Mapa
           </button>
         </nav>
       </div>
@@ -1282,14 +1285,14 @@ return (
             </div>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
               <div>
-                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">PROGRESO CHECKLIST</p>
+                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">TU MAPA H2B</p>
                 <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{checklistPercentage}%</p>
                 <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">
                   {checklistDone > 0 ? `${checklistDone} de ${CHECKLIST_TOTAL_TASKS} completados` : 'Sin iniciar'}
                 </p>
               </div>
               <div className="w-11 h-11 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5" />
+                <Compass className="w-5 h-5" />
               </div>
             </div>
           </div>
@@ -2417,16 +2420,19 @@ return (
 
      {/* TAB CHECKLIST EN app/page.tsx */}
 {activeTab === 'checklist' && (
-  <RoadmapChecklist
-  hasCompletedQuiz={profileCompleted}
-  hasCv={hasCv}
-  onEditProfile={() => setShowOnboarding(true)}
-  onOpenCvBuilder={() => setShowCvBuilder(true)}
-  userId={onboardingUserId}
-  onNavigateToTab={(tab) => {
-    if ((TABS as string[]).includes(tab)) setActiveTab(tab as Tab)
-  }}
-/>
+  <H2BMap
+    userId={onboardingUserId}
+    hasCv={hasCv}
+    perfilCompletado={profileCompleted}
+    crmItems={crmItems.map((i) => ({ status: i.status, createdAt: i.createdAt }))}
+    onEditProfile={() => setShowOnboarding(true)}
+    onOpenCvBuilder={() => setShowCvBuilder(true)}
+    onNavigateToTab={(tab) => {
+      if ((TABS as string[]).includes(tab)) setActiveTab(tab as Tab)
+    }}
+    onOpenInterview={() => setShowInterviewSimulator(true)}
+    onOpenScamDetector={() => setShowScamDetector(true)}
+  />
 )}
       {/* MODAL DETALLE DE OFERTA LABORAL (ÚNICO) */}
       {selectedJob && (

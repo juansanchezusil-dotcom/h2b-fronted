@@ -1,14 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { CalendarClock, Target } from 'lucide-react'
-import { supabase } from '@/lib/supabaseClient'
-import { COMMITMENT_DAYS, COMMITMENT_GOAL, computeNotices, type Notices } from '@/lib/membershipNotices'
+import { COMMITMENT_DAYS, COMMITMENT_GOAL, type Notices } from '@/lib/membershipNotices'
+import { useMembershipNotices } from '@/hooks/useMembershipNotices'
 
 // Enlace para renovar, configurable en Vercel sin tocar código (el mismo que usa la pantalla de sin acceso)
 const MEMBERSHIP_URL = process.env.NEXT_PUBLIC_MEMBERSHIP_URL
-
-const DAY = 24 * 60 * 60 * 1000
 
 export function NoticesView({ notices, renewUrl }: { notices: Notices; renewUrl?: string }) {
   const pct = Math.min(100, Math.round((notices.postulaciones / COMMITMENT_GOAL) * 100))
@@ -77,33 +74,7 @@ export function NoticesView({ notices, renewUrl }: { notices: Notices; renewUrl?
 // Dos avisos para la persona, debajo de "Tu prioridad": cuánto lleva de su Compromiso de PRO y, solo
 // cuando faltan 7 días o menos, que su acceso está por vencer. Son datos reales, sin urgencia inventada.
 export default function MembershipNotices({ userId }: { userId: string }) {
-  const [notices, setNotices] = useState<Notices | null>(null)
-
-  useEffect(() => {
-    if (!userId) return
-    let cancelled = false
-    ;(async () => {
-      const { data: auth } = await supabase.auth.getUser()
-      const email = auth.user?.email?.trim().toLowerCase()
-      if (!email) return
-      const since = new Date(Date.now() - COMMITMENT_DAYS * DAY).toISOString()
-      const [acceso, eventos] = await Promise.all([
-        supabase.from('accesos').select('created_at, vence_el').eq('email', email).maybeSingle(),
-        supabase
-          .from('application_events')
-          .select('company_name, from_status, to_status, created_at')
-          .eq('user_id', userId)
-          .gte('created_at', since),
-      ])
-      // Si algo falla no se muestra nada: es un aviso de apoyo, no algo que la persona necesite para usar la app
-      if (cancelled || acceso.error || eventos.error) return
-      setNotices(computeNotices(acceso.data, eventos.data || [], Date.now()))
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [userId])
-
+  const notices = useMembershipNotices(userId)
   if (!notices) return null
   return <NoticesView notices={notices} renewUrl={MEMBERSHIP_URL} />
 }
