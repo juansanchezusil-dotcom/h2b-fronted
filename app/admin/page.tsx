@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Loader2, UserPlus, RefreshCw, Ban } from 'lucide-react'
 import { aiFetch } from '@/lib/aiFetch'
 import RadarPanel from '@/components/RadarPanel'
+import EngagementPanel from '@/components/EngagementPanel'
 
 interface Acceso {
   email: string
@@ -79,6 +80,8 @@ export default function AdminPage() {
       </div>
 
       <RadarPanel />
+
+      <EngagementPanel />
 
       <form
         onSubmit={add}
