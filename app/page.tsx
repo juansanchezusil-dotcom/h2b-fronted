@@ -43,7 +43,7 @@ import {
 } from 'lucide-react'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
 import H2BMap from '@/components/H2BMap';
-import { readChecklistSteps, CHECKLIST_TOTAL_TASKS } from '@/lib/checklistSteps';
+import { loadSteps, CHECKLIST_TOTAL_TASKS } from '@/lib/checklistSteps';
 import InfoTooltip from '@/components/InfoTooltip';
 import Pagination from '@/components/Pagination';
 import SponsorHistory from '@/components/SponsorHistory';
@@ -463,11 +463,18 @@ if (!isComplete) {
 }, [])
 
 // ===== MI MAPA =====
-// Los pasos manuales (pasaporte y DS-160) viven en el navegador; aquí solo se leen para el recuadro
-// del dashboard, cada vez que se vuelve a una pestaña.
+// Los pasos manuales (pasaporte y DS-160) viven en la base (con copia en el navegador); aquí solo se leen
+// para el recuadro del dashboard, cada vez que se vuelve a una pestaña.
 const [manualSteps, setManualSteps] = useState({ passport: false, ds160: false })
 useEffect(() => {
-  setManualSteps(readChecklistSteps(onboardingUserId))
+  if (!onboardingUserId) return
+  let cancelled = false
+  loadSteps(supabase, onboardingUserId).then((s) => {
+    if (!cancelled) setManualSteps(s)
+  })
+  return () => {
+    cancelled = true
+  }
 }, [activeTab, onboardingUserId])
 
 const [matchScores, setMatchScores] = useState<Record<string, { score: number; breakdown: any }>>({})
@@ -2437,6 +2444,7 @@ return (
     }}
     onOpenInterview={() => setShowInterviewSimulator(true)}
     onOpenScamDetector={() => setShowScamDetector(true)}
+    onSaveOffer={(company, role, state) => addToCRM(company, role, state)}
   />
 )}
       {/* MODAL DETALLE DE OFERTA LABORAL (ÚNICO) */}

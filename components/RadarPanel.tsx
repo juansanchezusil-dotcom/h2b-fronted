@@ -18,6 +18,7 @@ interface Miembro {
   sinArrancar: boolean
   estancado: boolean
   porVencer: boolean
+  pasos?: { passport: boolean; ds160: boolean }
   prioridadRenovacion: boolean
   compromiso: { dia: number | null; llegoAlDia30: boolean; califica: boolean | null; faltan: string[] }
   acelerador: { candidato: boolean; motivos: string[] }
@@ -274,6 +275,10 @@ export default function RadarPanel() {
                   <div>
                     <dt className="text-slate-400 dark:text-slate-500">Vence</dt>
                     <dd className="font-medium text-slate-700 dark:text-slate-200">{vence(m)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-400 dark:text-slate-500">Pasos del Mapa</dt>
+                    <dd className="font-medium text-slate-700 dark:text-slate-200">{`Pasaporte ${m.pasos?.passport ? '✓' : '—'} · DS-160 ${m.pasos?.ds160 ? '✓' : '—'}`}</dd>
                   </div>
                   <div>
                     <dt className="text-slate-400 dark:text-slate-500">Reto de 30 días</dt>

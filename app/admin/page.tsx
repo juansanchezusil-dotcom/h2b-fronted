@@ -5,6 +5,7 @@ import { Loader2, UserPlus, RefreshCw, Ban, ChevronDown } from 'lucide-react'
 import { aiFetch } from '@/lib/aiFetch'
 import RadarPanel from '@/components/RadarPanel'
 import EngagementPanel from '@/components/EngagementPanel'
+import ClassOffersPanel from '@/components/ClassOffersPanel'
 
 interface Acceso {
   email: string
@@ -196,6 +197,10 @@ export default function AdminPage() {
             })}
           </ul>
         )}
+      </Section>
+
+      <Section title="Ofertas de la clase" hint="Las que encuentras en vivo: aparecen en Mi Mapa de todos los miembros.">
+        <ClassOffersPanel />
       </Section>
 
       <Section title="Radar de actividad" hint="Quién está activo, en riesgo o por vencer, y a quién contactar.">

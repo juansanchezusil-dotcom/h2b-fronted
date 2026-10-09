@@ -15,7 +15,8 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { buildMap, type RouteCode, type StageId, type StepAction } from '@/lib/h2bMap'
-import { readChecklistSteps, writeChecklistSteps, type ManualSteps } from '@/lib/checklistSteps'
+import { loadSteps, saveStepsRemote, writeChecklistSteps, type ManualSteps } from '@/lib/checklistSteps'
+import ClassOffers from '@/components/ClassOffers'
 import { useMembershipNotices } from '@/hooks/useMembershipNotices'
 
 interface H2BMapProps {
@@ -28,6 +29,8 @@ interface H2BMapProps {
   onNavigateToTab: (tab: string) => void
   onOpenInterview: () => void
   onOpenScamDetector: () => void
+  // Guarda una oferta de la clase en el CRM de la persona
+  onSaveOffer: (company: string, role: string, state?: string) => Promise<boolean>
 }
 
 interface ProfileRow {
@@ -58,13 +61,21 @@ export default function H2BMap({
   onNavigateToTab,
   onOpenInterview,
   onOpenScamDetector,
+  onSaveOffer,
 }: H2BMapProps) {
   const [profile, setProfile] = useState<ProfileRow>(EMPTY_PROFILE)
   const [steps, setSteps] = useState<ManualSteps>({ passport: false, ds160: false })
   const notices = useMembershipNotices(userId)
 
   useEffect(() => {
-    setSteps(readChecklistSteps(userId))
+    if (!userId) return
+    let cancelled = false
+    loadSteps(supabase, userId).then((s) => {
+      if (!cancelled) setSteps(s)
+    })
+    return () => {
+      cancelled = true
+    }
   }, [userId])
 
   useEffect(() => {
@@ -93,7 +104,10 @@ export default function H2BMap({
   const toggleStep = (key: keyof ManualSteps) => {
     setSteps((prev) => {
       const next = { ...prev, [key]: !prev[key] }
-      if (userId) writeChecklistSteps(userId, next)
+      if (userId) {
+        writeChecklistSteps(userId, next)
+        saveStepsRemote(supabase, userId, next)
+      }
       return next
     })
   }
@@ -351,6 +365,8 @@ export default function H2BMap({
           </button>
         ))}
       </section>
+
+      <ClassOffers onSave={onSaveOffer} />
 
       {/* Anti-estafa */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 p-4">

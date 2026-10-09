@@ -1,5 +1,7 @@
-// Pasos manuales del mapa (pasaporte y DS-160). Se guardan en el navegador, separados por usuario,
-// con la misma clave que usaba la hoja de ruta anterior, para no perder el avance de nadie.
+// Pasos manuales del mapa (pasaporte y DS-160). Se guardan en la base (profiles.manual_steps) para que no
+// se pierdan al cambiar de dispositivo y para que el radar los vea. El navegador conserva una copia con la
+// misma clave que usaba la hoja de ruta anterior: sirve para mostrar el avance al instante y para subir a la
+// base lo que alguien ya había marcado antes de este cambio.
 
 export const CHECKLIST_TOTAL_TASKS = 5 // perfil, CV, pasaporte, 5 ofertas guardadas y DS-160
 
@@ -31,5 +33,39 @@ export function writeChecklistSteps(userId: string, steps: ManualSteps) {
     window.localStorage.setItem(storageKey(userId), JSON.stringify({ ...previous, ...steps }))
   } catch {
     // Sin almacenamiento (modo privado): el avance dura solo esta visita
+  }
+}
+
+// Cliente mínimo de Supabase que necesitamos (evita depender del tipo completo)
+interface DbClient {
+  from: (table: string) => any
+}
+
+// Guarda los pasos en la base. Si falla, el avance sigue en el navegador y se vuelve a intentar al marcar otra vez.
+export async function saveStepsRemote(db: DbClient, userId: string, steps: ManualSteps): Promise<boolean> {
+  const { error } = await db.from('profiles').upsert({ id: userId, manual_steps: steps })
+  if (error) console.error('No se pudieron guardar los pasos del mapa:', error.message)
+  return !error
+}
+
+// Lee los pasos: lo de la base y lo del navegador se unen (marcado en cualquiera de los dos cuenta como
+// marcado) y, si el navegador tenía algo que la base no, se sube. Nunca desmarca nada por sí solo.
+export async function loadSteps(db: DbClient, userId: string): Promise<ManualSteps> {
+  const local = readChecklistSteps(userId)
+  try {
+    const { data, error } = await db.from('profiles').select('manual_steps').eq('id', userId).maybeSingle()
+    if (error) return local
+    const remote = data?.manual_steps || {}
+    // Si la base ya tiene los pasos guardados, manda la base (así desmarcar en un dispositivo vale en todos).
+    // Si nunca se guardaron, se sube lo que había en el navegador.
+    if ('passport' in remote || 'ds160' in remote) {
+      const fromDb: ManualSteps = { passport: !!remote.passport, ds160: !!remote.ds160 }
+      writeChecklistSteps(userId, fromDb)
+      return fromDb
+    }
+    if (local.passport || local.ds160) await saveStepsRemote(db, userId, local)
+    return local
+  } catch {
+    return local
   }
 }
