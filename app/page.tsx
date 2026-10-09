@@ -2444,6 +2444,7 @@ return (
     }}
     onOpenInterview={() => setShowInterviewSimulator(true)}
     onOpenScamDetector={() => setShowScamDetector(true)}
+    onSaveOffer={(company, role, state) => addToCRM(company, role, state)}
   />
 )}
       {/* MODAL DETALLE DE OFERTA LABORAL (ÚNICO) */}

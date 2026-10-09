@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { X, Sparkles, Copy, Download, Loader2, Check, Send, Upload, FileText, RotateCcw, ArrowLeft, Paperclip } from 'lucide-react';
+import { buildCvPdf, buildLetterPdf, pdfFileName } from '@/lib/cvPdf';
 import { prepareAttachment, ATTACH_ACCEPT, type Attachment } from '@/lib/readAttachment';
 import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
@@ -160,7 +161,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
   const [letter, setLetter] = useState<Letter | null>(null);
   const [letterLoading, setLetterLoading] = useState(false);
   const [copiedLetter, setCopiedLetter] = useState(false);
-  const [downloading, setDownloading] = useState<'cv' | 'letter' | null>(null);
+  const [downloading, setDownloading] = useState<'cv' | 'letter' | 'cv-pdf' | 'letter-pdf' | null>(null);
 
   // Cada vez que se abre: vuelve al inicio y precarga lo que ya haya guardado
   useEffect(() => {
@@ -326,6 +327,20 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     }
   };
 
+  const handleDownloadLetterPdf = async () => {
+    if (!letter) return;
+    setDownloading('letter-pdf');
+    setError(null);
+    try {
+      downloadBlob(await buildLetterPdf(letter.letter, profile.fullName), pdfFileName(docxFileName(profile.fullName, 'Cover_Letter')));
+    } catch (err) {
+      console.error('No se pudo crear el PDF de la carta:', err);
+      setError('No se pudo crear el PDF. Usa Copiar o descarga el Word.');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   const handleDownloadLetter = async () => {
     if (!letter) return;
     setDownloading('letter');
@@ -429,6 +444,20 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
       setTimeout(() => setCopied(false), 2000);
     } catch {
       window.prompt('Copia tu CV manualmente:', result.full_text);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!result) return;
+    setDownloading('cv-pdf');
+    setError(null);
+    try {
+      downloadBlob(await buildCvPdf(result.cv), pdfFileName(docxFileName(result.cv.header.fullName, 'CV')));
+    } catch (err) {
+      console.error('No se pudo crear el PDF del CV:', err);
+      setError('No se pudo crear el PDF. Usa Copiar o descarga el Word.');
+    } finally {
+      setDownloading(null);
     }
   };
 
@@ -826,6 +855,14 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
               >
                 {downloading === 'cv' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar Word
               </button>
+              <button
+                type="button"
+                onClick={handleDownloadPdf}
+                disabled={downloading === 'cv-pdf'}
+                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                {downloading === 'cv-pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar PDF
+              </button>
             </div>
 
             <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
@@ -866,6 +903,14 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                       className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
                     >
                       {downloading === 'letter' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar Word
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadLetterPdf}
+                      disabled={downloading === 'letter-pdf'}
+                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      {downloading === 'letter-pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar PDF
                     </button>
                   </div>
                 </>

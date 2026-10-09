@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 import { buildMap, type RouteCode, type StageId, type StepAction } from '@/lib/h2bMap'
+import TopOffers from '@/components/TopOffers'
 import { loadSteps, saveStepsRemote, writeChecklistSteps, type ManualSteps } from '@/lib/checklistSteps'
 import { useMembershipNotices } from '@/hooks/useMembershipNotices'
 
@@ -28,6 +29,8 @@ interface H2BMapProps {
   onNavigateToTab: (tab: string) => void
   onOpenInterview: () => void
   onOpenScamDetector: () => void
+  // Guarda una oferta sugerida en el CRM de la persona
+  onSaveOffer: (company: string, role: string, state?: string) => Promise<boolean>
 }
 
 interface ProfileRow {
@@ -58,6 +61,7 @@ export default function H2BMap({
   onNavigateToTab,
   onOpenInterview,
   onOpenScamDetector,
+  onSaveOffer,
 }: H2BMapProps) {
   const [profile, setProfile] = useState<ProfileRow>(EMPTY_PROFILE)
   const [steps, setSteps] = useState<ManualSteps>({ passport: false, ds160: false })
@@ -290,6 +294,8 @@ export default function H2BMap({
           )}
         </section>
       )}
+
+      <TopOffers perfilCompletado={perfilCompletado} onSave={onSaveOffer} onSeeAll={() => onNavigateToTab('jobs')} />
 
       {/* Plan de 30 días */}
       <section aria-labelledby="mapa-plan" className="space-y-3">
