@@ -603,7 +603,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                   </>
                 )}
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  Es lo mejor para entenderte: leemos tu CV, resumimos lo que entendimos y solo te preguntamos lo que falte. Si algo no está en tu CV, lo completamos con preguntas. No lo reemplazamos.
+                  Es lo mejor para entenderte. Sirve aunque esté en español, incompleto o sin formato estadounidense: lo leemos, resumimos lo que entendimos y solo te preguntamos lo que falte. Si no tienes CV, elige "Empezar de cero". No lo reemplazamos.
                 </p>
               </div>
             )}
