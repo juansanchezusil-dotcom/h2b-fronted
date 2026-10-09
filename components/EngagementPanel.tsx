@@ -20,6 +20,7 @@ const KIND_LABEL: Record<string, string> = {
   renewal_7: 'Renovación (7 días)',
   renewal_3: 'Renovación (3 días)',
   renewal_after: 'Acceso vencido',
+  reto_30: 'Reto de 30 días',
 }
 
 const MODE: Record<Mode, { label: string; detail: string; badge: string }> = {
@@ -147,7 +148,7 @@ export default function EngagementPanel() {
               <Item ok={data.renewalLinkConfigured}>
                 {`Enlace de renovación${data.renewalLinkConfigured ? '' : ': falta NEXT_PUBLIC_MEMBERSHIP_URL. Mientras tanto los correos piden responder para renovar'}.`}
               </Item>
-              <Item ok={null}>Aprobaste los textos: pulsa el botón de abajo y revisa los 5 ejemplos en tu correo.</Item>
+              <Item ok={null}>Aprobaste los textos: pulsa el botón de abajo y revisa los ejemplos en tu correo.</Item>
             </ul>
             <button
               type="button"
@@ -155,7 +156,7 @@ export default function EngagementPanel() {
               disabled={sending}
               className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#0B4079] hover:bg-[#08305c] disabled:opacity-50 text-white text-xs font-bold px-4 py-2.5"
             >
-              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Enviarme 5 correos de ejemplo
+              {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Enviarme los correos de ejemplo
             </button>
             {result && (
               <p role="status" className="mt-2 text-xs text-emerald-700 dark:text-emerald-400">
