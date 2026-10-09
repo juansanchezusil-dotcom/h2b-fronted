@@ -140,7 +140,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
   // Pantalla de inicio
   const [targetRole, setTargetRole] = useState('');
   const [englishLevel, setEnglishLevel] = useState('');
-  const [startMode, setStartMode] = useState<'scratch' | 'existing'>('scratch');
+  const [startMode, setStartMode] = useState<'scratch' | 'existing'>('existing');
   const [file, setFile] = useState<File | null>(null);
   const [pastedCv, setPastedCv] = useState('');
   const [seedProfile, setSeedProfile] = useState<CandidateProfile>(emptyProfile());
@@ -558,8 +558,8 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
 
             <div className="grid grid-cols-2 gap-2" role="group" aria-label="Cómo quieres empezar">
               {([
+                ['existing', 'Subir mi CV (recomendado)', FileText],
                 ['scratch', 'Empezar de cero', Sparkles],
-                ['existing', 'Ya tengo un CV', FileText],
               ] as const).map(([mode, label, Icon]) => (
                 <button
                   key={mode}
@@ -603,7 +603,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                   </>
                 )}
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  Leemos tu CV, resumimos lo que entendimos y solo te preguntamos lo que falte. No lo reemplazamos.
+                  Es lo mejor para entenderte: leemos tu CV, resumimos lo que entendimos y solo te preguntamos lo que falte. Si algo no está en tu CV, lo completamos con preguntas. No lo reemplazamos.
                 </p>
               </div>
             )}
@@ -650,6 +650,25 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
             </div>
 
             <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              {turns.length > 0 && profile.experiences.length > 0 && (
+                <details className="rounded-xl border border-slate-200 dark:border-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-300">
+                  <summary className="cursor-pointer font-semibold text-slate-800 dark:text-slate-100">Esto entendí de ti</summary>
+                  <div className="mt-2 space-y-1.5">
+                    {profile.targetRole && <p>{`Puesto: ${profile.targetRole}${profile.route ? ` · Ruta ${profile.route}` : ''}`}</p>}
+                    <ul className="list-disc pl-4 space-y-0.5">
+                      {profile.experiences.map((x) => (
+                        <li key={x.id}>{[x.title, x.company, x.duration].filter(Boolean).join(' · ') || 'Experiencia'}</li>
+                      ))}
+                    </ul>
+                    {(() => {
+                      const tools = Array.from(new Set(profile.experiences.flatMap((x) => x.tools || []))).slice(0, 10);
+                      return tools.length ? <p>{`Herramientas: ${tools.join(', ')}`}</p> : null;
+                    })()}
+                    {gaps.length > 0 && <p className="text-slate-500 dark:text-slate-400">{`Todavía falta: ${gaps.map((g) => g.label.toLowerCase()).join(' · ')}`}</p>}
+                    <p className="text-slate-500 dark:text-slate-400">Si algo no es correcto, escríbelo en el chat y lo corrijo.</p>
+                  </div>
+                </details>
+              )}
               {ready && (
                 <div className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 px-3 py-2">
                   <p className="text-xs text-emerald-800 dark:text-emerald-300">Ya tengo lo necesario. Puedes generar tu CV o seguir agregando detalle.</p>
