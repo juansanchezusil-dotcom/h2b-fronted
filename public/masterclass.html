@@ -194,8 +194,8 @@ details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:co
     <details class="note">
       <summary>Notas para Juan</summary>
       <ul>
-        <li>Para activar los botones de la plantilla de CV y del video, pega sus links en LINKS, al inicio del script (hoy están vacíos y los botones no se muestran).</li>
-        <li>Las 3 agencias de ejemplo están en AGENCIAS: reemplaza los nombres y las ubicaciones por las tuyas. Cada asistente puede agregar más.</li>
+        <li>El link del video ya está en LINKS. Cuando tengas el de la plantilla de CV, pégalo en LINKS.plantilla y aparece su botón.</li>
+        <li>Las 4 agencias están en AGENCIAS (nombre, ubicación y sitio). Cada asistente puede agregar más.</li>
         <li>Las ofertas de la clase salen de /admin, bloque Ofertas de la clase, y aparecen aquí en menos de 40 segundos.</li>
         <li>Lo que cada persona marca o agrega se guarda en su propio navegador.</li>
         <li>Verificar en la clase que el Hub sigue disponible y la vigencia del listado de reclutadores y de la cita 20 CFR 655.20.</li>
@@ -209,12 +209,13 @@ details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:co
   var KEY='jta-dashboard-h2b-v4', DAY=86400000, META=10;
   var API='https://h2b-backend-three.vercel.app/api/clase/ofertas';
   // Pega aquí los links (https://...) y los botones aparecen solos
-  var LINKS={plantilla:'',video:''};
+  var LINKS={plantilla:'',video:'https://www.youtube.com/live/y4xJkCegXjE?si=Knvp2RD7scLmCzSB'};
   // Agencias del listado del DOL que das tú en la clase: nombre y ubicación
   var AGENCIAS=[
-    {id:'ag1',name:'Agencia 1 (reemplazar)',loc:'Ciudad, país'},
-    {id:'ag2',name:'Agencia 2 (reemplazar)',loc:'Ciudad, país'},
-    {id:'ag3',name:'Agencia 3 (reemplazar)',loc:'Ciudad, país'}
+    {id:'ag1',name:'JTP AGENCY (ESPINOSA GAONA, PATRICIA)',loc:'US',url:'https://jtpagency.com/'},
+    {id:'ag2',name:'JKJ WORKFORCE (JUDKINS, JAMES)',loc:'US',url:'https://jkjworkforce.com/'},
+    {id:'ag3',name:'ADNIL SERIVCES, INC (ESPINOSA, ADRIANA)',loc:'US',url:'https://adnilservices.com/'},
+    {id:'ag4',name:'MTL INTERNATIONAL (CRANDELL, DAVID)',loc:'US',url:'https://mtlint.com/'}
   ];
   var SUGERENCIAS=['Housekeeper','Cocina','Construcción','Jardinería','Front desk','Lavaplatos'];
   var PASOS_EMP=['La busqué en el Employer Data Hub','Vi su historial: años y peticiones','Encontré su sitio web y contacto oficiales'];
@@ -351,10 +352,10 @@ details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:co
 
   // ---------- Agencias ----------
   function renderAgencias(){
-    var all=AGENCIAS.map(function(a){return {id:a.id,name:a.name,loc:a.loc,mine:false}}).concat(st.agencies.map(function(a){return {id:a.id,name:a.name,loc:a.loc,mine:true}}));
+    var all=AGENCIAS.map(function(a){return {id:a.id,name:a.name,loc:a.loc,url:a.url,mine:false}}).concat(st.agencies.map(function(a){return {id:a.id,name:a.name,loc:a.loc,mine:true}}));
     $('agencias').innerHTML=all.map(function(r){
       var v=st.rec[r.id]||'',p=v==='si'?'<span class="pill ok">Lo encontré en el listado</span>':(v==='no'?'<span class="pill bad">No aparece: pide información por escrito antes de seguir</span>':'<span class="pill none">Sin revisar</span>');
-      return '<article class="card"><h3>'+esc(r.name)+'</h3><div class="fu">'+esc(r.loc||'')+'</div>'+p+
+      return '<article class="card"><h3>'+esc(r.name)+'</h3><div class="fu">'+esc(r.loc||'')+(r.url?' · <a class="link" href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.url.replace(/^https?:\/\//,'').replace(/\/$/,''))+' ↗</a>':'')+'</div>'+p+
         '<div class="row"><label class="fu" for="rec-'+r.id+'">¿Lo encontré en el listado oficial?</label><select id="rec-'+r.id+'" data-rec="'+r.id+'"><option value=""'+(v===''?' selected':'')+'>Sin revisar</option><option value="si"'+(v==='si'?' selected':'')+'>Sí lo encontré</option><option value="no"'+(v==='no'?' selected':'')+'>No lo encontré</option></select>'+
         (r.mine?'<button type="button" class="rm" data-rma="'+r.id+'">Quitar</button>':'')+'</div></article>';
     }).join('');
