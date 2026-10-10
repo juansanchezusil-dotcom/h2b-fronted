@@ -215,6 +215,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
         <li>El dashboard se abre solo el 25-nov a las 7:00 p. m. (hora de Perú). Antes, con ?preview=1 lo ves tú.</li>
         <li>Las 4 agencias están en AGENCIAS (nombre, ubicación y sitio). Cada asistente puede agregar más.</li>
         <li>Las ofertas de la clase salen de /admin, bloque Ofertas de la clase, y aparecen aquí en menos de 40 segundos.</li>
+        <li>Las semanas 2 y 3 se marcan solas con lo que la persona hace en el dashboard (ofertas guardadas, verificadas, postulaciones y seguimientos). Solo la semana 1 (perfil y CV) la marca ella, porque aquí no hay forma de comprobarlo; en la app sí se mide.</li>
         <li>Lo que cada persona marca o agrega se guarda en su propio navegador.</li>
         <li>Verificar en la clase que el Hub sigue disponible y la vigencia del listado de reclutadores y de la cita 20 CFR 655.20.</li>
       </ul>
@@ -250,14 +251,14 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
       ['c','Revisé mi CV con la plantilla y el video']],
       tools:'cv'},
     {id:'s2',t:'Semana 2 · Busca, verifica y guarda',items:[
-      ['a','Busqué ofertas en SeasonalJobs'],
-      ['b','Verifiqué cada oferta con los 4 puntos'],
-      ['c','Guardé mis mejores ofertas en Mis ofertas']],
+      ['a','Guardé 5 ofertas en Mis ofertas','saved5'],
+      ['b','Verifiqué 3 ofertas con los 4 puntos','verif3'],
+      ['c','Revisé 3 empresas en la pestaña Empresas','emp3']],
       tools:'ofertas'},
     {id:'s3',t:'Semana 3 · Postula y da seguimiento',items:[
-      ['a','Postulé a mínimo 10 empresas distintas'],
-      ['b','Anoté mis fechas de seguimiento 7-14-21'],
-      ['c','Di seguimiento a las empresas que no respondieron']],
+      ['a','Postulé a mínimo 10 empresas distintas','apply10'],
+      ['b','Mis postulaciones tienen sus fechas de seguimiento 7-14-21','fechas'],
+      ['c','Marqué al menos un seguimiento como hecho','fuDone']],
       tools:'post'}
   ];
   var st={plan:{},groups:[],offers:[],agencies:[],rec:{},tab:'plan',arm:false};
@@ -284,7 +285,18 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
     s.distintas=Object.keys(s.emps).length;
     return s;
   }
-  function planDone(){var n=0;PLAN.forEach(function(w){w.items.forEach(function(i){if(st.plan[w.id+i[0]])n++})});return n}
+  // Los pasos medibles se marcan solos con lo que la persona hace en el dashboard; solo la semana 1 (perfil y CV)
+  // la marca ella, porque aquí no hay forma de saberlo.
+  var AUTO={
+    saved5:function(){return stats().total>=5},
+    verif3:function(){return stats().verif>=3},
+    emp3:function(){var n=0;st.groups.forEach(function(g){g.items.forEach(function(c){if(cnt(c)===3)n++})});return n>=3},
+    apply10:function(){return stats().distintas>=META},
+    fechas:function(){return st.offers.some(function(o){return !!o.fecha})},
+    fuDone:function(){return st.offers.some(function(o){return o.fu&&Object.keys(o.fu).some(function(k){return o.fu[k]})})}
+  };
+  function itemDone(w,it){return it[2]?!!AUTO[it[2]]():!!st.plan[w.id+it[0]]}
+  function planDone(){var n=0;PLAN.forEach(function(w){w.items.forEach(function(i){if(itemDone(w,i))n++})});return n}
   function fuList(o){
     if(!o.fecha)return [];
     return [7,14,21].map(function(n){var at=o.fecha+n*DAY;return {n:n,at:at,done:!!(o.fu&&o.fu[n])}});
@@ -293,10 +305,10 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
   // ---------- Mi plan ----------
   function renderPlan(){
     var curW=-1;
-    PLAN.forEach(function(w,i){if(curW<0&&!w.items.every(function(it){return st.plan[w.id+it[0]]}))curW=i});
+    PLAN.forEach(function(w,i){if(curW<0&&!w.items.every(function(it){return itemDone(w,it)}))curW=i});
     var s=stats();
     $('plan').innerHTML=PLAN.map(function(w,i){
-      var done=w.items.filter(function(it){return st.plan[w.id+it[0]]}).length;
+      var done=w.items.filter(function(it){return itemDone(w,it)}).length;
       var tools='';
       if(w.tools==='cv'){
         var u1=safeUrl(LINKS.plantilla),u2=safeUrl(LINKS.video);
@@ -304,10 +316,14 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
       }else if(w.tools==='ofertas'){
         tools='<div class="row"><a class="btn" href="https://seasonaljobs.dol.gov" target="_blank" rel="noopener">SeasonalJobs ↗</a><button type="button" class="btn gold" data-tab="ofertas">Ir a Mis ofertas</button></div>';
       }else{
-        tools='<p class="fu" style="margin:0">Según Mis ofertas, llevas <b>'+s.distintas+'</b> '+(s.distintas===1?'empresa':'empresas')+' postuladas de '+META+'.</p>';
+        tools='<p class="fu" style="margin:0">Según Mis ofertas, llevas <b>'+s.distintas+'</b> '+(s.distintas===1?'empresa':'empresas')+' postuladas de '+META+'. Estos pasos se marcan solos con lo que haces en el dashboard.</p>';
       }
       return '<div class="box'+(i===curW?' cur':'')+'"><h3>'+esc(w.t)+'<span>'+done+' de '+w.items.length+'</span></h3>'+
-        w.items.map(function(it){var on=!!st.plan[w.id+it[0]];return '<label class="chk'+(on?' done':'')+'"><input type="checkbox" data-plan="'+w.id+it[0]+'"'+(on?' checked':'')+'><span>'+esc(it[1])+'</span></label>'}).join('')+
+        w.items.map(function(it){
+          var on=itemDone(w,it);
+          if(it[2])return '<div class="chk'+(on?' done':'')+'" style="display:flex;gap:10px;align-items:flex-start;font-size:14px"><span aria-hidden="true" style="width:18px;flex:none;text-align:center;color:'+(on?'var(--good)':'var(--muted)')+'">'+(on?'✓':'○')+'</span><span>'+esc(it[1])+'<span class="fu"> · '+(on?'hecho':'se marca solo')+'</span></span></div>';
+          return '<label class="chk'+(on?' done':'')+'"><input type="checkbox" data-plan="'+w.id+it[0]+'"'+(on?' checked':'')+'><span>'+esc(it[1])+'</span></label>';
+        }).join('')+
         tools+'</div>';
     }).join('');
   }

@@ -21,8 +21,10 @@ export interface MapInput {
   hasCv: boolean
   crm: { status: string; createdAt: number }[]
   steps: { passport: boolean; ds160: boolean }
-  // Casillas del plan que la persona marcó a mano (id del paso -> true)
+  // Casillas del plan que la persona marcó a mano (id del paso -> true). Solo cuentan los pasos que no se pueden medir.
   manualPlan?: Record<string, boolean>
+  // Si ya tiene su carta de presentación guardada. Sin este dato (página pública) la casilla la marca la persona.
+  hasCoverLetter?: boolean
   // Del Compromiso de PRO (hook de avisos): día N de 30 y empresas distintas postuladas en 30 días
   dia: number | null
   applied30: number
@@ -236,32 +238,35 @@ export function buildMap(input: MapInput): H2BMapData {
     auto: auto !== undefined,
     done: !!manual[id] || !!auto,
   })
+  // Cada paso se marca solo con datos reales (perfil, CV, ofertas guardadas, postulaciones y sus estados).
+  // Solo queda a mano lo que no se puede medir, y únicamente cuando no hay datos (página pública).
+  const answered = entrevistas + aceptadas + count('rechazada')
+  const followedUp = count('seguimiento') + count('no_respondido') + answered
   const weeks: { week: number; title: string; items: PlanItem[] }[] = [
     {
       week: 1,
       title: 'Conoce tu perfil y tu CV',
       items: [
-        item('w1a', 'Revisé mi perfil: puesto, industria, inglés y estados donde quiero trabajar', profile.perfilCompletado),
-        item('w1b', 'Armé mi CV en formato americano, en una sola hoja', hasCv),
-        item('w1c', 'Revisé mi CV con la plantilla y el video'),
+        item('w1a', 'Perfil completo: puesto, industria, inglés y estados donde quieres trabajar', profile.perfilCompletado),
+        item('w1b', 'CV en inglés, formato americano y una sola hoja', hasCv),
+        item('w1c', 'Carta de presentación lista', input.hasCoverLetter),
       ],
     },
     {
       week: 2,
       title: 'Busca, verifica y guarda',
       items: [
-        item('w2a', 'Busqué ofertas en SeasonalJobs'),
-        item('w2b', 'Verifiqué cada oferta con los 4 puntos'),
-        item('w2c', 'Guardé mis mejores ofertas', crm.length >= 5),
+        item('w2a', 'Guardar 5 ofertas de tu rubro', crm.length >= 5),
+        item('w2b', 'Guardar 10 ofertas para poder elegir las mejores', crm.length >= 10),
       ],
     },
     {
       week: 3,
       title: 'Postula y da seguimiento',
       items: [
-        item('w3a', 'Postulé a mínimo 10 empresas distintas', input.applied30 >= MAP_GOAL),
-        item('w3b', 'Anoté mis fechas de seguimiento 7-14-21'),
-        item('w3c', 'Di seguimiento a las empresas que no respondieron'),
+        item('w3a', 'Postular a mínimo 10 empresas distintas', input.applied30 >= MAP_GOAL),
+        item('w3b', 'Tener postulaciones en seguimiento (7-14-21)', followedUp > 0),
+        item('w3c', 'Recibir al menos una respuesta de una empresa', answered > 0),
       ],
     },
   ]

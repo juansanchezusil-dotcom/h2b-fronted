@@ -67,6 +67,7 @@ export default function H2BMap({
   onOpenJob,
 }: H2BMapProps) {
   const [profile, setProfile] = useState<ProfileRow>(EMPTY_PROFILE)
+  const [hasCover, setHasCover] = useState(false)
   const [steps, setSteps] = useState<ManualSteps>({ passport: false, ds160: false })
   const notices = useMembershipNotices(userId)
 
@@ -87,10 +88,11 @@ export default function H2BMap({
     ;(async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('target_role, industry, experiencia_industria, english_level, nivel_ingles, pais_origen, cv_route')
+        .select('target_role, industry, experiencia_industria, english_level, nivel_ingles, pais_origen, cv_route, cover_letter_en')
         .eq('id', userId)
         .maybeSingle()
       if (cancelled || !data) return
+      setHasCover(typeof data.cover_letter_en === 'string' && data.cover_letter_en.trim().length >= 30)
       setProfile({
         targetRole: data.target_role || '',
         industry: data.industry || data.experiencia_industria || '',
@@ -136,11 +138,12 @@ export default function H2BMap({
         crm: crmItems,
         steps,
         manualPlan: steps.plan,
+        hasCoverLetter: hasCover,
         dia: notices?.dia ?? null,
         applied30: notices ? notices.postulaciones : appliedFallback,
         now: Date.now(),
       }),
-    [profile, perfilCompletado, hasCv, crmItems, steps, notices, appliedFallback]
+    [profile, perfilCompletado, hasCv, hasCover, crmItems, steps, notices, appliedFallback]
   )
 
   const run = (action: StepAction) => {
@@ -318,7 +321,7 @@ export default function H2BMap({
           <h2 id="mapa-plan" className="text-base font-bold text-slate-900 dark:text-white">
             Tu plan de 3 semanas
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Lo que se puede saber con tus datos se marca solo. Lo demás lo marcas tú cuando lo termines.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Cada paso se marca solo con lo que haces en la app: tu perfil, tu CV, tus ofertas y tus postulaciones.</p>
           <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{`Tu primera meta: mínimo 10 empresas distintas, ya verificadas. Para ${map.goal.label} puedes ir por más: unas ${map.goal.perWeek} por semana. Prioriza ofertas verificadas sobre cantidad.`}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
