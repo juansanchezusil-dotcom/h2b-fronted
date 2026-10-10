@@ -155,32 +155,10 @@ export default function MapaPublico() {
     [a, plan]
   )
 
-  if (gate !== 'open') {
-    return (
-      <main className="min-h-dvh bg-gray-50 dark:bg-slate-950 px-4 py-8">
-        <div className="mx-auto w-full max-w-xl space-y-5">
-          <header className="flex items-center gap-3">
-            <LogoMark size={44} decorative className="rounded-xl" />
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#08131F] dark:text-white">Juan Te Avisa</p>
-              <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Mi Mapa H2B Personal</h1>
-            </div>
-          </header>
-          {gate === 'closed' && (
-            <section className={`${card} space-y-4`}>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">El Mapa H2B se activa en la masterclass del 25 de noviembre</h2>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                Lo vamos a armar juntos, en vivo: tu etapa, tu plan de 3 semanas y tu dashboard para guardar ofertas, empresas y agencias. Reserva tu lugar para recibirlo ese día.
-              </p>
-              <a href={MASTERCLASS_URL} target="_blank" rel="noopener noreferrer" className={primaryBtn}>
-                Reservar mi lugar <ArrowRight className="w-4 h-4" />
-              </a>
-            </section>
-          )}
-        </div>
-      </main>
-    )
-  }
+  // Antes del 25-nov se muestra solo una parte del mapa; el plan completo y el dashboard se abren con la masterclass
+  const full = gate === 'open'
+  const visibleSteps = [a.hasCv !== 'si' ? 'cv' : '', a.passport !== 'si' ? 'pasaporte' : '', 'ofertas'].filter(Boolean)
+  const show = (key: string) => visibleSteps.includes(key) && (full || visibleSteps[0] === key)
 
   const q = QUESTIONS[step]
   const answered = step < QUESTIONS.length && !!a[q.key]
@@ -386,7 +364,7 @@ export default function MapaPublico() {
             <section className={`${card} space-y-3`}>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">Tus próximos pasos</h2>
               <ul className="space-y-3">
-                {a.hasCv !== 'si' && (
+                {show('cv') && (
                   <li className="flex gap-3">
                     <Check className="w-4 h-4 mt-0.5 shrink-0 text-[#C89B3C]" aria-hidden="true" />
                     <div>
@@ -398,7 +376,7 @@ export default function MapaPublico() {
                     </div>
                   </li>
                 )}
-                {a.passport !== 'si' && (
+                {show('pasaporte') && (
                   <li className="flex gap-3">
                     <Check className="w-4 h-4 mt-0.5 shrink-0 text-[#C89B3C]" aria-hidden="true" />
                     <div>
@@ -407,6 +385,7 @@ export default function MapaPublico() {
                     </div>
                   </li>
                 )}
+                {show('ofertas') && (
                 <li className="flex gap-3">
                   <Check className="w-4 h-4 mt-0.5 shrink-0 text-[#C89B3C]" aria-hidden="true" />
                   <div>
@@ -417,10 +396,12 @@ export default function MapaPublico() {
                     </a>
                   </div>
                 </li>
+                )}
               </ul>
             </section>
 
-            <section className={`${card} space-y-3`}>
+            {full && (
+<section className={`${card} space-y-3`}>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">Tu plan de 3 semanas</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {`Tu primera meta: mínimo 10 empresas distintas, ya verificadas. Para ${map.goal.label} puedes ir por más: unas ${map.goal.perWeek} por semana. Marca cada paso cuando lo termines.`}
@@ -450,8 +431,26 @@ export default function MapaPublico() {
                 ))}
               </div>
             </section>
+)}
 
-            <section className={`${card} space-y-3`}>
+            {!full && (
+              <section className={`${card} space-y-3`}>
+                <h2 className="text-base font-bold text-slate-900 dark:text-white">Tu plan completo y tu dashboard</h2>
+                <p className="text-sm text-slate-600 dark:text-slate-300">
+                  Se activan en la masterclass del 25 de noviembre. Ahí armamos juntos tu plan de 3 semanas y tu dashboard para guardar ofertas, empresas y agencias. Reserva tu lugar para recibirlos ese día.
+                </p>
+                <a href={MASTERCLASS_URL} target="_blank" rel="noopener noreferrer" className={primaryBtn}>
+                  Reservar mi lugar <ArrowRight className="w-4 h-4" />
+                </a>
+                <div>
+                  <button type="button" onClick={restart} className="text-xs font-semibold text-slate-500 dark:text-slate-400 underline">
+                    Volver a empezar
+                  </button>
+                </div>
+              </section>
+            )}
+            {full && (
+<section className={`${card} space-y-3`}>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">Sigue desde tu dashboard</h2>
               <p className="text-sm text-slate-600 dark:text-slate-300">
                 Guarda las ofertas que encuentres, las empresas que verifiques y las agencias del listado del DOL, y marca el seguimiento a los 7, 14 y 21 días.
@@ -465,6 +464,7 @@ export default function MapaPublico() {
                 </button>
               </div>
             </section>
+)}
 
             <p className="text-[11px] text-slate-400 dark:text-slate-500">
               Este mapa organiza tu búsqueda con lo que respondiste. No garantiza visa, patrocinio, entrevistas ni contratación: eso depende de cada empresa. Juan Te Avisa no es agencia ni despacho de abogados.
