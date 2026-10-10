@@ -41,6 +41,27 @@ interface GeneratedEmail {
   body_es: string;
 }
 
+// Familias de puestos: sirve para saber si la oferta es del mismo tipo que el puesto principal de la persona
+// (en español o en inglés). Si no se puede saber, se trata como un puesto distinto.
+const ROLE_FAMILIES: [string, RegExp][] = [
+  ['limpieza', /housekeep|room attend|maid|cleaner|janitor|camarer|limpie|aseo|laundry|lavander/],
+  ['cocina', /cook|chef|kitchen|cocin|dishwash|lavaplat|prep|baker|panader|food/],
+  ['jardin', /landscap|ground|garden|jardin|lawn|paisaj|nursery|farm|agricult|vivero/],
+  ['construccion', /construct|laborer|carpent|mason|roof|concrete|drywall|paint|pintor|alba[nñ]il|obra|builder|rigger|electric|plumb|weld|maintenance|mantenim/],
+  ['recepcion', /front desk|reception|recepci|concierge|bell|botones|hotel clerk/],
+  ['servicio', /server|waiter|waitress|mesero|mesera|bartend|barman|host|busser/],
+  ['conduccion', /driver|conduct|chofer|truck/],
+  ['almacen', /warehouse|almac|packer|packing|stock|forklift|procesad|production|assembly/],
+];
+const norm = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function sameRole(mainRole: string, jobTitle: string): boolean {
+  const a = norm(mainRole);
+  const b = norm(jobTitle);
+  if (!a.trim() || !b.trim()) return false;
+  if (a === b || a.includes(b) || b.includes(a)) return true;
+  return ROLE_FAMILIES.some(([, re]) => re.test(a) && re.test(b));
+}
+
 export default function ApplyFlowModal({
   isOpen,
   userId,
@@ -55,10 +76,12 @@ export default function ApplyFlowModal({
 
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [hasCv, setHasCv] = useState(false);
-  const [candidate, setCandidate] = useState<{ fullName: string; baseCvText: string; skills: string[]; englishLevel: string } | null>(null);
+  const [candidate, setCandidate] = useState<{ fullName: string; baseCvText: string; skills: string[]; englishLevel: string; targetRole: string } | null>(null);
 
-  // 'fit': primero ver cómo encaja con la oferta. 'email': ya eligió pasar al correo. Sin la opción de encaje, va directo al correo.
-  const [step, setStep] = useState<'fit' | 'email'>('fit');
+  // 'email': el redactor de correos (camino normal, usa tu CV y los datos de la empresa).
+  // 'fit': la oferta es de un puesto distinto al principal; se ofrece ver el encaje primero.
+  // 'afterFit': ya vio su encaje y vuelve para escribir el correo.
+  const [step, setStep] = useState<'fit' | 'afterFit' | 'email'>('email');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState<GeneratedEmail | null>(null);
@@ -71,7 +94,7 @@ export default function ApplyFlowModal({
   useEffect(() => {
     if (!isOpen || !userId) return;
     setLoadingProfile(true);
-    setStep(onAdaptCv ? 'fit' : 'email');
+    setStep('email');
     setEmail(null);
     setSent(false);
     setMarked(false);
@@ -79,7 +102,7 @@ export default function ApplyFlowModal({
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, base_cv_text, skills, english_level, nivel_ingles')
+        .select('full_name, base_cv_text, skills, english_level, nivel_ingles, target_role')
         .eq('id', userId)
         .maybeSingle();
       const cv = data?.base_cv_text || '';
@@ -88,11 +111,14 @@ export default function ApplyFlowModal({
         baseCvText: cv,
         skills: data?.skills || [],
         englishLevel: data?.english_level || data?.nivel_ingles || '',
+        targetRole: data?.target_role || '',
       });
       setHasCv(cv.trim().length >= 30);
+      // Mismo puesto que el principal: directo al correo. Otro puesto: se ofrece ver el encaje antes.
+      if (onAdaptCv && cv.trim().length >= 30 && !sameRole(data?.target_role || '', job?.title || '')) setStep('fit');
       setLoadingProfile(false);
     })();
-  }, [isOpen, userId]);
+  }, [isOpen, userId, job?.title]);
 
   useEffect(() => {
     if (!isOpen || !job || !candidate || !hasCv || step !== 'email' || email || loading) return;
@@ -106,6 +132,7 @@ export default function ApplyFlowModal({
           body: JSON.stringify({
             emailType: 'initial',
             jobTitle: job.title || 'the H-2B position',
+            jobDuties: job.duties || '',
             companyName: job.employerName || 'your company',
             location: job.location || '',
             candidateName: candidate.fullName || '[Tu nombre]',
@@ -231,15 +258,20 @@ export default function ApplyFlowModal({
                 <Target className="w-5 h-5" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Antes de enviar, mira cómo encajas</h3>
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm">Esta oferta es de un puesto distinto al tuyo</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Tu correo y tu CV salen de lo que cuentas de tu experiencia. Revisamos esta oferta contra tu perfil y te decimos qué reforzar antes de postular.
+                  {candidate?.targetRole
+                    ? `Tu puesto principal es "${candidate.targetRole}" y esta oferta es de "${job.title}". Antes de enviar, mira cómo encajas y qué reforzar. Si prefieres, ve directo al correo.`
+                    : 'Antes de enviar, mira cómo encajas con esta oferta y qué reforzar. Si prefieres, ve directo al correo.'}
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                 <button
                   type="button"
-                  onClick={onAdaptCv}
+                  onClick={() => {
+                    setStep('afterFit');
+                    onAdaptCv?.();
+                  }}
                   className="w-full sm:w-auto bg-[#C89B3C] hover:bg-[#b08833] text-[#08131F] font-bold text-xs px-5 py-2.5 rounded-xl transition-all"
                 >
                   Ver mi encaje
@@ -253,8 +285,48 @@ export default function ApplyFlowModal({
                 </button>
               </div>
             </div>
+          ) : step === 'afterFit' ? (
+            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center space-y-4">
+              <div className="space-y-1.5">
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm">¿Seguimos con el correo?</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Cuando termines de revisar tu encaje, escribe el correo de postulación para esta oferta.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStep('email')}
+                  className="w-full sm:w-auto bg-[#C89B3C] hover:bg-[#b08833] text-[#08131F] font-bold text-xs px-5 py-2.5 rounded-xl transition-all"
+                >
+                  Escribir el correo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAdaptCv?.()}
+                  className="w-full sm:w-auto text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-4 py-2.5"
+                >
+                  Ver mi encaje otra vez
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="space-y-4">
+              {onAdaptCv && (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  ¿Esta oferta es de otro puesto distinto al tuyo?{' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep('afterFit');
+                      onAdaptCv();
+                    }}
+                    className="font-semibold text-[#0B4079] dark:text-[#C89B3C] underline"
+                  >
+                    Ver mi encaje
+                  </button>
+                </p>
+              )}
               {!contactEmail && (
                 <p className="text-xs text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
                   Esta oferta no trae un correo de contacto directo. Copia el mensaje y úsalo por el medio que la
