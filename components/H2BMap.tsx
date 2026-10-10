@@ -101,7 +101,18 @@ export default function H2BMap({
     }
   }, [userId, hasCv])
 
-  const toggleStep = (key: keyof ManualSteps) => {
+  const togglePlan = (id: string) => {
+    setSteps((prev) => {
+      const next: ManualSteps = { ...prev, plan: { ...(prev.plan || {}), [id]: !prev.plan?.[id] } }
+      if (userId) {
+        writeChecklistSteps(userId, next)
+        saveStepsRemote(supabase, userId, next)
+      }
+      return next
+    })
+  }
+
+  const toggleStep = (key: 'passport' | 'ds160') => {
     setSteps((prev) => {
       const next = { ...prev, [key]: !prev[key] }
       if (userId) {
@@ -121,6 +132,7 @@ export default function H2BMap({
         hasCv,
         crm: crmItems,
         steps,
+        manualPlan: steps.plan,
         dia: notices?.dia ?? null,
         applied30: notices ? notices.postulaciones : appliedFallback,
         now: Date.now(),
@@ -301,12 +313,12 @@ export default function H2BMap({
       <section aria-labelledby="mapa-plan" className="space-y-3">
         <div>
           <h2 id="mapa-plan" className="text-base font-bold text-slate-900 dark:text-white">
-            Tu plan de 30 días
+            Tu plan de 3 semanas
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Lo que ya hiciste se marca solo con tus datos.</p>
-          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{`Meta recomendada para ${map.goal.label}: unas ${map.goal.perWeek} postulaciones por semana a empresas distintas (${map.goal.perMonth} en 30 días). El primer día es para tu perfil, tu CV y conocer tu Mapa. Prioriza ofertas verificadas sobre cantidad.`}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Lo que se puede saber con tus datos se marca solo. Lo demás lo marcas tú cuando lo termines.</p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{`Tu primera meta: mínimo 10 empresas distintas, ya verificadas. Para ${map.goal.label} puedes ir por más: unas ${map.goal.perWeek} por semana. Prioriza ofertas verificadas sobre cantidad.`}</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {map.plan.map((w) => (
             <div
               key={w.week}
@@ -320,13 +332,25 @@ export default function H2BMap({
               </div>
               <ul className="mt-2.5 space-y-1.5">
                 {w.items.map((item) => (
-                  <li key={item.label} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
-                    {item.done ? (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                  <li key={item.id} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+                    {item.auto ? (
+                      item.done ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                      ) : (
+                        <Circle className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600" aria-hidden="true" />
+                      )
                     ) : (
-                      <Circle className="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600" aria-hidden="true" />
+                      <input
+                        type="checkbox"
+                        id={`plan-${item.id}`}
+                        checked={item.done}
+                        onChange={() => togglePlan(item.id)}
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-[#C89B3C]"
+                      />
                     )}
-                    <span className={item.done ? 'line-through text-slate-400 dark:text-slate-500' : ''}>{item.label}</span>
+                    <label htmlFor={item.auto ? undefined : `plan-${item.id}`} className={item.done ? 'line-through text-slate-400 dark:text-slate-500' : ''}>
+                      {item.label}
+                    </label>
                     <span className="sr-only">{item.done ? ' (hecho)' : ' (pendiente)'}</span>
                   </li>
                 ))}

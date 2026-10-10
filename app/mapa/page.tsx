@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react'
 import LogoMark from '@/components/LogoMark'
 import { buildMap } from '@/lib/h2bMap'
@@ -8,6 +8,11 @@ import { buildMap } from '@/lib/h2bMap'
 // Mapa H2B público: sin cuenta. Cinco preguntas, el correo (con consentimiento) y el mapa en pantalla.
 // Usa la misma lógica que Mi Mapa de los miembros (lib/h2bMap.ts), solo que sin CRM ni datos guardados.
 const BACKEND = 'https://h2b-backend-three.vercel.app'
+// El dashboard de la masterclass vive en el dominio de la app (este dominio solo sirve el Mapa)
+const DASHBOARD_URL = 'https://h2b-fronted.vercel.app/masterclass.html'
+const VIDEO_URL = 'https://www.youtube.com/live/y4xJkCegXjE?si=Knvp2RD7scLmCzSB'
+const SEASONAL_URL = 'https://seasonaljobs.dol.gov'
+const PLAN_KEY = 'jta-mapa-plan-v1'
 
 type Experience = 'directa' | 'parecida' | 'informal' | 'ninguna' | ''
 type YesNo = 'si' | 'no' | 'no_se' | ''
@@ -70,6 +75,38 @@ export default function MapaPublico() {
   const [website, setWebsite] = useState('') // campo trampa para programas
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Casillas del plan que la persona marca; se recuerdan en su navegador
+  const [plan, setPlan] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(PLAN_KEY)
+      if (raw) setPlan(JSON.parse(raw))
+    } catch {
+      // Sin almacenamiento: el avance dura solo esta visita
+    }
+  }, [])
+
+  const togglePlan = (id: string) => {
+    setPlan((prev) => {
+      const next = { ...prev, [id]: !prev[id] }
+      try {
+        window.localStorage.setItem(PLAN_KEY, JSON.stringify(next))
+      } catch {
+        // idem
+      }
+      return next
+    })
+  }
+
+  const restart = () => {
+    setA(EMPTY)
+    setStep(0)
+    setEmail('')
+    setNombre('')
+    setConsent(false)
+    setError(null)
+  }
 
   const map = useMemo(
     () =>
@@ -85,11 +122,12 @@ export default function MapaPublico() {
         hasCv: a.hasCv === 'si',
         crm: [],
         steps: { passport: a.passport === 'si', ds160: false },
+        manualPlan: plan,
         dia: null,
         applied30: 0,
         now: Date.now(),
       }),
-    [a]
+    [a, plan]
   )
 
   const q = QUESTIONS[step]
@@ -288,42 +326,86 @@ export default function MapaPublico() {
               )}
             </section>
 
-            {map.nextSteps.length > 0 && (
-              <section className={`${card} space-y-3`}>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white">Lo que sigue</h2>
-                <ul className="space-y-3">
-                  {map.nextSteps.map((s) => (
-                    <li key={s.id} className="flex gap-3">
-                      <Check className="w-4 h-4 mt-0.5 shrink-0 text-[#C89B3C]" aria-hidden="true" />
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{s.title}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{s.desc}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+            <section className={`${card} space-y-3`}>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Tus próximos pasos</h2>
+              <ul className="space-y-3">
+                {a.hasCv !== 'si' && (
+                  <li className="flex gap-3">
+                    <Check className="w-4 h-4 mt-0.5 shrink-0 text-[#C89B3C]" aria-hidden="true" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">Arma tu CV en formato americano</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Una sola hoja, sin foto ni edad, con las tareas que de verdad hiciste.</p>
+                      <a href={VIDEO_URL} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] underline">
+                        Ver el video: cómo armar tu CV
+                      </a>
+                    </div>
+                  </li>
+                )}
+                {a.passport !== 'si' && (
+                  <li className="flex gap-3">
+                    <Check className="w-4 h-4 mt-0.5 shrink-0 text-[#C89B3C]" aria-hidden="true" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">Revisa la vigencia de tu pasaporte</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Idealmente con 6 meses o más a partir del inicio de la temporada.</p>
+                    </div>
+                  </li>
+                )}
+                <li className="flex gap-3">
+                  <Check className="w-4 h-4 mt-0.5 shrink-0 text-[#C89B3C]" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Busca ofertas oficiales y verifícalas</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Empieza en SeasonalJobs, del Departamento de Trabajo. Revisa cada oferta antes de postular: que el correo use el dominio de la empresa, que no pidan dinero y que todo esté por escrito.</p>
+                    <a href={SEASONAL_URL} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] underline">
+                      Abrir SeasonalJobs
+                    </a>
+                  </div>
+                </li>
+              </ul>
+            </section>
 
             <section className={`${card} space-y-3`}>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white">Tus primeros 30 días</h2>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Tu plan de 3 semanas</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {`Para ${map.goal.label}, una guía razonable es de unas ${map.goal.perWeek} postulaciones por semana a empresas distintas, ya verificadas.`}
+                {`Tu primera meta: mínimo 10 empresas distintas, ya verificadas. Para ${map.goal.label} puedes ir por más: unas ${map.goal.perWeek} por semana. Marca cada paso cuando lo termines.`}
               </p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-3">
                 {map.plan.map((w) => (
-                  <div key={w.week} className="rounded-xl border border-slate-200 dark:border-slate-800 p-3">
+                  <div key={w.week} className={`rounded-xl border p-3 ${w.current ? 'border-[#C89B3C]' : 'border-slate-200 dark:border-slate-800'}`}>
                     <p className="text-sm font-bold text-slate-900 dark:text-white">{`Semana ${w.week}: ${w.title}`}</p>
-                    <ul className="mt-1.5 space-y-1">
+                    <ul className="mt-2 space-y-2">
                       {w.items.map((it) => (
-                        <li key={it.label} className="flex gap-2 text-xs text-slate-600 dark:text-slate-300">
-                          <span aria-hidden="true">{it.done ? '✓' : '○'}</span>
-                          <span>{it.label}</span>
+                        <li key={it.id} className="flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-300">
+                          <input
+                            type="checkbox"
+                            id={`mapa-${it.id}`}
+                            checked={it.done}
+                            disabled={it.auto && it.done && !plan[it.id]}
+                            onChange={() => togglePlan(it.id)}
+                            className="mt-0.5 h-4 w-4 shrink-0 accent-[#C89B3C]"
+                          />
+                          <label htmlFor={`mapa-${it.id}`} className={it.done ? 'line-through text-slate-400 dark:text-slate-500' : ''}>
+                            {it.label}
+                          </label>
                         </li>
                       ))}
                     </ul>
                   </div>
                 ))}
+              </div>
+            </section>
+
+            <section className={`${card} space-y-3`}>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Sigue desde tu dashboard</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Guarda las ofertas que encuentres, las empresas que verifiques y las agencias del listado del DOL, y marca el seguimiento a los 7, 14 y 21 días.
+              </p>
+              <a href={DASHBOARD_URL} target="_blank" rel="noopener noreferrer" className={primaryBtn}>
+                Abrir mi dashboard <ArrowRight className="w-4 h-4" />
+              </a>
+              <div>
+                <button type="button" onClick={restart} className="text-xs font-semibold text-slate-500 dark:text-slate-400 underline">
+                  Volver a empezar
+                </button>
               </div>
             </section>
 

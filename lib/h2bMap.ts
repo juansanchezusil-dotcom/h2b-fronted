@@ -21,6 +21,8 @@ export interface MapInput {
   hasCv: boolean
   crm: { status: string; createdAt: number }[]
   steps: { passport: boolean; ds160: boolean }
+  // Casillas del plan que la persona marcó a mano (id del paso -> true)
+  manualPlan?: Record<string, boolean>
   // Del Compromiso de PRO (hook de avisos): día N de 30 y empresas distintas postuladas en 30 días
   dia: number | null
   applied30: number
@@ -42,8 +44,11 @@ export interface NextStep {
 }
 
 export interface PlanItem {
+  id: string
   label: string
   done: boolean
+  // true si se marca sola con los datos de la persona; si no, la marca ella misma
+  auto: boolean
 }
 
 export interface PlanWeek {
@@ -121,8 +126,8 @@ export function englishNoteFor(targetRole: string, industry: string, englishLeve
 export function buildMap(input: MapInput): H2BMapData {
   const { profile, hasCv, crm, steps, now } = input
   const goal = goalFor(profile.industry, profile.targetRole)
-  const MAP_GOAL = goal.perMonth
-  const part = (pct: number) => Math.max(5, Math.round((MAP_GOAL * pct) / 100))
+  // Primera meta del plan: mínimo 10 empresas distintas. La recomendada por puesto (goal) es una guía aparte.
+  const MAP_GOAL = 10
 
   const count = (status: string) => crm.filter((i) => i.status === status).length
   const guardadas = count('guardadas')
@@ -201,7 +206,7 @@ export function buildMap(input: MapInput): H2BMapData {
     },
     prepared && input.applied30 < MAP_GOAL && applied > 0 && {
       id: 'goal',
-      title: `Te faltan ${MAP_GOAL - input.applied30} postulaciones para tu meta de 30 días`,
+      title: `Te faltan ${MAP_GOAL - input.applied30} postulaciones para tu primera meta`,
       desc: `Llevas ${input.applied30} de ${MAP_GOAL} postulaciones a empresas distintas.`,
       action: 'jobs',
       buttonLabel: 'Ver ofertas',
@@ -223,46 +228,45 @@ export function buildMap(input: MapInput): H2BMapData {
   ]
   const nextSteps = candidates.filter((c): c is NextStep => c !== false).slice(0, 3)
 
-  // Plan de 30 días, con lo que ya está hecho marcado según los datos reales
-  const week = input.dia === null ? null : Math.min(4, Math.ceil(input.dia / 7))
-  const plan: PlanWeek[] = [
+  // Plan de 3 semanas. Lo que se puede saber con los datos se marca solo; el resto lo marca la persona.
+  const manual = input.manualPlan || {}
+  const item = (id: string, label: string, auto?: boolean): PlanItem => ({
+    id,
+    label,
+    auto: auto !== undefined,
+    done: !!manual[id] || !!auto,
+  })
+  const weeks: { week: number; title: string; items: PlanItem[] }[] = [
     {
       week: 1,
-      title: 'Prepárate',
-      current: week === 1,
+      title: 'Conoce tu perfil y tu CV',
       items: [
-        { label: 'Perfil completo', done: profile.perfilCompletado },
-        { label: 'CV en inglés generado', done: hasCv },
-        { label: 'Pasaporte con vigencia confirmada', done: steps.passport },
-        { label: 'Guardar 5 ofertas de tu rubro', done: crm.length >= 5 },
+        item('w1a', 'Revisé mi perfil: puesto, industria, inglés y estados donde quiero trabajar', profile.perfilCompletado),
+        item('w1b', 'Armé mi CV en formato americano, en una sola hoja', hasCv),
+        item('w1c', 'Revisé mi CV con la plantilla y el video'),
       ],
     },
     {
       week: 2,
-      title: 'Primeras postulaciones',
-      current: week === 2,
-      items: [{ label: `${part(30)} postulaciones a empresas distintas`, done: input.applied30 >= part(30) }],
+      title: 'Busca, verifica y guarda',
+      items: [
+        item('w2a', 'Busqué ofertas en SeasonalJobs'),
+        item('w2b', 'Verifiqué cada oferta con los 4 puntos'),
+        item('w2c', 'Guardé mis mejores ofertas', crm.length >= 5),
+      ],
     },
     {
       week: 3,
-      title: 'Seguimiento',
-      current: week === 3,
+      title: 'Postula y da seguimiento',
       items: [
-        { label: 'Seguimiento a las postulaciones de 7 días', done: applied > 0 && pendingFollowUps === 0 },
-        { label: `${part(70)} postulaciones a empresas distintas`, done: input.applied30 >= part(70) },
-      ],
-    },
-    {
-      week: 4,
-      title: 'Revisa y ajusta',
-      current: week === 4,
-      items: [
-        { label: `Llegar a ${MAP_GOAL} postulaciones a empresas distintas`, done: input.applied30 >= MAP_GOAL },
-        { label: 'Revisar qué empresas respondieron', done: entrevistas + aceptadas + count('rechazada') > 0 },
-        { label: 'Ajustar tu CV o tus ofertas según lo que veas', done: false },
+        item('w3a', 'Postulé a mínimo 10 empresas distintas', input.applied30 >= MAP_GOAL),
+        item('w3b', 'Anoté mis fechas de seguimiento 7-14-21'),
+        item('w3c', 'Di seguimiento a las empresas que no respondieron'),
       ],
     },
   ]
+  const firstOpen = weeks.findIndex((w) => !w.items.every((i) => i.done))
+  const plan: PlanWeek[] = weeks.map((w, i) => ({ ...w, current: i === (firstOpen === -1 ? weeks.length - 1 : firstOpen) }))
 
   // Progreso general: los mismos 5 elementos del panel anterior (perfil, CV, pasaporte, 5 ofertas y DS-160)
   const checks = [profile.perfilCompletado, hasCv, steps.passport, crm.length >= 5, steps.ds160]

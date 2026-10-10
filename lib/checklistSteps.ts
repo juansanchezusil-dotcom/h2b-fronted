@@ -8,6 +8,8 @@ export const CHECKLIST_TOTAL_TASKS = 5 // perfil, CV, pasaporte, 5 ofertas guard
 export interface ManualSteps {
   passport: boolean
   ds160: boolean
+  // Casillas del plan de 3 semanas marcadas a mano (id del paso -> true)
+  plan?: Record<string, boolean>
 }
 
 const EMPTY: ManualSteps = { passport: false, ds160: false }
@@ -19,7 +21,7 @@ export function readChecklistSteps(userId?: string): ManualSteps {
   try {
     const raw = window.localStorage.getItem(storageKey(userId))
     const parsed = raw ? JSON.parse(raw) : {}
-    return { passport: !!parsed.passport, ds160: !!parsed.ds160 }
+    return { passport: !!parsed.passport, ds160: !!parsed.ds160, plan: parsed.plan && typeof parsed.plan === 'object' ? parsed.plan : {} }
   } catch {
     return { ...EMPTY }
   }
@@ -58,12 +60,12 @@ export async function loadSteps(db: DbClient, userId: string): Promise<ManualSte
     const remote = data?.manual_steps || {}
     // Si la base ya tiene los pasos guardados, manda la base (así desmarcar en un dispositivo vale en todos).
     // Si nunca se guardaron, se sube lo que había en el navegador.
-    if ('passport' in remote || 'ds160' in remote) {
-      const fromDb: ManualSteps = { passport: !!remote.passport, ds160: !!remote.ds160 }
+    if ('passport' in remote || 'ds160' in remote || 'plan' in remote) {
+      const fromDb: ManualSteps = { passport: !!remote.passport, ds160: !!remote.ds160, plan: remote.plan && typeof remote.plan === 'object' ? remote.plan : {} }
       writeChecklistSteps(userId, fromDb)
       return fromDb
     }
-    if (local.passport || local.ds160) await saveStepsRemote(db, userId, local)
+    if (local.passport || local.ds160 || Object.keys(local.plan || {}).length) await saveStepsRemote(db, userId, local)
     return local
   } catch {
     return local
