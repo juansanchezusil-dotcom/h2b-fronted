@@ -286,7 +286,7 @@ export default function Home() {
   // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
   const [emailDraftFor, setEmailDraftFor] = useState<{ company: string; role: string } | null>(null)
   // Oferta que se está postulando ahora mismo (flujo "Postular ahora" del detalle)
-  const [applyFlowJob, setApplyFlowJob] = useState<{ title: string; employerName: string; location?: string; contactEmail?: string; duties?: string } | null>(null)
+  const [applyFlowJob, setApplyFlowJob] = useState<{ title: string; employerName: string; location?: string; contactEmail?: string; duties?: string; reference?: string } | null>(null)
 
   const refreshHasCv = async (userId: string) => {
     if (!userId) return
