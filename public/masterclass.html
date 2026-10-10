@@ -87,6 +87,11 @@ ol.q{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
 details.note{margin-top:10px;border:1px dashed var(--gold-text);border-radius:12px;padding:10px 14px}
 details.note>summary{cursor:pointer;font-weight:700;color:var(--gold-text)}
 details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.cta{border-color:var(--gold-text)}
+.cta p{margin:0;color:var(--muted);max-width:62ch}
+#cerrado{display:none}
+body.cerrado #cerrado{display:flex}
+body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{display:none}
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
 </head>
@@ -97,6 +102,12 @@ details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:co
     <h1>Mi Dashboard <em>H2B</em></h1>
     <p class="sub">No te regalo una lista. Te enseño a armarla, y esta es la que armamos juntos el día de la clase.</p>
   </header>
+
+  <section class="box cta" id="cerrado" aria-labelledby="cerrado-t">
+    <h3 id="cerrado-t">Tu dashboard se activa en la masterclass del 25 de noviembre</h3>
+    <p>Lo vamos a armar juntos, en vivo. Reserva tu lugar para recibirlo ese día.</p>
+    <div class="row"><a class="btn gold" href="https://juanteavisa.com/masterclass-h2b/" target="_blank" rel="noopener">Reservar mi lugar</a></div>
+  </section>
 
   <section class="tiles" aria-label="Resumen">
     <div class="tile"><span class="k">Mi plan</span><span class="v" id="t-plan">0 <small>de 9 pasos</small></span><div class="bar"><i id="t-bar"></i></div></div>
@@ -188,13 +199,20 @@ details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:co
     </div>
   </section>
 
+  <section class="box cta" id="skool" aria-labelledby="skool-t">
+    <h3 id="skool-t">Lleva tu búsqueda a la app completa</h3>
+    <p>Este dashboard es la versión base. En la comunidad de Juan Te Avisa en Skool tienes acceso a la app completa: las empresas con historial, las ofertas actualizadas y las agencias que usamos, y un CRM exclusivo para llevar tus postulaciones con el seguimiento a los 7, 14 y 21 días.</p>
+    <div class="row"><a class="btn gold" id="skool-btn" href="#" target="_blank" rel="noopener" hidden>Unirme a la comunidad</a></div>
+  </section>
+
   <footer class="foot">
     <p style="margin:0">Contenido educativo. Juan Te Avisa no es abogado ni agencia, y no garantiza visa, patrocinador, entrevista ni empleo. Los datos del Hub son históricos y pueden cambiar. <a class="link" href="/privacidad">Política de privacidad</a>.</p>
     <p style="margin:10px 0 0"><button type="button" class="rm" id="reset">Borrar mi avance</button> <span id="reset-n"></span></p>
     <details class="note">
       <summary>Notas para Juan</summary>
       <ul>
-        <li>Los links del video y de la plantilla de CV están en LINKS, al inicio del script.</li>
+        <li>Los links del video y de la plantilla de CV están en LINKS, al inicio del script. El enlace de Skool va en SKOOL_URL (hasta que lo pongas, el botón de la comunidad no se muestra).</li>
+        <li>El dashboard se abre solo el 25-nov a las 7:00 p. m. (hora de Perú). Antes, con ?preview=1 lo ves tú.</li>
         <li>Las 4 agencias están en AGENCIAS (nombre, ubicación y sitio). Cada asistente puede agregar más.</li>
         <li>Las ofertas de la clase salen de /admin, bloque Ofertas de la clase, y aparecen aquí en menos de 40 segundos.</li>
         <li>Lo que cada persona marca o agrega se guarda en su propio navegador.</li>
@@ -209,6 +227,10 @@ details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:co
   var KEY='jta-dashboard-h2b-v4', DAY=86400000, META=10;
   var API='https://h2b-backend-three.vercel.app/api/clase/ofertas';
   // Pega aquí los links (https://...) y los botones aparecen solos
+  // El dashboard se activa el día de la masterclass. Con ?preview=1 se puede ver antes (para revisarlo).
+  var ACTIVACION=Date.parse('2026-11-25T19:00:00-05:00');
+  // Pega aquí el enlace de la comunidad de Skool (https://...) y el botón aparece solo
+  var SKOOL_URL='';
   var LINKS={plantilla:'https://juanteavisa.com/recursos/plantillas/',video:'https://www.youtube.com/live/y4xJkCegXjE?si=Knvp2RD7scLmCzSB'};
   // Agencias del listado del DOL que das tú en la clase: nombre y ubicación
   var AGENCIAS=[
@@ -445,6 +467,13 @@ details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:co
       save();renderEmpresas();
     }
   });
+  (function(){
+    var preview=false;
+    try{preview=new URLSearchParams(location.search).get('preview')==='1'}catch(e){}
+    if(!preview&&Date.now()<ACTIVACION)document.body.classList.add('cerrado');
+    var u=safeUrl(SKOOL_URL),b=$('skool-btn');
+    if(u&&b){b.href=u;b.hidden=false}
+  })();
   all();
   loadClase();
   setInterval(function(){if(!document.hidden)loadClase()},30000);
