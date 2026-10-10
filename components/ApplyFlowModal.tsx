@@ -17,6 +17,8 @@ interface ApplyJob {
   location?: string;
   contactEmail?: string;
   duties?: string;
+  // Número de caso o de oferta, para el asunto del correo si existe
+  reference?: string;
 }
 
 interface ApplyFlowModalProps {
@@ -39,6 +41,7 @@ interface GeneratedEmail {
   body_en: string;
   subject_es: string;
   body_es: string;
+  nota_es?: string;
 }
 
 // Familias de puestos: sirve para saber si la oferta es del mismo tipo que el puesto principal de la persona
@@ -133,6 +136,7 @@ export default function ApplyFlowModal({
             emailType: 'initial',
             jobTitle: job.title || 'the H-2B position',
             jobDuties: job.duties || '',
+            jobReference: job.reference || '',
             companyName: job.employerName || 'your company',
             location: job.location || '',
             candidateName: candidate.fullName || '[Tu nombre]',
@@ -366,6 +370,11 @@ export default function ApplyFlowModal({
                     <div className="bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-xl text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed border border-slate-100 dark:border-slate-700 max-h-56 overflow-y-auto">
                       {body}
                     </div>
+                    {email?.nota_es && (
+                      <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-2.5 py-1.5">
+                        {email.nota_es}
+                      </p>
+                    )}
                   </>
                 )}
               </div>

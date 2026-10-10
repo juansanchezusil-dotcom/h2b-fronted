@@ -2578,6 +2578,7 @@ return (
                       location: selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim(),
                       contactEmail: selectedJob.email_to_apply || selectedJob.email || selectedJob.recruitment_email || selectedJob.emp_email || '',
                       duties: selectedJob.job_description || selectedJob.job_duties || selectedJob.description || selectedJob.duties || '',
+                      reference: selectedJob.case_number || selectedJob.job_order_id || '',
                     })}
                     className="w-full bg-[#00A86B] hover:bg-[#008f5b] text-white font-bold text-xs py-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-sm"
                   >
@@ -2706,7 +2707,7 @@ return (
         userId={onboardingUserId}
         initialCompanyName={emailDraftFor?.company || ''}
         initialJobTitle={emailDraftFor?.role || ''}
-        savedOffers={crmItems.map(i => ({ company: i.company, role: i.role, state: i.state }))}
+        savedOffers={crmItems.map(i => ({ company: i.company, role: i.role, state: i.state, status: i.status }))}
         onOpenCvBuilder={() => setShowCvBuilder(true)}
       />
     </AssistantModal>

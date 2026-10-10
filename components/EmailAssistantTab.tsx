@@ -9,6 +9,7 @@ interface SavedOffer {
   company: string;
   role: string;
   state?: string;
+  status?: string;
 }
 
 interface EmailAssistantProps {
@@ -33,6 +34,7 @@ interface GeneratedEmail {
   body_en: string;
   subject_es: string;
   body_es: string;
+  nota_es?: string;
 }
 
 interface CandidateData {
@@ -133,6 +135,10 @@ export function EmailAssistantTab({
     if (hasCv && !current && !loading) generate(emailType);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emailType, hasCv, companyName, jobTitle, location]);
+
+  // Un seguimiento no corresponde cuando la empresa ya respondió o hubo un avance
+  const pickedStatus = Number(selectedOfferIdx) >= 0 ? savedOffers[Number(selectedOfferIdx)]?.status : undefined;
+  const followupNotNeeded = emailType !== 'initial' && !!pickedStatus && ['entrevista', 'aceptado', 'rechazada'].includes(pickedStatus);
 
   const subject = lang === 'en' ? current?.subject_en : current?.subject_es;
   const body = lang === 'en' ? current?.body_en : current?.body_es;
@@ -343,6 +349,12 @@ export function EmailAssistantTab({
               <p className="text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg px-3 py-2">{error}</p>
             )}
 
+            {followupNotNeeded && (
+              <p className="text-xs text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
+                Esta postulación ya tiene una respuesta o un avance en tu CRM (estado: {pickedStatus}). Antes de escribir un seguimiento, revisa si de verdad hace falta.
+              </p>
+            )}
+
             {lang === 'es' && (
               <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-2.5 py-1.5">
                 Esta es la traducción, solo para que entiendas lo que dice. Recomendamos enviarlo en inglés (EN).
@@ -361,6 +373,11 @@ export function EmailAssistantTab({
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed border border-slate-100 dark:border-slate-700 min-h-[220px]">
                   {body || 'Genera el correo para verlo aquí.'}
                 </div>
+                {current?.nota_es && (
+                  <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-2.5 py-1.5">
+                    {current.nota_es}
+                  </p>
+                )}
               </>
             )}
           </div>
