@@ -5,8 +5,13 @@ import { hasActiveMembership } from "@/lib/membership";
 export async function middleware(request: NextRequest) {
   // mapa.juanteavisa.com muestra directo el Mapa H2B público (abierto, sin cuenta)
   const host = request.headers.get("host") || "";
-  if (host.startsWith("mapa.") && request.nextUrl.pathname === "/") {
-    return NextResponse.rewrite(new URL("/mapa", request.url));
+  if (host.startsWith("mapa.")) {
+    const p = request.nextUrl.pathname;
+    if (p === "/") return NextResponse.rewrite(new URL("/mapa", request.url));
+    // Solo el Mapa y lo que necesita (política, imágenes de compartir) viven en este dominio. El login y la
+    // app están en el dominio de la app: el inicio de sesión de Google solo está autorizado allí.
+    const own = p === "/mapa" || p === "/privacidad" || /^\/(opengraph-image|twitter-image|icon|apple-icon)/.test(p);
+    if (!own) return NextResponse.redirect(new URL(p + request.nextUrl.search, "https://h2b-fronted.vercel.app"));
   }
 
   let response = NextResponse.next({
