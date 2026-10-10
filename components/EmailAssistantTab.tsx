@@ -26,7 +26,7 @@ interface EmailAssistantProps {
   onOpenCvBuilder?: () => void;
 }
 
-type EmailType = 'initial' | 'followup_7d' | 'followup_14d';
+type EmailType = 'initial' | 'followup_7d' | 'followup_14d' | 'reply';
 type Lang = 'en' | 'es';
 
 interface GeneratedEmail {
@@ -54,6 +54,8 @@ export function EmailAssistantTab({
   onOpenCvBuilder,
 }: EmailAssistantProps) {
   const [emailType, setEmailType] = useState<EmailType>('initial');
+  // Mensaje que la empresa le escribió (solo para el tipo "responder")
+  const [employerMessage, setEmployerMessage] = useState('');
   const [companyName, setCompanyName] = useState(initialCompanyName);
   const [jobTitle, setJobTitle] = useState(initialJobTitle);
   const [location, setLocation] = useState(initialLocation);
@@ -118,6 +120,7 @@ export function EmailAssistantTab({
           baseCvText: candidate.baseCvText,
           skills: candidate.skills,
           englishLevel: candidate.englishLevel,
+          ...(type === 'reply' ? { employerMessage } : {}),
         }),
       });
       const data = await res.json();
@@ -132,13 +135,14 @@ export function EmailAssistantTab({
 
   // Genera el correo del tipo activo si aún no existe (o cambiaron empresa/puesto)
   useEffect(() => {
-    if (hasCv && !current && !loading) generate(emailType);
+    // La respuesta a la empresa no se genera sola: hace falta pegar primero su mensaje
+    if (hasCv && !current && !loading && emailType !== 'reply') generate(emailType);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emailType, hasCv, companyName, jobTitle, location]);
 
   // Un seguimiento no corresponde cuando la empresa ya respondió o hubo un avance
   const pickedStatus = Number(selectedOfferIdx) >= 0 ? savedOffers[Number(selectedOfferIdx)]?.status : undefined;
-  const followupNotNeeded = emailType !== 'initial' && !!pickedStatus && ['entrevista', 'aceptado', 'rechazada'].includes(pickedStatus);
+  const followupNotNeeded = emailType !== 'initial' && emailType !== 'reply' && !!pickedStatus && ['entrevista', 'aceptado', 'rechazada'].includes(pickedStatus);
 
   const subject = lang === 'en' ? current?.subject_en : current?.subject_es;
   const body = lang === 'en' ? current?.body_en : current?.body_es;
@@ -186,6 +190,7 @@ export function EmailAssistantTab({
       { id: 'initial' as const, label: 'Contacto Inicial / Postulación' },
       { id: 'followup_7d' as const, label: 'Primer Seguimiento (7 días)' },
       { id: 'followup_14d' as const, label: 'Último Seguimiento (14 días)' },
+      { id: 'reply' as const, label: 'Responder a un mensaje de la empresa' },
     ],
     []
   );
@@ -251,6 +256,34 @@ export function EmailAssistantTab({
               </button>
             ))}
           </div>
+
+          {emailType === 'reply' && (
+            <div className="space-y-2">
+              <label htmlFor="employer-message" className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                Pega aquí el mensaje que te escribió la empresa
+              </label>
+              <textarea
+                id="employer-message"
+                rows={6}
+                value={employerMessage}
+                onChange={(e) => setEmployerMessage(e.target.value)}
+                maxLength={3000}
+                placeholder="Hola, gracias por tu interés. ¿Podrías confirmar tu disponibilidad...?"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white px-3 py-2 text-xs"
+              />
+              <button
+                type="button"
+                onClick={() => generate('reply')}
+                disabled={loading || employerMessage.trim().length < 5}
+                className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold py-2"
+              >
+                {loading ? 'Escribiendo...' : 'Escribir mi respuesta'}
+              </button>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Si la empresa pide un dato que no está en tu CV, la respuesta lo deja entre corchetes para que lo completes tú. No se inventa nada.
+              </p>
+            </div>
+          )}
 
           <hr className="border-slate-200 dark:border-slate-700 my-4" />
 
