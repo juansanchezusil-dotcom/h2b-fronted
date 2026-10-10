@@ -13,6 +13,7 @@ interface Lead {
   updated_at: string
   unsubscribed_at?: string | null
   reminder_sent_at?: string | null
+  skip_reminder?: boolean
 }
 
 const STAGE: Record<string, string> = {
@@ -35,11 +36,39 @@ export default function MapLeadsPanel() {
   const [busy, setBusy] = useState(false)
   const [armed, setArmed] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
+  const [pasted, setPasted] = useState('')
 
   const reload = async () => {
     const res = await aiFetch('/api/admin/mapa-leads')
     const data = await res.json().catch(() => ({}))
     if (res.ok) setLeads(data.leads)
+  }
+
+  const exclude = async () => {
+    const emails = Array.from(new Set((pasted.match(/[^\s,;<>"']+@[^\s,;<>"']+\.[^\s,;<>"']{2,}/g) || []).map((e) => e.toLowerCase())))
+    if (!emails.length) {
+      setError('No encontramos correos en lo que pegaste.')
+      return
+    }
+    setBusy(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const res = await aiFetch('/api/admin/mapa-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'excluir', emails }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'No se pudo guardar.')
+      setNotice(`Pegaste ${data.recibidos} correos; ${data.coinciden} estaban en esta lista y ya no recibirán el recordatorio.`)
+      setPasted('')
+      await reload()
+    } catch (err: any) {
+      setError(err.message || 'No se pudo guardar.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const act = async (accion: 'prueba' | 'enviar') => {
@@ -111,7 +140,7 @@ export default function MapLeadsPanel() {
         <>
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-2">
             <p className="text-xs text-slate-600 dark:text-slate-300">
-              {`Recordatorio de la masterclass del 25 de noviembre: ${leads.filter((l) => !l.unsubscribed_at && !l.reminder_sent_at).length} por enviar, ${leads.filter((l) => l.reminder_sent_at).length} ya enviados, ${leads.filter((l) => l.unsubscribed_at).length} de baja.`}
+              {`Recordatorio de la masterclass del 25 de noviembre: ${leads.filter((l) => !l.unsubscribed_at && !l.reminder_sent_at && !l.skip_reminder).length} por enviar, ${leads.filter((l) => l.reminder_sent_at).length} ya enviados, ${leads.filter((l) => l.skip_reminder).length} excluidos (ya en la masterclass), ${leads.filter((l) => l.unsubscribed_at).length} de baja.`}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" onClick={() => act('prueba')} disabled={busy} className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 disabled:opacity-50">
@@ -131,6 +160,22 @@ export default function MapLeadsPanel() {
                   Enviar recordatorio a los que faltan
                 </button>
               )}
+            </div>
+            <div className="space-y-1.5 pt-1">
+              <label htmlFor="excluir-correos" className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                ¿Ya están registrados en la masterclass? Pega sus correos para no duplicarles el mensaje
+              </label>
+              <textarea
+                id="excluir-correos"
+                rows={3}
+                value={pasted}
+                onChange={(e) => setPasted(e.target.value)}
+                placeholder="correo1@ejemplo.com, correo2@ejemplo.com"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2 text-xs"
+              />
+              <button type="button" onClick={exclude} disabled={busy || !pasted.trim()} className="rounded-lg border border-slate-300 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 disabled:opacity-50">
+                Excluir del recordatorio
+              </button>
             </div>
             {notice && <p role="status" className="text-xs text-emerald-700 dark:text-emerald-400">{notice}</p>}
           </div>
@@ -158,7 +203,7 @@ export default function MapLeadsPanel() {
                     l.answers?.english ? `Inglés: ${l.answers.english}` : '',
                     l.answers?.hasCv === 'no' ? 'Sin CV' : '',
                     l.answers?.passport === 'no' ? 'Sin pasaporte' : '',
-                    l.unsubscribed_at ? 'De baja' : l.reminder_sent_at ? 'Recordatorio enviado' : '',
+                    l.unsubscribed_at ? 'De baja' : l.reminder_sent_at ? 'Recordatorio enviado' : l.skip_reminder ? 'Excluido (ya en la masterclass)' : '',
                     fecha(l.updated_at),
                   ]
                     .filter(Boolean)
