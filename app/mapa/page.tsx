@@ -13,6 +13,7 @@ const DASHBOARD_URL = 'https://h2b-fronted.vercel.app/masterclass.html'
 const VIDEO_URL = 'https://www.youtube.com/live/y4xJkCegXjE?si=Knvp2RD7scLmCzSB'
 const SEASONAL_URL = 'https://seasonaljobs.dol.gov'
 const PLAN_KEY = 'jta-mapa-plan-v1'
+const DONE_KEY = 'jta-mapa-respuestas-v1'
 
 type Experience = 'directa' | 'parecida' | 'informal' | 'ninguna' | ''
 type YesNo = 'si' | 'no' | 'no_se' | ''
@@ -82,6 +83,14 @@ export default function MapaPublico() {
     try {
       const raw = window.localStorage.getItem(PLAN_KEY)
       if (raw) setPlan(JSON.parse(raw))
+      const done = window.localStorage.getItem(DONE_KEY)
+      if (done) {
+        const parsed = JSON.parse(done)
+        if (parsed?.answers?.role) {
+          setA({ ...EMPTY, ...parsed.answers })
+          setStep(6)
+        }
+      }
     } catch {
       // Sin almacenamiento: el avance dura solo esta visita
     }
@@ -100,6 +109,11 @@ export default function MapaPublico() {
   }
 
   const restart = () => {
+    try {
+      window.localStorage.removeItem(DONE_KEY)
+    } catch {
+      // idem
+    }
     setA(EMPTY)
     setStep(0)
     setEmail('')
@@ -149,6 +163,11 @@ export default function MapaPublico() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'No pudimos guardar tu correo. Intenta de nuevo.')
+      try {
+        window.localStorage.setItem(DONE_KEY, JSON.stringify({ answers: a }))
+      } catch {
+        // idem
+      }
       setStep(6)
     } catch (err: any) {
       setError(err.message || 'No pudimos guardar tu correo. Intenta de nuevo.')
