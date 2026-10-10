@@ -2445,6 +2445,14 @@ return (
     onOpenInterview={() => setShowInterviewSimulator(true)}
     onOpenScamDetector={() => setShowScamDetector(true)}
     onSaveOffer={(company, role, state) => addToCRM(company, role, state)}
+    onOpenJob={async (jobId) => {
+      const { data } = await supabase
+        .from('jobs')
+        .select('*, sponsor:sponsor_companies(employer_name, consular_processed, total_approved, cap_type)')
+        .eq('id', jobId)
+        .maybeSingle()
+      if (data) setSelectedJob(data)
+    }}
   />
 )}
       {/* MODAL DETALLE DE OFERTA LABORAL (ÚNICO) */}

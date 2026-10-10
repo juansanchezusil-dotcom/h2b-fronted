@@ -31,6 +31,8 @@ interface H2BMapProps {
   onOpenScamDetector: () => void
   // Guarda una oferta sugerida en el CRM de la persona
   onSaveOffer: (company: string, role: string, state?: string) => Promise<boolean>
+  // Abre el detalle de una oferta sugerida
+  onOpenJob: (jobId: string) => void
 }
 
 interface ProfileRow {
@@ -62,6 +64,7 @@ export default function H2BMap({
   onOpenInterview,
   onOpenScamDetector,
   onSaveOffer,
+  onOpenJob,
 }: H2BMapProps) {
   const [profile, setProfile] = useState<ProfileRow>(EMPTY_PROFILE)
   const [steps, setSteps] = useState<ManualSteps>({ passport: false, ds160: false })
@@ -307,7 +310,7 @@ export default function H2BMap({
         </section>
       )}
 
-      <TopOffers perfilCompletado={perfilCompletado} onSave={onSaveOffer} onSeeAll={() => onNavigateToTab('jobs')} />
+      <TopOffers perfilCompletado={perfilCompletado} onSave={onSaveOffer} onSeeAll={() => onNavigateToTab('jobs')} onOpen={onOpenJob} />
 
       {/* Plan de 30 días */}
       <section aria-labelledby="mapa-plan" className="space-y-3">

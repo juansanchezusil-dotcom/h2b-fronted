@@ -17,11 +17,13 @@ interface TopOffersProps {
   // Guarda la oferta en el CRM de la persona. Devuelve true si quedó guardada.
   onSave: (company: string, role: string, state?: string) => Promise<boolean>
   onSeeAll: () => void
+  // Abre el detalle de la oferta (la misma ventana que en la lista de ofertas)
+  onOpen: (jobId: string) => void
 }
 
 // Las 3 ofertas que mejor encajan con el perfil de la persona, según el cálculo que ya usa la lista de
 // ofertas (industria, experiencia e inglés). No dice que la empresa vaya a responder.
-export default function TopOffers({ perfilCompletado, onSave, onSeeAll }: TopOffersProps) {
+export default function TopOffers({ perfilCompletado, onSave, onSeeAll, onOpen }: TopOffersProps) {
   const [jobs, setJobs] = useState<TopJob[] | null>(null)
   const [saved, setSaved] = useState<Set<string>>(new Set())
   const [busy, setBusy] = useState<string | null>(null)
@@ -84,11 +86,16 @@ export default function TopOffers({ perfilCompletado, onSave, onSeeAll }: TopOff
       <ul className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {jobs.map((j) => (
           <li key={j.id} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm flex flex-col gap-2">
-            <p className="text-sm font-bold text-slate-900 dark:text-white">{j.title}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{`${j.employer_name}${j.location ? ` · ${j.location}` : ''}`}</p>
+            <button type="button" onClick={() => onOpen(j.id)} className="text-left space-y-0.5 group">
+              <span className="block text-sm font-bold text-slate-900 dark:text-white group-hover:underline">{j.title}</span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400">{`${j.employer_name}${j.location ? ` · ${j.location}` : ''}`}</span>
+            </button>
             <span className="w-fit rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
               {`${j.score}% compatible`}
             </span>
+            <button type="button" onClick={() => onOpen(j.id)} className="text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] hover:underline text-left">
+              Ver la oferta completa
+            </button>
             <button
               type="button"
               onClick={() => save(j)}

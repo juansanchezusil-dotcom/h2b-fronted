@@ -194,7 +194,7 @@ details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:co
     <details class="note">
       <summary>Notas para Juan</summary>
       <ul>
-        <li>El link del video ya está en LINKS. Cuando tengas el de la plantilla de CV, pégalo en LINKS.plantilla y aparece su botón.</li>
+        <li>Los links del video y de la plantilla de CV están en LINKS, al inicio del script.</li>
         <li>Las 4 agencias están en AGENCIAS (nombre, ubicación y sitio). Cada asistente puede agregar más.</li>
         <li>Las ofertas de la clase salen de /admin, bloque Ofertas de la clase, y aparecen aquí en menos de 40 segundos.</li>
         <li>Lo que cada persona marca o agrega se guarda en su propio navegador.</li>
@@ -209,7 +209,7 @@ details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:co
   var KEY='jta-dashboard-h2b-v4', DAY=86400000, META=10;
   var API='https://h2b-backend-three.vercel.app/api/clase/ofertas';
   // Pega aquí los links (https://...) y los botones aparecen solos
-  var LINKS={plantilla:'',video:'https://www.youtube.com/live/y4xJkCegXjE?si=Knvp2RD7scLmCzSB'};
+  var LINKS={plantilla:'https://juanteavisa.com/recursos/plantillas/',video:'https://www.youtube.com/live/y4xJkCegXjE?si=Knvp2RD7scLmCzSB'};
   // Agencias del listado del DOL que das tú en la clase: nombre y ubicación
   var AGENCIAS=[
     {id:'ag1',name:'JTP AGENCY (ESPINOSA GAONA, PATRICIA)',loc:'US',url:'https://jtpagency.com/'},
