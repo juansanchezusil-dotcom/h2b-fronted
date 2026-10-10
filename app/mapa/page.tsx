@@ -13,6 +13,9 @@ const DASHBOARD_URL = 'https://h2b-fronted.vercel.app/masterclass.html'
 const VIDEO_URL = 'https://www.youtube.com/live/y4xJkCegXjE?si=Knvp2RD7scLmCzSB'
 const SEASONAL_URL = 'https://seasonaljobs.dol.gov'
 const PLAN_KEY = 'jta-mapa-plan-v1'
+// El Mapa se activa el día de la masterclass. Antes, la página solo invita a reservar el lugar.
+const ACTIVATION = Date.parse('2026-11-25T19:00:00-05:00')
+const MASTERCLASS_URL = 'https://juanteavisa.com/masterclass-h2b/'
 const DONE_KEY = 'jta-mapa-respuestas-v1'
 
 type Experience = 'directa' | 'parecida' | 'informal' | 'ninguna' | ''
@@ -76,8 +79,16 @@ export default function MapaPublico() {
   const [website, setWebsite] = useState('') // campo trampa para programas
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // 'loading' evita un parpadeo del aviso: el estado se decide en el navegador, con la fecha de hoy.
+  // Con ?preview=1 se puede ver el cuestionario antes de la fecha (para revisarlo).
+  const [gate, setGate] = useState<'loading' | 'closed' | 'open'>('loading')
   // Casillas del plan que la persona marca; se recuerdan en su navegador
   const [plan, setPlan] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    const preview = new URLSearchParams(window.location.search).get('preview') === '1'
+    setGate(preview || Date.now() >= ACTIVATION ? 'open' : 'closed')
+  }, [])
 
   useEffect(() => {
     try {
@@ -143,6 +154,33 @@ export default function MapaPublico() {
       }),
     [a, plan]
   )
+
+  if (gate !== 'open') {
+    return (
+      <main className="min-h-dvh bg-gray-50 dark:bg-slate-950 px-4 py-8">
+        <div className="mx-auto w-full max-w-xl space-y-5">
+          <header className="flex items-center gap-3">
+            <LogoMark size={44} decorative className="rounded-xl" />
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#08131F] dark:text-white">Juan Te Avisa</p>
+              <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">Mi Mapa H2B Personal</h1>
+            </div>
+          </header>
+          {gate === 'closed' && (
+            <section className={`${card} space-y-4`}>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">El Mapa H2B se activa en la masterclass del 25 de noviembre</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Lo vamos a armar juntos, en vivo: tu etapa, tu plan de 3 semanas y tu dashboard para guardar ofertas, empresas y agencias. Reserva tu lugar para recibirlo ese día.
+              </p>
+              <a href={MASTERCLASS_URL} target="_blank" rel="noopener noreferrer" className={primaryBtn}>
+                Reservar mi lugar <ArrowRight className="w-4 h-4" />
+              </a>
+            </section>
+          )}
+        </div>
+      </main>
+    )
+  }
 
   const q = QUESTIONS[step]
   const answered = step < QUESTIONS.length && !!a[q.key]
