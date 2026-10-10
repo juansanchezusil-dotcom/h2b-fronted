@@ -3,6 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasActiveMembership } from "@/lib/membership";
 
 export async function middleware(request: NextRequest) {
+  // mapa.juanteavisa.com muestra directo el Mapa H2B público (abierto, sin cuenta)
+  const host = request.headers.get("host") || "";
+  if (host.startsWith("mapa.") && request.nextUrl.pathname === "/") {
+    return NextResponse.rewrite(new URL("/mapa", request.url));
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -40,7 +46,7 @@ export async function middleware(request: NextRequest) {
 
   // 1. Si NO ha iniciado sesión y quiere entrar a cualquier ruta protegida (incluyendo la raíz `/`),
   // lo redirige inmediatamente a /login
-  if (!user && pathname !== "/login" && pathname !== "/no-acceso" && pathname !== "/privacidad" && pathname !== "/masterclass.html" && !pathname.startsWith("/auth")) {
+  if (!user && pathname !== "/login" && pathname !== "/no-acceso" && pathname !== "/privacidad" && pathname !== "/masterclass.html" && pathname !== "/mapa" && !pathname.startsWith("/auth")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -61,7 +67,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  const isPublic = pathname === "/no-acceso" || pathname === "/privacidad" || pathname === "/masterclass.html" || pathname.startsWith("/auth") || pathname.startsWith("/api");
+  const isPublic = pathname === "/no-acceso" || pathname === "/privacidad" || pathname === "/masterclass.html" || pathname === "/mapa" || pathname.startsWith("/auth") || pathname.startsWith("/api");
   if (user?.email && !isPublic) {
     if (!(await hasActiveMembership(supabase, user.email))) {
       return NextResponse.redirect(new URL("/no-acceso", request.url));

@@ -6,6 +6,7 @@ import { aiFetch } from '@/lib/aiFetch'
 import RadarPanel from '@/components/RadarPanel'
 import EngagementPanel from '@/components/EngagementPanel'
 import ClassOffersPanel from '@/components/ClassOffersPanel'
+import MapLeadsPanel from '@/components/MapLeadsPanel'
 
 interface Acceso {
   email: string
@@ -201,6 +202,10 @@ export default function AdminPage() {
 
       <Section title="Ofertas de la clase" hint="Las que encuentras en vivo: aparecen en Mi Mapa de todos los miembros.">
         <ClassOffersPanel />
+      </Section>
+
+      <Section title="Contactos del Mapa público" hint="Personas que dejaron su correo en mapa.juanteavisa.com.">
+        <MapLeadsPanel />
       </Section>
 
       <Section title="Radar de actividad" hint="Quién está activo, en riesgo o por vencer, y a quién contactar.">

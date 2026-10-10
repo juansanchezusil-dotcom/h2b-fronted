@@ -50,6 +50,7 @@ export default function PrivacidadPage() {
             'Tu actividad en la app: la fecha de tu última visita y los cambios de estado de tus postulaciones.',
             'Tu membresía: si está activa y la fecha de vencimiento.',
             'Un registro de los correos automáticos que te enviamos, para no repetirlos.',
+            'Si usas el Mapa H2B público (sin cuenta): tu correo, tu nombre si lo escribes y tus respuestas del cuestionario (puesto, experiencia, inglés, si tienes CV y pasaporte).',
           ]}
         />
         <p className="mt-2">No guardamos datos de tarjeta. El pago se hace en Skool y lo procesa esa plataforma.</p>
@@ -62,6 +63,7 @@ export default function PrivacidadPage() {
             'Saber si tu acceso está vigente y avisarte antes de que venza.',
             'Escribirte si llevas varios días sin entrar, para ofrecerte ayuda. Puedes darte de baja de estos avisos en cualquier momento.',
             'Entender cómo se usa el sistema para mejorarlo y acompañar mejor a los miembros.',
+            'Si dejaste tu correo en el Mapa H2B público: escribirte sobre tu mapa y sobre la masterclass, solo porque lo autorizaste.',
           ]}
         />
         <p className="mt-2">No vendemos tus datos ni los usamos para publicidad de terceros.</p>
