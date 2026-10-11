@@ -181,6 +181,9 @@ interface CRMItem {
   // Fecha real de postulación: el cron cuenta los días 7-14-21 desde aquí
   createdAt: number
   notes?: string
+  // Cuándo envió su primer y su segundo seguimiento (los registra la persona)
+  followup1At?: number | null
+  followup2At?: number | null
 }
 
 // Cada oferta viene del scraper diario del DOL o de la carga de CareerOneStop (columna "source")
@@ -347,6 +350,8 @@ export default function Home() {
         lastUpdated: new Date(row.last_updated || row.created_at).getTime(),
         createdAt: new Date(row.created_at).getTime(),
         notes: row.notes || '',
+        followup1At: row.followup1_sent_at ? new Date(row.followup1_sent_at).getTime() : null,
+        followup2At: row.followup2_sent_at ? new Date(row.followup2_sent_at).getTime() : null,
       }))
       setCrmItems(mapped)
       setCrmError(false)
@@ -963,6 +968,21 @@ const emailTypeFor = (item: CRMItem): 'initial' | 'followup_7d' | 'followup_14d'
   if (item.status !== 'postulado' && item.status !== 'seguimiento') return 'initial'
   const days = daysSinceApplied(item)
   return days >= 14 ? 'followup_14d' : days >= 7 ? 'followup_7d' : 'initial'
+}
+
+// La persona confirma que ya envió su primer (1) o segundo (2) seguimiento: queda registrado con la fecha
+const markFollowupSent = async (item: CRMItem, n: 1 | 2): Promise<boolean> => {
+  const when = new Date()
+  const column = n === 1 ? 'followup1_sent_at' : 'followup2_sent_at'
+  const { error } = await supabase.from('applications').update({ [column]: when.toISOString() }).eq('id', item.id)
+  if (error) {
+    console.error('No se pudo registrar el seguimiento:', error)
+    showToast('❌ No se pudo registrar el seguimiento. Intenta de nuevo.')
+    return false
+  }
+  setCrmItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, [n === 1 ? 'followup1At' : 'followup2At']: when.getTime() } : i)))
+  showToast(n === 1 ? '✅ Primer seguimiento registrado' : '✅ Segundo seguimiento registrado')
+  return true
 }
 
 const openEmailFor = (item: CRMItem) => {
@@ -2186,6 +2206,15 @@ return (
                     trackingMessage = '✉️ Envía tu primer correo de seguimiento'
                     badgeColor = 'bg-amber-100 dark:bg-amber-500/20 border-amber-300 dark:border-amber-500/40 text-amber-900 dark:text-amber-200 font-bold'
                   }
+                  // Con el seguimiento ya enviado, el aviso cambia: ya no toca escribir, toca esperar
+                  if (item.followup2At) {
+                    trackingMessage = '✅ Segundo seguimiento enviado. Espera su respuesta'
+                    badgeColor = 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                  } else if (item.followup1At && daysPassed < 14) {
+                    trackingMessage = '✅ Primer seguimiento enviado. El segundo toca el día 14'
+                    badgeColor = 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
+                  }
+                  const fmtDay = (t: number) => new Date(t).toLocaleDateString('es', { day: 'numeric', month: 'short' })
                   return (
                     <div key={item.id} className="bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-xl p-3.5 shadow-2xs space-y-3">
                       <div className="flex justify-between items-start">
@@ -2196,6 +2225,21 @@ return (
                         <button onClick={() => deleteCrmItem(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
                       </div>
                       <div className={`${badgeColor} border text-[9px] font-semibold px-2 py-1 rounded-lg text-center`}>{trackingMessage}</div>
+                      {(item.followup1At || item.followup2At) && (
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400">
+                          {[item.followup1At ? `1.er seguimiento: ${fmtDay(item.followup1At)}` : '', item.followup2At ? `2.º seguimiento: ${fmtDay(item.followup2At)}` : ''].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
+                      {daysPassed >= 7 && !item.followup1At && !item.followup2At && (
+                        <button onClick={() => markFollowupSent(item, 1)} className="w-full text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 py-1.5 rounded-lg">
+                          Ya envié el primer seguimiento
+                        </button>
+                      )}
+                      {daysPassed >= 14 && !item.followup2At && (
+                        <button onClick={() => markFollowupSent(item, 2)} className="w-full text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 py-1.5 rounded-lg">
+                          Ya envié el segundo seguimiento
+                        </button>
+                      )}
                       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
                         {editingNotesId === item.id ? (
                           <div className="space-y-2">
@@ -2742,6 +2786,14 @@ return (
         initialCompanyName={emailDraftFor?.company || ''}
         initialJobTitle={emailDraftFor?.role || ''}
         initialEmailType={emailDraftFor?.type || 'initial'}
+        onFollowupSent={async (company, role, type) => {
+          const item = crmItems.find((i) => crmKey(i.company, i.role) === crmKey(company, role))
+          if (!item) {
+            showToast('No encontramos esa postulación en tu CRM.')
+            return false
+          }
+          return markFollowupSent(item, type === 'followup_7d' ? 1 : 2)
+        }}
         savedOffers={crmItems.map(i => ({ company: i.company, role: i.role, state: i.state, status: i.status }))}
         onOpenCvBuilder={() => setShowCvBuilder(true)}
       />

@@ -24,6 +24,8 @@ interface EmailAssistantProps {
   // (solo tiene sentido cuando se abre el redactor "en blanco", sin una
   // oferta específica ya precargada).
   savedOffers?: SavedOffer[];
+  // Se llama cuando la persona confirma que ya envió un seguimiento, para que el CRM lo registre
+  onFollowupSent?: (company: string, role: string, type: 'followup_7d' | 'followup_14d') => Promise<boolean> | boolean | void;
   // Se llama cuando falta el CV, para que quien lo use abra el constructor de CV
   onOpenCvBuilder?: () => void;
 }
@@ -55,7 +57,9 @@ export function EmailAssistantTab({
   initialEmailType = 'initial',
   savedOffers = [],
   onOpenCvBuilder,
+  onFollowupSent,
 }: EmailAssistantProps) {
+  const [followupDone, setFollowupDone] = useState<Record<string, boolean>>({});
   const [emailType, setEmailType] = useState<EmailType>(initialEmailType);
   // Mensaje que la empresa le escribió (solo para el tipo "responder")
   const [employerMessage, setEmployerMessage] = useState('');
@@ -413,6 +417,22 @@ export function EmailAssistantTab({
                   <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-2.5 py-1.5">
                     {current.nota_es}
                   </p>
+                )}
+                {onFollowupSent && (emailType === 'followup_7d' || emailType === 'followup_14d') && body && (
+                  followupDone[`${companyName}|${jobTitle}|${emailType}`] ? (
+                    <p role="status" className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">✓ Seguimiento registrado en tu CRM.</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const ok = await onFollowupSent(companyName, jobTitle, emailType)
+                        if (ok !== false) setFollowupDone((prev) => ({ ...prev, [`${companyName}|${jobTitle}|${emailType}`]: true }))
+                      }}
+                      className="w-full text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                      Ya envié este seguimiento: registrarlo en mi CRM
+                    </button>
+                  )
                 )}
               </>
             )}
