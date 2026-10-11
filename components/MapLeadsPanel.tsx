@@ -14,6 +14,12 @@ interface Lead {
   unsubscribed_at?: string | null
   reminder_sent_at?: string | null
   skip_reminder?: boolean
+  sequence_step?: number
+}
+
+interface Secuencia {
+  activa: boolean
+  pasos: { paso: number; nombre: string; desde: string; enviados: number }[]
 }
 
 const STAGE: Record<string, string> = {
@@ -31,6 +37,7 @@ const fecha = (iso: string) => new Date(iso).toLocaleDateString('es', { day: 'nu
 // Panel del administrador: quién dejó su correo en el Mapa público, con lo que respondió
 export default function MapLeadsPanel() {
   const [leads, setLeads] = useState<Lead[] | null>(null)
+  const [secuencia, setSecuencia] = useState<Secuencia | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -41,7 +48,7 @@ export default function MapLeadsPanel() {
   const reload = async () => {
     const res = await aiFetch('/api/admin/mapa-leads')
     const data = await res.json().catch(() => ({}))
-    if (res.ok) setLeads(data.leads)
+    if (res.ok) { setLeads(data.leads); setSecuencia(data.secuencia || null) }
   }
 
   const exclude = async () => {
@@ -71,7 +78,7 @@ export default function MapLeadsPanel() {
     }
   }
 
-  const act = async (accion: 'prueba' | 'enviar') => {
+  const act = async (accion: 'prueba' | 'enviar', paso?: number) => {
     setBusy(true)
     setError(null)
     setNotice(null)
@@ -79,7 +86,7 @@ export default function MapLeadsPanel() {
       const res = await aiFetch('/api/admin/mapa-leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accion }),
+        body: JSON.stringify({ accion, paso }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || 'No se pudo completar la acción.')
@@ -105,7 +112,7 @@ export default function MapLeadsPanel() {
       const data = await res.json().catch(() => ({}))
       if (cancelled) return
       if (!res.ok) setError(data.error || 'No se pudo cargar la lista.')
-      else setLeads(data.leads)
+      else { setLeads(data.leads); setSecuencia(data.secuencia || null) }
     })()
     return () => {
       cancelled = true
@@ -161,6 +168,23 @@ export default function MapLeadsPanel() {
                 </button>
               )}
             </div>
+            {secuencia && (
+              <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 p-2.5 space-y-1.5">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                  {`Secuencia automática hasta la masterclass: ${secuencia.activa ? 'ENCENDIDA' : 'apagada (se enciende con MAPA_SECUENCIA=on en Vercel)'}`}
+                </p>
+                <ul className="space-y-1">
+                  {secuencia.pasos.map((p) => (
+                    <li key={p.paso} className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                      <span>{`Paso ${p.paso} · ${p.nombre} · desde el ${new Date(p.desde).toLocaleDateString('es', { day: 'numeric', month: 'long', timeZone: 'UTC' })} · enviados: ${p.enviados}`}</span>
+                      <button type="button" onClick={() => act('prueba', p.paso)} disabled={busy} className="underline font-semibold disabled:opacity-50">
+                        Enviarme una prueba
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="space-y-1.5 pt-1">
               <label htmlFor="excluir-correos" className="text-xs font-semibold text-slate-700 dark:text-slate-200">
                 ¿Ya están registrados en la masterclass? Pega sus correos para no duplicarles el mensaje
