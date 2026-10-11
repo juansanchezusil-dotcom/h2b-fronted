@@ -82,12 +82,45 @@ export default function MapaPublico() {
   // 'loading' evita un parpadeo del aviso: el estado se decide en el navegador, con la fecha de hoy.
   // Con ?preview=1 se puede ver el cuestionario antes de la fecha (para revisarlo).
   const [gate, setGate] = useState<'loading' | 'closed' | 'open'>('loading')
+  // Recuperar el mapa con el correo (para quien cambia de navegador o de celular)
+  const [recoverOpen, setRecoverOpen] = useState(false)
+  const [recoverEmail, setRecoverEmail] = useState('')
+  const [recoverMsg, setRecoverMsg] = useState<string | null>(null)
+  const [recovering, setRecovering] = useState(false)
+  // Navegadores dentro de otras apps (Instagram, Facebook...) borran lo guardado al cerrarse
+  const [inApp, setInApp] = useState(false)
   // Casillas del plan que la persona marca; se recuerdan en su navegador
   const [plan, setPlan] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     const preview = new URLSearchParams(window.location.search).get('preview') === '1'
     setGate(preview || Date.now() >= ACTIVATION ? 'open' : 'closed')
+  }, [])
+
+  useEffect(() => {
+    setInApp(/Instagram|FBAN|FBAV|FB_IAB|Snapchat|TikTok|MicroMessenger|Line\//i.test(navigator.userAgent))
+    // Llegó desde el enlace del correo: se recuperan sus respuestas y se muestra su mapa
+    const token = new URLSearchParams(window.location.search).get('r')
+    if (token) {
+      fetch(`${BACKEND}/api/mapa/respuestas?t=${encodeURIComponent(token)}`)
+        .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+        .then(({ ok, d }) => {
+          if (ok && d.answers?.role) {
+            setA({ ...EMPTY, ...d.answers })
+            setStep(6)
+            try {
+              window.localStorage.setItem(DONE_KEY, JSON.stringify({ answers: d.answers }))
+            } catch {
+              // idem
+            }
+          } else {
+            setRecoverOpen(true)
+            setRecoverMsg(d.error || 'El enlace venció. Pide uno nuevo con tu correo.')
+          }
+          window.history.replaceState(null, '', window.location.pathname)
+        })
+        .catch(() => undefined)
+    }
   }, [])
 
   useEffect(() => {
@@ -117,6 +150,25 @@ export default function MapaPublico() {
       }
       return next
     })
+  }
+
+  const recover = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setRecovering(true)
+    setRecoverMsg(null)
+    try {
+      const res = await fetch(`${BACKEND}/api/mapa/recuperar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: recoverEmail }),
+      })
+      const data = await res.json().catch(() => ({}))
+      setRecoverMsg(res.ok ? 'Si ese correo está registrado, te enviamos un enlace. Revisa también la carpeta de spam.' : data.error || 'No pudimos enviar el enlace.')
+    } catch {
+      setRecoverMsg('No pudimos enviar el enlace. Intenta de nuevo.')
+    } finally {
+      setRecovering(false)
+    }
   }
 
   const restart = () => {
@@ -258,6 +310,38 @@ export default function MapaPublico() {
               </div>
             )}
 
+            {step === 0 && (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-2">
+                {!recoverOpen ? (
+                  <button type="button" onClick={() => setRecoverOpen(true)} className="text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] underline">
+                    ¿Ya hiciste tu mapa? Recupéralo con tu correo
+                  </button>
+                ) : (
+                  <form onSubmit={recover} className="space-y-2">
+                    <label htmlFor="recover-email" className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      Escribe el correo con el que lo hiciste y te enviamos un enlace
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        id="recover-email"
+                        type="email"
+                        required
+                        value={recoverEmail}
+                        onChange={(e) => setRecoverEmail(e.target.value)}
+                        placeholder="tucorreo@ejemplo.com"
+                        autoComplete="email"
+                        className="flex-1 min-w-0 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2 text-xs"
+                      />
+                      <button type="submit" disabled={recovering} className="rounded-lg bg-[#0B4079] hover:bg-[#08305c] disabled:opacity-50 text-white text-xs font-bold px-3 py-2">
+                        {recovering ? '...' : 'Enviar'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+                {recoverMsg && <p role="status" className="text-xs text-slate-600 dark:text-slate-300">{recoverMsg}</p>}
+              </div>
+            )}
+
             <div className="flex items-center justify-between pt-1">
               <button
                 type="button"
@@ -332,6 +416,11 @@ export default function MapaPublico() {
 
         {step === 6 && (
           <div className="space-y-5">
+            {inApp && (
+              <p className="text-xs text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl px-3.5 py-3">
+                Estás en el navegador de otra app: tu avance puede no guardarse. Abre esta página en Chrome o Safari para conservarlo.
+              </p>
+            )}
             <section className={`${card} space-y-3`}>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">{map.headline}</h2>
               <ol className="grid grid-cols-5 gap-1.5" aria-label="Tus 5 etapas">
