@@ -284,7 +284,31 @@ export default function Home() {
   // Oferta a la que se adapta el CV (null = CV general)
   const [cvJob, setCvJob] = useState<{ title: string; employerName: string; location?: string; duties?: string } | null>(null)
   // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
-  const [emailDraftFor, setEmailDraftFor] = useState<{ company: string; role: string } | null>(null)
+  const [emailDraftFor, setEmailDraftFor] = useState<{ company: string; role: string; type: 'initial' | 'followup_7d' | 'followup_14d' } | null>(null)
+  // Día real en que cada postulación pasó a "postulado" (historial de estados); sin historial se usa la creación de la tarjeta
+  const [appliedAtById, setAppliedAtById] = useState<Record<string, number>>({})
+  useEffect(() => {
+    if (!onboardingUserId) return
+    let cancelled = false
+    ;(async () => {
+      const { data } = await supabase
+        .from('application_events')
+        .select('application_id, created_at')
+        .in('to_status', ['postulado', 'seguimiento'])
+        .eq('source', 'trigger')
+        .order('created_at', { ascending: true })
+        .limit(2000)
+      if (cancelled || !data) return
+      const map: Record<string, number> = {}
+      for (const e of data as { application_id: string | null; created_at: string }[]) {
+        if (e.application_id && map[e.application_id] === undefined) map[e.application_id] = new Date(e.created_at).getTime()
+      }
+      setAppliedAtById(map)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [onboardingUserId, crmItems.length])
   // Oferta que se está postulando ahora mismo (flujo "Postular ahora" del detalle)
   const [applyFlowJob, setApplyFlowJob] = useState<{ title: string; employerName: string; location?: string; contactEmail?: string; duties?: string; reference?: string } | null>(null)
 
@@ -931,8 +955,18 @@ const viewJobsFor = (sponsorId: number, employerName: string) => {
   setActiveTab('jobs')
 }
 
+// Días desde que se postuló de verdad (no desde que se guardó la tarjeta)
+const daysSinceApplied = (item: CRMItem) => Math.floor((Date.now() - (appliedAtById[item.id] ?? item.createdAt)) / (1000 * 60 * 60 * 24))
+
+// El correo que corresponde según el día: el mismo criterio del aviso que ve la persona en la tarjeta
+const emailTypeFor = (item: CRMItem): 'initial' | 'followup_7d' | 'followup_14d' => {
+  if (item.status !== 'postulado' && item.status !== 'seguimiento') return 'initial'
+  const days = daysSinceApplied(item)
+  return days >= 14 ? 'followup_14d' : days >= 7 ? 'followup_7d' : 'initial'
+}
+
 const openEmailFor = (item: CRMItem) => {
-  setEmailDraftFor({ company: item.company, role: item.role })
+  setEmailDraftFor({ company: item.company, role: item.role, type: emailTypeFor(item) })
   setShowEmailAssistant(true)
 }
 
@@ -2142,7 +2176,7 @@ return (
               </div>
               <div className="space-y-3 flex-1">
                 {crmItems.filter(i => i.status === 'seguimiento').map(item => {
-                  const daysPassed = Math.floor((Date.now() - item.createdAt) / (1000 * 60 * 60 * 24))
+                  const daysPassed = daysSinceApplied(item)
                   let trackingMessage = 'En seguimiento activo'
                   let badgeColor = 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300'
                   if (daysPassed >= 14) {
@@ -2703,10 +2737,11 @@ return (
       }}
     >
       <EmailAssistantTab
-        key={`${emailDraftFor?.company || ''}-${emailDraftFor?.role || ''}`}
+        key={`${emailDraftFor?.company || ''}-${emailDraftFor?.role || ''}-${emailDraftFor?.type || ''}`}
         userId={onboardingUserId}
         initialCompanyName={emailDraftFor?.company || ''}
         initialJobTitle={emailDraftFor?.role || ''}
+        initialEmailType={emailDraftFor?.type || 'initial'}
         savedOffers={crmItems.map(i => ({ company: i.company, role: i.role, state: i.state, status: i.status }))}
         onOpenCvBuilder={() => setShowCvBuilder(true)}
       />

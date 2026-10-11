@@ -18,6 +18,8 @@ interface EmailAssistantProps {
   initialCompanyName?: string;
   initialContactEmail?: string;
   initialLocation?: string;
+  // Qué correo abrir primero (por ejemplo, el seguimiento del día 14 desde una tarjeta del CRM)
+  initialEmailType?: 'initial' | 'followup_7d' | 'followup_14d';
   // Ofertas ya guardadas en el CRM, para elegir en vez de escribir a mano
   // (solo tiene sentido cuando se abre el redactor "en blanco", sin una
   // oferta específica ya precargada).
@@ -50,10 +52,11 @@ export function EmailAssistantTab({
   initialCompanyName = '',
   initialContactEmail = '',
   initialLocation = '',
+  initialEmailType = 'initial',
   savedOffers = [],
   onOpenCvBuilder,
 }: EmailAssistantProps) {
-  const [emailType, setEmailType] = useState<EmailType>('initial');
+  const [emailType, setEmailType] = useState<EmailType>(initialEmailType);
   // Mensaje que la empresa le escribió (solo para el tipo "responder")
   const [employerMessage, setEmployerMessage] = useState('');
   const [companyName, setCompanyName] = useState(initialCompanyName);
@@ -416,7 +419,7 @@ export function EmailAssistantTab({
           </div>
 
           <div className="bg-slate-900 text-white p-4 rounded-2xl space-y-3">
-            <span className="text-xs font-medium text-slate-300 block">Enviar mensaje directamente con:</span>
+            <span className="text-xs font-medium text-slate-300 block">Abrir el mensaje en tu correo (tú lo revisas y lo envías):</span>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button
                 onClick={() => handleOpenWebmail('gmail')}
