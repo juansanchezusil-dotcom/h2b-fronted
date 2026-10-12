@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useUserAccess } from "@/hooks/useUserAccess";
+import { aiFetch } from "@/lib/aiFetch";
 
 interface UserMenuProps {
   onEditProfile?: () => void;
@@ -11,6 +12,11 @@ interface UserMenuProps {
 export default function UserMenu({ onEditProfile }: UserMenuProps) {
   const { user, hasAccess, loading } = useUserAccess();
   const [isOpen, setIsOpen] = useState(false);
+  // Borrar la cuenta pide escribir BORRAR: no se puede hacer por un toque accidental
+  const [deleting, setDeleting] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const supabase = createBrowserClient(
@@ -41,6 +47,25 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/";
+  };
+
+  const handleDelete = async () => {
+    setBusy(true);
+    setDeleteError(null);
+    try {
+      const res = await aiFetch("/api/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: confirmText.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "No pudimos borrar tu cuenta. Intenta de nuevo.");
+      await supabase.auth.signOut();
+      window.location.href = "/login";
+    } catch (err: any) {
+      setDeleteError(err.message || "No pudimos borrar tu cuenta. Intenta de nuevo.");
+      setBusy(false);
+    }
   };
 
   if (loading) {
@@ -110,6 +135,48 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
             </svg>
             Cerrar Sesión
           </button>
+          <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
+          {!deleting ? (
+            <button
+              onClick={() => setDeleting(true)}
+              className="w-full text-left px-4 py-2.5 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              Borrar mi cuenta
+            </button>
+          ) : (
+            <div className="px-4 py-2.5 space-y-2">
+              <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                Se borrarán tu perfil, tu CV y tus postulaciones. No se puede deshacer. Escribe BORRAR para confirmar.
+              </p>
+              <input
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                aria-label="Escribe BORRAR para confirmar"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-2 py-1.5 text-xs"
+              />
+              {deleteError && <p className="text-[11px] text-rose-600 dark:text-rose-400">{deleteError}</p>}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDelete}
+                  disabled={busy || confirmText.trim() !== "BORRAR"}
+                  className="flex-1 rounded-lg bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold py-1.5"
+                >
+                  {busy ? "Borrando..." : "Borrar"}
+                </button>
+                <button
+                  onClick={() => {
+                    setDeleting(false);
+                    setConfirmText("");
+                    setDeleteError(null);
+                  }}
+                  className="text-xs font-semibold text-slate-500 dark:text-slate-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
