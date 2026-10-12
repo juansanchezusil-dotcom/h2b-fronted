@@ -2786,6 +2786,15 @@ return (
         initialCompanyName={emailDraftFor?.company || ''}
         initialJobTitle={emailDraftFor?.role || ''}
         initialEmailType={emailDraftFor?.type || 'initial'}
+        onMoveToInterview={async (company, role) => {
+          const item = crmItems.find((i) => crmKey(i.company, i.role) === crmKey(company, role))
+          if (!item) {
+            showToast('No encontramos esa postulación en tu CRM.')
+            return false
+          }
+          await changeCrmStatus(item.id, 'entrevista')
+          return true
+        }}
         onFollowupSent={async (company, role, type) => {
           const item = crmItems.find((i) => crmKey(i.company, i.role) === crmKey(company, role))
           if (!item) {

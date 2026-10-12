@@ -24,6 +24,8 @@ interface EmailAssistantProps {
   // (solo tiene sentido cuando se abre el redactor "en blanco", sin una
   // oferta específica ya precargada).
   savedOffers?: SavedOffer[];
+  // Pasa la postulación a "Entrevista" en el CRM (detiene los seguimientos de los días 7 y 14)
+  onMoveToInterview?: (company: string, role: string) => Promise<boolean> | boolean | void;
   // Se llama cuando la persona confirma que ya envió un seguimiento, para que el CRM lo registre
   onFollowupSent?: (company: string, role: string, type: 'followup_7d' | 'followup_14d') => Promise<boolean> | boolean | void;
   // Se llama cuando falta el CV, para que quien lo use abra el constructor de CV
@@ -39,6 +41,8 @@ interface GeneratedEmail {
   subject_es: string;
   body_es: string;
   nota_es?: string;
+  faltan_datos_es?: string[];
+  es_invitacion_entrevista?: boolean;
 }
 
 interface CandidateData {
@@ -58,11 +62,15 @@ export function EmailAssistantTab({
   savedOffers = [],
   onOpenCvBuilder,
   onFollowupSent,
+  onMoveToInterview,
 }: EmailAssistantProps) {
+  const [movedToInterview, setMovedToInterview] = useState(false);
   const [followupDone, setFollowupDone] = useState<Record<string, boolean>>({});
   const [emailType, setEmailType] = useState<EmailType>(initialEmailType);
   // Mensaje que la empresa le escribió (solo para el tipo "responder")
   const [employerMessage, setEmployerMessage] = useState('');
+  // Disponibilidad real que la persona le da a la empresa (solo para responder invitaciones)
+  const [availability, setAvailability] = useState('');
   const [companyName, setCompanyName] = useState(initialCompanyName);
   const [jobTitle, setJobTitle] = useState(initialJobTitle);
   const [location, setLocation] = useState(initialLocation);
@@ -127,7 +135,7 @@ export function EmailAssistantTab({
           baseCvText: candidate.baseCvText,
           skills: candidate.skills,
           englishLevel: candidate.englishLevel,
-          ...(type === 'reply' ? { employerMessage } : {}),
+          ...(type === 'reply' ? { employerMessage, availability } : {}),
         }),
       });
       const data = await res.json();
@@ -278,6 +286,18 @@ export function EmailAssistantTab({
                 placeholder="Hola, gracias por tu interés. ¿Podrías confirmar tu disponibilidad...?"
                 className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white px-3 py-2 text-xs"
               />
+              <label htmlFor="availability" className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                Si te piden fechas u horarios, escribe tu disponibilidad real
+              </label>
+              <textarea
+                id="availability"
+                rows={2}
+                value={availability}
+                onChange={(e) => setAvailability(e.target.value)}
+                maxLength={600}
+                placeholder="Ej.: martes y jueves después de las 3 p. m. (hora del Este); puedo por llamada o video"
+                className="w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 dark:text-white px-3 py-2 text-xs"
+              />
               <button
                 type="button"
                 onClick={() => generate('reply')}
@@ -413,6 +433,36 @@ export function EmailAssistantTab({
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl text-xs text-slate-700 dark:text-slate-300 font-mono whitespace-pre-wrap leading-relaxed border border-slate-100 dark:border-slate-700 min-h-[220px]">
                   {body || 'Genera el correo para verlo aquí.'}
                 </div>
+                {current?.faltan_datos_es && current.faltan_datos_es.length > 0 && (
+                  <div className="text-xs text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2 space-y-1">
+                    <p className="font-semibold">Antes de redactar tu respuesta necesito esto:</p>
+                    <ul className="list-disc pl-4 space-y-0.5">
+                      {current.faltan_datos_es.map((q) => (
+                        <li key={q}>{q}</li>
+                      ))}
+                    </ul>
+                    <p>Escríbelo en el campo de disponibilidad y pulsa "Escribir mi respuesta" otra vez.</p>
+                  </div>
+                )}
+                {current?.es_invitacion_entrevista && onMoveToInterview && (
+                  <div className="text-xs text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-lg px-3 py-2 space-y-1.5">
+                    <p>Te invitaron a una entrevista. Mueve esta postulación a "Entrevista" para detener los recordatorios de seguimiento de los días 7 y 14.</p>
+                    {movedToInterview ? (
+                      <p role="status" className="font-semibold">✓ Movida a Entrevista en tu CRM.</p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const ok = await onMoveToInterview(companyName, jobTitle)
+                          if (ok !== false) setMovedToInterview(true)
+                        }}
+                        className="font-bold underline"
+                      >
+                        Mover a Entrevista
+                      </button>
+                    )}
+                  </div>
+                )}
                 {current?.nota_es && (
                   <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-2.5 py-1.5">
                     {current.nota_es}
