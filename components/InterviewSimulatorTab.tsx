@@ -8,9 +8,17 @@ import { aiFetch } from '@/lib/aiFetch';
 // Simulador de entrevistas H-2B: entrevista adaptativa, una pregunta por turno, sin correcciones durante la
 // práctica (solo si se pausa para pedir ayuda) y un informe final con puntuación y plan de mejora.
 
+interface SavedOffer {
+  company: string;
+  role: string;
+  status?: string;
+}
+
 interface InterviewSimulatorProps {
   userId: string;
   onOpenCvBuilder?: () => void;
+  // Postulaciones del CRM, para elegir la oferta de la que te van a entrevistar
+  savedOffers?: SavedOffer[];
 }
 
 type Module = 'employer' | 'consular';
@@ -47,6 +55,9 @@ interface Report {
   practice_questions: { en: string; es: string }[];
   closing_es: string;
   has_docs: boolean;
+  encaje_tiene_es?: string[];
+  encaje_falta_es?: string[];
+  job_title?: string;
 }
 
 interface CandidateProfile {
@@ -73,7 +84,7 @@ function List({ items }: { items: string[] }) {
   );
 }
 
-export default function InterviewSimulatorTab({ userId, onOpenCvBuilder }: InterviewSimulatorProps) {
+export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOffers = [] }: InterviewSimulatorProps) {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
 
@@ -86,6 +97,11 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder }: Inter
   const [error, setError] = useState<string | null>(null);
   const [help, setHelp] = useState<Help | null>(null);
   const [report, setReport] = useState<Report | null>(null);
+  // Puesto de la entrevista: el principal, una oferta del CRM o uno escrito a mano
+  const [jobChoice, setJobChoice] = useState<string>('main'); // 'main' | 'manual' | índice de savedOffers
+  const [manualTitle, setManualTitle] = useState('');
+  const [manualCompany, setManualCompany] = useState('');
+  const [duties, setDuties] = useState('');
 
   // Dictado por voz (transcripción en el navegador; no se guarda audio)
   const [listening, setListening] = useState(false);
@@ -122,6 +138,13 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder }: Inter
           setModule(s.module === 'consular' ? 'consular' : 'employer');
           setTurns(s.turns);
           setQuestion(s.question);
+          if (s.job?.title) {
+            // El puesto elegido se recupera como "otro puesto" con sus datos
+            setJobChoice('manual');
+            setManualTitle(String(s.job.title));
+            setManualCompany(String(s.job.company || ''));
+            setDuties(String(s.job.duties || ''));
+          }
           setStage('interview');
         }
       }
@@ -135,13 +158,22 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder }: Inter
   const persist = (s: { module: Module; turns: Turn[]; question: Question | null } | null) => {
     try {
       if (!s) window.localStorage.removeItem(storageKey);
-      else window.localStorage.setItem(storageKey, JSON.stringify(s));
+      else window.localStorage.setItem(storageKey, JSON.stringify({ ...s, job: jobPayload() }));
     } catch {
       // idem
     }
   };
 
   const hasCv = (profile?.baseCvText || '').trim().length >= 30;
+
+  // Ofertas en entrevista primero: son las más probables
+  const offerOptions = [...savedOffers].sort((a, b) => Number(b.status === 'entrevista') - Number(a.status === 'entrevista')).slice(0, 40);
+  const jobPayload = () => {
+    if (jobChoice === 'main') return profile?.targetRole ? { title: profile.targetRole, company: '', duties } : null;
+    if (jobChoice === 'manual') return manualTitle.trim() ? { title: manualTitle.trim(), company: manualCompany.trim(), duties } : null;
+    const o = offerOptions[Number(jobChoice)];
+    return o ? { title: o.role, company: o.company, duties } : null;
+  };
   const candidatePayload = () => ({
     role: profile?.targetRole || '',
     industry: profile?.industry || '',
@@ -153,7 +185,7 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder }: Inter
     const res = await aiFetch('/api/interview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ module, candidate: candidatePayload(), ...payload }),
+      body: JSON.stringify({ module, candidate: candidatePayload(), job: jobPayload(), ...payload }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'No se pudo procesar tu práctica. Intenta de nuevo.');
@@ -322,6 +354,64 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder }: Inter
             ))}
           </div>
 
+          <div className="space-y-2">
+            <label htmlFor="sim-job" className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
+              ¿Para qué puesto es tu entrevista?
+            </label>
+            <select
+              id="sim-job"
+              value={jobChoice}
+              onChange={(e) => setJobChoice(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2.5 text-sm"
+            >
+              <option value="main">{profile?.targetRole ? `Mi puesto principal (${profile.targetRole})` : 'Práctica general'}</option>
+              {offerOptions.map((o, i) => (
+                <option key={`${o.company}-${o.role}-${i}`} value={String(i)}>
+                  {`${o.role} — ${o.company}${o.status === 'entrevista' ? ' (en entrevista)' : ''}`}
+                </option>
+              ))}
+              <option value="manual">Otro puesto (lo escribo)</option>
+            </select>
+            {jobChoice === 'manual' && (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <input
+                  type="text"
+                  value={manualTitle}
+                  onChange={(e) => setManualTitle(e.target.value)}
+                  maxLength={120}
+                  placeholder="Puesto (ej.: Housekeeper)"
+                  aria-label="Puesto"
+                  className="rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm"
+                />
+                <input
+                  type="text"
+                  value={manualCompany}
+                  onChange={(e) => setManualCompany(e.target.value)}
+                  maxLength={120}
+                  placeholder="Empresa (opcional)"
+                  aria-label="Empresa"
+                  className="rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm"
+                />
+              </div>
+            )}
+            {jobChoice !== 'main' && (
+              <>
+                <textarea
+                  value={duties}
+                  onChange={(e) => setDuties(e.target.value)}
+                  rows={3}
+                  maxLength={1800}
+                  placeholder="Pega aquí las funciones de la oferta (opcional, mejora las preguntas)"
+                  aria-label="Funciones de la oferta"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2 text-xs"
+                />
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Si el puesto es distinto al tuyo, la práctica explora lo que sí has hecho y qué es transferible, sin darlo como experiencia directa. Al final verás qué tienes y qué te falta para ese puesto.
+                </p>
+              </>
+            )}
+          </div>
+
           {module === 'consular' && (
             <p className="text-[11px] text-amber-900 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
               Es una simulación educativa: las preguntas reales pueden variar y no es una lista oficial. Para dudas legales sobre requisitos, consulta fuentes oficiales o un abogado de inmigración.
@@ -404,6 +494,24 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder }: Inter
           </ul>
           {report.score.note_es && <p className="text-[11px] text-slate-500 dark:text-slate-400">{report.score.note_es}</p>}
         </section>
+
+        {((report.encaje_tiene_es?.length || 0) > 0 || (report.encaje_falta_es?.length || 0) > 0) && (
+          <section className={`${card} space-y-3 text-sm text-slate-700 dark:text-slate-300`}>
+            <h3 className="font-bold text-slate-900 dark:text-white">{report.job_title ? `Cómo encajas con "${report.job_title}"` : 'Cómo encajas con este puesto'}</h3>
+            {(report.encaje_tiene_es?.length || 0) > 0 && (
+              <div>
+                <p className="font-semibold">Lo que ya tienes</p>
+                <List items={report.encaje_tiene_es || []} />
+              </div>
+            )}
+            {(report.encaje_falta_es?.length || 0) > 0 && (
+              <div>
+                <p className="font-semibold">Lo que te falta o no demostraste</p>
+                <List items={report.encaje_falta_es || []} />
+              </div>
+            )}
+          </section>
+        )}
 
         {report.strengths_es.length > 0 && (
           <section className={`${card} space-y-2 text-sm text-slate-700 dark:text-slate-300`}>

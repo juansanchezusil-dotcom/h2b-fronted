@@ -2817,7 +2817,7 @@ return (
       label="Simulador de entrevista"
       onClose={() => setShowInterviewSimulator(false)}
     >
-      <InterviewSimulatorTab userId={onboardingUserId} onOpenCvBuilder={() => setShowCvBuilder(true)} />
+      <InterviewSimulatorTab userId={onboardingUserId} onOpenCvBuilder={() => setShowCvBuilder(true)} savedOffers={crmItems.map((i) => ({ company: i.company, role: i.role, status: i.status }))} />
     </AssistantModal>
 
     <CVBuilderModal
