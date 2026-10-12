@@ -354,6 +354,14 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
             ))}
           </div>
 
+          <div className="text-xs text-blue-900 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg px-3 py-2.5 space-y-1">
+            <p className="font-semibold">Recomendación para que la práctica se parezca a tu entrevista real</p>
+            <p>
+              Elige abajo la oferta de la que te van a entrevistar y pega sus funciones. Si no las pegas, el simulador solo conoce el puesto y la empresa, y las preguntas serán más generales.
+            </p>
+            <p>Si cierras a mitad de la práctica, al volver continúas donde la dejaste, con el mismo puesto.</p>
+          </div>
+
           <div className="space-y-2">
             <label htmlFor="sim-job" className="block text-xs font-semibold text-slate-700 dark:text-slate-200">
               ¿Para qué puesto es tu entrevista?
