@@ -5,7 +5,9 @@ import { hasActiveMembership } from "@/lib/membership";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+  // Solo rutas internas: "next" viene del enlace y no puede mandar a otro sitio (por ejemplo "@sitio.com" o "//sitio.com")
+  const rawNext = searchParams.get("next") ?? "/";
+  const next = /^\/(?![/\\])[A-Za-z0-9_\-./?=&%#]*$/.test(rawNext) ? rawNext : "/";
 
   if (code) {
     let response = NextResponse.redirect(`${origin}${next}`);
