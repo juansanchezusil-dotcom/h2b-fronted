@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Qué datos guardamos, para qué los usamos, con quién los compartimos y cómo pedir que los borremos.',
 }
 
-const UPDATED = '8 de octubre de 2026'
+const UPDATED = '14 de octubre de 2026'
 
 function H({ children }: { children: React.ReactNode }) {
   return <h2 className="mt-8 mb-2 text-lg font-bold text-slate-900 dark:text-white">{children}</h2>
@@ -50,9 +50,14 @@ export default function PrivacidadPage() {
             'Tu actividad en la app: la fecha de tu última visita y los cambios de estado de tus postulaciones.',
             'Tu membresía: si está activa y la fecha de vencimiento.',
             'Un registro de los correos automáticos que te enviamos, para no repetirlos.',
-            'Si usas el Mapa H2B público (sin cuenta): tu correo, tu nombre si lo escribes y tus respuestas del cuestionario (puesto, experiencia, inglés, si tienes CV y pasaporte).',
+            'Si usas el Mapa H2B público (sin cuenta): tu correo, tu nombre si lo escribes y tus respuestas del cuestionario (puesto, experiencia, inglés, si tienes CV y pasaporte). Si pides recuperar tu mapa, te enviamos un enlace a ese correo.',
+            'Para frenar abusos en las páginas abiertas guardamos, por unos días, un código derivado de tu conexión. No guardamos tu dirección IP.',
+            'En tu propio navegador se guardan avances como las casillas de tu plan o una práctica de entrevista a medias. Eso no sale de tu dispositivo, salvo lo que envías para que se evalúe.',
           ]}
         />
+        <p className="mt-2">
+          Los textos que pegas o escribes en los asistentes (por ejemplo un mensaje de una empresa o tus respuestas en el simulador de entrevistas) se envían al proveedor de inteligencia artificial para generar la respuesta y no se guardan en nuestra base de datos. No guardamos audio.
+        </p>
         <p className="mt-2">No guardamos datos de tarjeta. El pago se hace en Skool y lo procesa esa plataforma.</p>
 
         <H>Para qué los usamos</H>
@@ -85,7 +90,11 @@ export default function PrivacidadPage() {
 
         <H>Cuánto tiempo los guardamos</H>
         <p>
-          Mientras tengas cuenta y mientras sea necesario para darte el servicio. Si pides que borremos tus datos, los eliminamos, salvo lo que debamos conservar por obligación legal.
+          Mientras tengas cuenta y mientras sea necesario para darte el servicio.
+        </p>
+        <p className="mt-2">
+          Si borras tu cuenta, eliminamos tu perfil, tu CV y borradores, tus postulaciones y su historial, tus registros de correos y de uso, y tu contacto del Mapa público si usaste el mismo correo.
+          Conservamos el registro de tu membresía (tu correo y sus fechas) para administrar tu acceso y los pagos, y lo que debamos guardar por obligación legal. Las copias de seguridad de nuestro proveedor pueden conservar datos por un tiempo limitado antes de eliminarse.
         </p>
 
         <H>Tus derechos</H>
@@ -95,11 +104,11 @@ export default function PrivacidadPage() {
             'Ver qué datos tuyos tenemos.',
             'Corregir lo que esté mal.',
             'Borrar tu cuenta y tus datos.',
-            'Dejar de recibir los correos de renovación y reenganche. Cada uno trae un enlace de baja.',
+            'Dejar de recibir nuestros correos (renovación, reenganche y los del Mapa público). Cada uno trae un enlace de baja.',
           ]}
         />
         <p className="mt-2">
-          Para cualquiera de estas solicitudes, responde a cualquier correo que te hayamos enviado o escríbenos por la comunidad. Te respondemos lo antes posible.
+          Puedes borrar tu cuenta tú mismo desde el menú de tu cuenta, en "Borrar mi cuenta". Para cualquier otra solicitud, responde a cualquier correo que te hayamos enviado o escríbenos por la comunidad. Te respondemos lo antes posible.
         </p>
 
         <H>Seguridad</H>
