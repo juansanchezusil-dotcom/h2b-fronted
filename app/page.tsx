@@ -282,6 +282,8 @@ export default function Home() {
   const [showEmailAssistant, setShowEmailAssistant] = useState(false)
   const [showScamDetector, setShowScamDetector] = useState(false)
   const [showInterviewSimulator, setShowInterviewSimulator] = useState(false)
+  // Postulación con la que se abrió el simulador (botón "Practicar esta entrevista" de una tarjeta)
+  const [simulatorJob, setSimulatorJob] = useState<{ company: string; role: string } | null>(null)
   const [hasCv, setHasCv] = useState(false)
   const [showCvBuilder, setShowCvBuilder] = useState(false)
   // Oferta a la que se adapta el CV (null = CV general)
@@ -2314,6 +2316,15 @@ return (
                         </div>
                       )}
                     </div>
+                    <button
+                      onClick={() => {
+                        setSimulatorJob({ company: item.company, role: item.role })
+                        setShowInterviewSimulator(true)
+                      }}
+                      className="w-full text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 py-2 rounded-lg"
+                    >
+                      🎤 Practicar esta entrevista
+                    </button>
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-1.5">
                       <button
                         onClick={() => changeCrmStatus(item.id, 'aceptado')}
@@ -2815,9 +2826,12 @@ return (
     <AssistantModal
       isOpen={showInterviewSimulator && !showCvBuilder}
       label="Simulador de entrevista"
-      onClose={() => setShowInterviewSimulator(false)}
+      onClose={() => {
+        setShowInterviewSimulator(false)
+        setSimulatorJob(null)
+      }}
     >
-      <InterviewSimulatorTab userId={onboardingUserId} onOpenCvBuilder={() => setShowCvBuilder(true)} savedOffers={crmItems.map((i) => ({ company: i.company, role: i.role, status: i.status }))} />
+      <InterviewSimulatorTab key={`${simulatorJob?.company || ''}-${simulatorJob?.role || ''}`} initialJob={simulatorJob} userId={onboardingUserId} onOpenCvBuilder={() => setShowCvBuilder(true)} savedOffers={crmItems.map((i) => ({ company: i.company, role: i.role, status: i.status }))} />
     </AssistantModal>
 
     <CVBuilderModal

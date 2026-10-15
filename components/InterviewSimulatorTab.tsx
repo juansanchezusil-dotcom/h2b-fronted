@@ -19,6 +19,8 @@ interface InterviewSimulatorProps {
   onOpenCvBuilder?: () => void;
   // Postulaciones del CRM, para elegir la oferta de la que te van a entrevistar
   savedOffers?: SavedOffer[];
+  // Entrevista que se quiere practicar ya cargada (desde una tarjeta en "Entrevista" del CRM)
+  initialJob?: { company: string; role: string } | null;
 }
 
 type Module = 'employer' | 'consular';
@@ -84,7 +86,7 @@ function List({ items }: { items: string[] }) {
   );
 }
 
-export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOffers = [] }: InterviewSimulatorProps) {
+export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOffers = [], initialJob = null }: InterviewSimulatorProps) {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
 
@@ -98,9 +100,9 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
   const [help, setHelp] = useState<Help | null>(null);
   const [report, setReport] = useState<Report | null>(null);
   // Puesto de la entrevista: el principal, una oferta del CRM o uno escrito a mano
-  const [jobChoice, setJobChoice] = useState<string>('main'); // 'main' | 'manual' | índice de savedOffers
-  const [manualTitle, setManualTitle] = useState('');
-  const [manualCompany, setManualCompany] = useState('');
+  const [jobChoice, setJobChoice] = useState<string>(initialJob ? 'manual' : 'main'); // 'main' | 'manual' | índice de savedOffers
+  const [manualTitle, setManualTitle] = useState(initialJob?.role || '');
+  const [manualCompany, setManualCompany] = useState(initialJob?.company || '');
   const [duties, setDuties] = useState('');
 
   // Dictado por voz (transcripción en el navegador; no se guarda audio)
