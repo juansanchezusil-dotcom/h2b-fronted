@@ -7,6 +7,7 @@ import RadarPanel from '@/components/RadarPanel'
 import EngagementPanel from '@/components/EngagementPanel'
 import ClassOffersPanel from '@/components/ClassOffersPanel'
 import MapLeadsPanel from '@/components/MapLeadsPanel'
+import ResultadosPanel from '@/components/ResultadosPanel'
 
 interface Acceso {
   email: string
@@ -209,6 +210,10 @@ export default function AdminPage() {
 
       <Section title="Ofertas de la clase" hint="Las que encuentras en vivo: aparecen en Mi Mapa de todos los miembros.">
         <ClassOffersPanel />
+      </Section>
+
+      <Section title="Resultados" hint="El camino de tus miembros: perfil, CV, postulaciones, respuestas y entrevistas.">
+        <ResultadosPanel />
       </Section>
 
       <Section title="Contactos del Mapa público" hint="Personas que dejaron su correo en mapa.juanteavisa.com.">
