@@ -166,6 +166,13 @@ export default function AdminPage() {
                   >
                     <RefreshCw className="w-3.5 h-3.5" /> +30 días
                   </button>
+                  <button
+                    onClick={() => send('POST', { email: a.email, dias: 365 })}
+                    disabled={busy}
+                    className="flex items-center gap-1 text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] hover:underline disabled:opacity-50"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> +1 año
+                  </button>
                   {a.activo && (
                     confirmingRevoke === a.email ? (
                       <span className="flex items-center gap-2 text-xs">
