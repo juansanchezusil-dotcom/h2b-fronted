@@ -13,6 +13,7 @@ interface Resultados {
   porVencer: number
   vencidos: number
   puestos: { puesto: string; postulaciones: number; respuestas: number }[]
+  respuestasEmpleador?: { postuladas: number; conRespuesta: number; masDatos: number; entrevista: number; rechazo: number; otra: number }
   mapa: { total: number; recordatorio: number; deBaja: number; excluidos: number; sonMiembros: number }
 }
 
@@ -108,6 +109,19 @@ export default function ResultadosPanel() {
           </ul>
         )}
       </section>
+
+      {data.respuestasEmpleador && (
+        <section className={card} aria-labelledby="res-resp">
+          <h3 id="res-resp" className="text-sm font-bold text-slate-900 dark:text-white mb-2">Respuestas de empleadores</h3>
+          <p className="text-xs text-slate-600 dark:text-slate-300">
+            {`${data.respuestasEmpleador.conRespuesta} respuestas registradas de ${data.respuestasEmpleador.postuladas} postulaciones (${pct(data.respuestasEmpleador.conRespuesta, data.respuestasEmpleador.postuladas)})`}
+          </p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            {`${data.respuestasEmpleador.entrevista} invitaron a entrevista · ${data.respuestasEmpleador.masDatos} pidieron más datos · ${data.respuestasEmpleador.rechazo} dijeron que no · ${data.respuestasEmpleador.otra} otra`}
+          </p>
+          <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">Es un mínimo: solo cuentan las respuestas que los miembros marcaron en su tarjeta. La cifra real es mayor.</p>
+        </section>
+      )}
 
       <section className={card} aria-labelledby="res-mapa">
         <h3 id="res-mapa" className="text-sm font-bold text-slate-900 dark:text-white mb-2">Mapa público</h3>

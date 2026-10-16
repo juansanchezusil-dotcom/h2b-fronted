@@ -184,6 +184,16 @@ interface CRMItem {
   // Cuándo envió su primer y su segundo seguimiento (los registra la persona)
   followup1At?: number | null
   followup2At?: number | null
+  // Respuesta del empleador que la persona registró (más datos, entrevista, rechazo u otra)
+  replyType?: 'mas_datos' | 'entrevista' | 'rechazo' | 'otra' | null
+  replyAt?: number | null
+}
+
+const REPLY_LABELS: Record<'mas_datos' | 'entrevista' | 'rechazo' | 'otra', string> = {
+  mas_datos: 'Pidió más datos o documentos',
+  entrevista: 'Me invitó a entrevista',
+  rechazo: 'Me dijo que no por ahora',
+  otra: 'Otra respuesta',
 }
 
 // Cada oferta viene del scraper diario del DOL o de la carga de CareerOneStop (columna "source")
@@ -354,6 +364,8 @@ export default function Home() {
         notes: row.notes || '',
         followup1At: row.followup1_sent_at ? new Date(row.followup1_sent_at).getTime() : null,
         followup2At: row.followup2_sent_at ? new Date(row.followup2_sent_at).getTime() : null,
+        replyType: row.reply_type || null,
+        replyAt: row.reply_at ? new Date(row.reply_at).getTime() : null,
       }))
       setCrmItems(mapped)
       setCrmError(false)
@@ -986,6 +998,46 @@ const markFollowupSent = async (item: CRMItem, n: 1 | 2): Promise<boolean> => {
   showToast(n === 1 ? '✅ Primer seguimiento registrado' : '✅ Segundo seguimiento registrado')
   return true
 }
+
+// La persona registra (o quita) la respuesta del empleador
+const setEmployerReply = async (item: CRMItem, type: CRMItem['replyType']) => {
+  const when = type ? new Date() : null
+  const { error } = await supabase
+    .from('applications')
+    .update({ reply_type: type, reply_at: when ? when.toISOString() : null })
+    .eq('id', item.id)
+  if (error) {
+    console.error('No se pudo registrar la respuesta del empleador:', error)
+    showToast('❌ No se pudo guardar. Intenta de nuevo.')
+    return
+  }
+  setCrmItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, replyType: type, replyAt: when ? when.getTime() : null } : i)))
+  showToast(type ? '✅ Respuesta registrada' : 'Respuesta quitada')
+}
+
+const renderReplyControl = (item: CRMItem) =>
+  item.replyType ? (
+    <div className="flex items-center justify-between gap-2 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 rounded-lg px-2 py-1.5">
+      <span className="text-[10px] font-semibold text-violet-800 dark:text-violet-300">📩 {REPLY_LABELS[item.replyType]}</span>
+      <button onClick={() => setEmployerReply(item, null)} className="text-[9px] underline text-violet-700 dark:text-violet-300 shrink-0">
+        Quitar
+      </button>
+    </div>
+  ) : (
+    <select
+      aria-label="Registrar que el empleador respondió"
+      value=""
+      onChange={(e) => e.target.value && setEmployerReply(item, e.target.value as CRMItem['replyType'])}
+      className="w-full text-[10px] font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 rounded-lg py-1.5 px-2"
+    >
+      <option value="">📩 El empleador respondió…</option>
+      {(Object.keys(REPLY_LABELS) as (keyof typeof REPLY_LABELS)[]).map((k) => (
+        <option key={k} value={k}>
+          {REPLY_LABELS[k]}
+        </option>
+      ))}
+    </select>
+  )
 
 const openEmailFor = (item: CRMItem) => {
   setEmailDraftFor({ company: item.company, role: item.role, type: emailTypeFor(item) })
@@ -2166,6 +2218,7 @@ return (
                         </div>
                       )}
                     </div>
+                    {renderReplyControl(item)}
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center gap-1">
                       <button
                         onClick={() => openEmailFor(item)}
@@ -2252,6 +2305,7 @@ return (
                           <div className="flex justify-between items-center"><span className="text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[100px]">{item.notes ? `📝 ${item.notes}` : 'Sin notas'}</span><button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || '') }} className="text-blue-600 dark:text-blue-400 font-bold text-[9px]">{item.notes ? 'Editar' : '+ Nota'}</button></div>
                         )}
                       </div>
+                      {renderReplyControl(item)}
                       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center gap-1">
                         <button onClick={() => openEmailFor(item)} title="Redactar correo con tu CV" className="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2.5 py-2 rounded-lg">✉️</button>
                         <span className="text-[9px] text-slate-500 dark:text-slate-400">Día {daysPassed}</span>
