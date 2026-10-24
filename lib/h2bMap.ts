@@ -247,7 +247,7 @@ export function buildMap(input: MapInput): H2BMapData {
       week: 1,
       title: 'Conoce tu perfil y tu CV',
       items: [
-        item('w1a', 'Perfil completo: puesto, industria, inglés y estados donde quieres trabajar', profile.perfilCompletado),
+        item('w1a', 'Perfil completo: puesto, industria e inglés (sin limitarte a unos pocos estados)', profile.perfilCompletado),
         item('w1b', 'CV en inglés, formato americano y una sola hoja', hasCv),
         item('w1c', 'Carta de presentación lista', input.hasCoverLetter),
       ],
