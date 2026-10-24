@@ -17,6 +17,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [mode, setMode] = useState<'loading' | 'summary' | 'form'>('loading');
   const [formData, setFormData] = useState({  
   experiencia_industria: '',
   anos_experiencia: 0,
@@ -27,11 +28,17 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
   useEffect(() => {
     async function loadExistingProfile() {
       if (!isOpen || !userId) return;
+      setStep(1);
+      setSaveError(null);
+      setMode('loading');
       const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
+
+      // Con el perfil ya completo se muestra el resumen; el cuestionario solo si quiere actualizar.
+      setMode(data?.perfil_completado === true ? 'summary' : 'form');
 
       if (data) {
         setFormData({
@@ -94,6 +101,55 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
 
         <div className="max-h-[90vh] overflow-y-auto p-6 md:p-8">
 
+        {mode === 'loading' && (
+          <p className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">Cargando tu perfil...</p>
+        )}
+
+        {mode === 'summary' && (
+          <div>
+            <div className="mb-6 text-center">
+              <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#C89B3C] bg-[#C89B3C]/10 rounded-full mb-3">
+                Mi perfil
+              </span>
+              <h2 className="text-2xl font-extrabold text-[#08131F] dark:text-white">Tus respuestas</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Con esto ordenamos las vacantes que más te convienen.
+              </p>
+            </div>
+            <dl className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-sm">
+              {[
+                ['Industria con más experiencia', formData.experiencia_industria || 'Sin responder'],
+                ['Años de experiencia', ANOS_LABEL[formData.anos_experiencia] ?? `${formData.anos_experiencia} años`],
+                ['Nivel de inglés', formData.nivel_ingles || 'Sin responder'],
+                ['País de ciudadanía', formData.pais_origen || 'Sin responder'],
+                ['Viajó antes con H-2B', formData.has_previous_h2b === null ? 'Sin responder' : formData.has_previous_h2b ? 'Sí' : 'No'],
+              ].map(([label, value]) => (
+                <div key={label} className="flex items-center justify-between gap-4 px-4 py-3">
+                  <dt className="text-slate-500 dark:text-slate-400">{label}</dt>
+                  <dd className="font-semibold text-right text-slate-800 dark:text-white">{value}</dd>
+                </div>
+              ))}
+            </dl>
+            <button
+              type="button"
+              onClick={() => setMode('form')}
+              className="w-full mt-6 rounded-xl bg-[#C89B3C] py-3.5 text-sm font-bold text-[#08131F] shadow-md hover:bg-[#b08833] transition"
+            >
+              ¿Algo cambió? Actualizar mis respuestas
+            </button>
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 py-2 mt-1"
+              >
+                Cerrar
+              </button>
+            )}
+          </div>
+        )}
+
+        {mode === 'form' && (<>
         {/* Encabezado y Progreso */}
         <div className="mb-6 text-center">
           <span className="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#C89B3C] bg-[#C89B3C]/10 rounded-full mb-3">
@@ -267,9 +323,17 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
             </div>
           </div>
         )}
+        </>)}
 
         </div>
       </div>
     </div>
   );
 }
+
+const ANOS_LABEL: Record<number, string> = {
+  0: 'Menos de 1 año',
+  1: '1 a 2 años',
+  3: '3 a 5 años',
+  5: 'Más de 5 años',
+};
