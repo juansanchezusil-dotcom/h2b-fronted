@@ -1018,8 +1018,8 @@ const setEmployerReply = async (item: CRMItem, type: CRMItem['replyType']) => {
 const renderReplyControl = (item: CRMItem) =>
   item.replyType ? (
     <div className="flex items-center justify-between gap-2 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 rounded-lg px-2 py-1.5">
-      <span className="text-[10px] font-semibold text-violet-800 dark:text-violet-300">📩 {REPLY_LABELS[item.replyType]}</span>
-      <button onClick={() => setEmployerReply(item, null)} className="text-[9px] underline text-violet-700 dark:text-violet-300 shrink-0">
+      <span className="text-xs sm:text-[10px] font-semibold text-violet-800 dark:text-violet-300">📩 {REPLY_LABELS[item.replyType]}</span>
+      <button onClick={() => setEmployerReply(item, null)} className="min-h-11 sm:min-h-0 px-2 sm:px-0 text-xs sm:text-[9px] underline text-violet-700 dark:text-violet-300 shrink-0">
         Quitar
       </button>
     </div>
@@ -1028,7 +1028,7 @@ const renderReplyControl = (item: CRMItem) =>
       aria-label="Registrar que el empleador respondió"
       value=""
       onChange={(e) => e.target.value && setEmployerReply(item, e.target.value as CRMItem['replyType'])}
-      className="w-full text-[10px] font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 rounded-lg py-1.5 px-2"
+      className="w-full min-h-11 sm:min-h-0 text-xs sm:text-[10px] font-bold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/30 rounded-lg py-1.5 px-2"
     >
       <option value="">📩 El empleador respondió…</option>
       {(Object.keys(REPLY_LABELS) as (keyof typeof REPLY_LABELS)[]).map((k) => (
@@ -1354,7 +1354,7 @@ return (
                 <nextAction.icon className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <span className="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">🎯 Tu prioridad</span>
+                <span className="text-xs sm:text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">🎯 Tu prioridad</span>
                 <h2 className="text-base font-black text-slate-900 dark:text-white mt-0.5">{nextAction.title}</h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{nextAction.desc}</p>
               </div>
@@ -1375,7 +1375,7 @@ return (
               <div>
                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">OFERTA DE EMPLEO (DOL)</p>
                 <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{catalogTotals.jobs}</p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
+                <p className="text-xs sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> Ofertas publicadas
                 </p>
               </div>
@@ -1387,7 +1387,7 @@ return (
               <div>
                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">EMPRESAS USCIS</p>
                 <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{catalogTotals.employers}</p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">● En el catálogo</p>
+                <p className="text-xs sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">● En el catálogo</p>
               </div>
               <div className="w-11 h-11 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl flex items-center justify-center">
                 <Building2 className="w-5 h-5" />
@@ -1397,7 +1397,7 @@ return (
               <div>
                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AGENCIAS REGULADAS</p>
                 <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{catalogTotals.agencies}</p>
-                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">● En el catálogo</p>
+                <p className="text-xs sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">● En el catálogo</p>
               </div>
               <div className="w-11 h-11 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5" />
@@ -1407,7 +1407,7 @@ return (
               <div>
                 <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">TU MAPA H2B</p>
                 <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{checklistPercentage}%</p>
-                <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">
+                <p className="text-xs sm:text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">
                   {checklistDone > 0 ? `${checklistDone} de ${CHECKLIST_TOTAL_TASKS} completados` : 'Sin iniciar'}
                 </p>
               </div>
@@ -1638,7 +1638,7 @@ return (
                         const source = sourceInfo(job.source)
                         return (
                           <InfoTooltip text={source.tooltip}>
-                            <span className="shrink-0 bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
+                            <span className="shrink-0 bg-emerald-50 text-emerald-800 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
                               ✓ Verificada · {source.label}
                             </span>
                           </InfoTooltip>
@@ -1684,7 +1684,7 @@ return (
                       return (
                         <InfoTooltip text="Qué tanto encaja esta oferta con tu perfil (industria, experiencia e inglés). No es la probabilidad de que te den la visa.">
                           <span
-                            className={`font-bold text-[10px] px-2 py-0.5 rounded border ${
+                            className={`font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded border ${
                               match.score >= 80
                                 ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30'
                                 : match.score >= 50
@@ -1713,7 +1713,7 @@ return (
                         ? '✓ Ya está en tu CRM'
                         : '+ Guardar Oferta en Mi CRM'}
                     </button>
-                    <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 text-center">
+                    <p className="text-xs sm:text-[10px] font-mono text-slate-400 dark:text-slate-500 text-center">
                       {job.case_number || job.job_order_id || `ID: ${job.id || idx + 1}`}
                     </p>
                   </div>
@@ -1833,14 +1833,14 @@ return (
                     <div key={comp.id || idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-2.5">
                       <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-snug">{comp.employer_name || 'Sin Nombre'}</h3>
                       <div className="flex flex-wrap gap-1.5">
-                        <span className={`font-bold px-2 py-0.5 rounded text-[10px] border ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
+                        <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] border ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
                             comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' :
                               comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/30' :
                                 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
                           }`}>
                           {comp.cap_type || 'General'}
                         </span>
-                        <span className={`font-bold px-2 py-0.5 rounded text-[10px] border ${abroad ? 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/30' : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'}`}>
+                        <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] border ${abroad ? 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/30' : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'}`}>
                           {abroad ? '🌎 Contrata desde el extranjero' : 'Solo contrató dentro de EE. UU.'}
                         </span>
                       </div>
@@ -1873,7 +1873,7 @@ return (
               <div className="hidden md:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                    <thead className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-[10px]">
+                    <thead className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-xs sm:text-[10px]">
                       <tr>
                         <th className="p-4">Empresa Patrocinadora</th>
                         <th className="p-4">Tipo de Cupo (Cap)</th>
@@ -1888,7 +1888,7 @@ return (
                         <tr key={comp.id || idx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                           <td className="p-4 font-bold text-slate-900 dark:text-white">{comp.employer_name || 'Sin Nombre'}</td>
                           <td className="p-4">
-                            <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
+                            <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
                                 comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' :
                                   comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/30' :
                                     'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
@@ -1996,7 +1996,7 @@ return (
                 const location = [agency.city, agency.country].filter(Boolean).join(', ')
                 return (
                   <div key={agency.id || idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="bg-emerald-50 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30 inline-block">
+                    <span className="bg-emerald-50 text-emerald-800 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30 inline-block">
                       ✓ En la lista oficial del DOL
                     </span>
                     <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-snug">{agency.agency_name}</h3>
@@ -2112,7 +2112,7 @@ return (
             <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-slate-500 dark:text-slate-400 tracking-wider">GUARDADAS</span>
-                <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                   {crmItems.filter(i => i.status === 'guardadas').length}
                 </span>
               </div>
@@ -2135,28 +2135,28 @@ return (
                             value={tempNotes}
                             onChange={(e) => setTempNotes(e.target.value)}
                             placeholder="Nota rápida..."
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-[10px] focus:outline-none"
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-xs sm:text-[10px] focus:outline-none"
                             rows={2}
                           />
                           <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 text-[10px] text-slate-500 dark:text-slate-400">Cancelar</button>
-                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 text-[10px] rounded font-bold">Guardar</button>
+                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] text-slate-500 dark:text-slate-400">Cancelar</button>
+                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] rounded font-bold">Guardar</button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex justify-between items-center">
-                          <span className="text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[100px]">
+                          <span className="text-xs sm:text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[60%] sm:max-w-[100px]">
                             {item.notes ? `📝 ${item.notes}` : 'Sin notas'}
                           </span>
-                          <button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || ''); }} className="text-blue-600 dark:text-blue-400 font-bold text-[9px]">
+                          <button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || ''); }} className="text-blue-600 dark:text-blue-400 font-bold min-h-11 sm:min-h-0 px-2 sm:px-0 text-xs sm:text-[9px]">
                             {item.notes ? 'Editar' : '+ Nota'}
                           </button>
                         </div>
                       )}
                     </div>
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                      <span className="text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
-                      <button onClick={() => changeCrmStatus(item.id, 'postulado')} className="text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-0.5 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-2.5 py-2 rounded-lg">
+                      <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
+                      <button onClick={() => changeCrmStatus(item.id, 'postulado')} className="text-xs sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-0.5 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg">
                         Postular <MoveRight className="w-3 h-3" />
                       </button>
                     </div>
@@ -2174,7 +2174,7 @@ return (
             <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-sky-500 dark:text-sky-400 tracking-wider">POSTULADO</span>
-                <span className="bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                <span className="bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                   {crmItems.filter(i => i.status === 'postulado').length}
                 </span>
               </div>
@@ -2190,7 +2190,7 @@ return (
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.role}</p>
                     </div>
-                    <div className="bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 text-sky-800 dark:text-sky-300 text-[9px] font-semibold px-2 py-1 rounded-lg">
+                    <div className="bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 text-sky-800 dark:text-sky-300 text-xs sm:text-[9px] font-semibold px-2 py-1 rounded-lg">
                       ✅ Marcaste que ya postulaste
                     </div>
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
@@ -2199,20 +2199,20 @@ return (
                           <textarea
                             value={tempNotes}
                             onChange={(e) => setTempNotes(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-[10px]"
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-xs sm:text-[10px]"
                             rows={2}
                           />
                           <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 text-[10px]">Cancelar</button>
-                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 text-[10px] rounded font-bold">Guardar</button>
+                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px]">Cancelar</button>
+                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] rounded font-bold">Guardar</button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex justify-between items-center">
-                          <span className="text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[100px]">
+                          <span className="text-xs sm:text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[60%] sm:max-w-[100px]">
                             {item.notes ? `📝 ${item.notes}` : 'Sin notas'}
                           </span>
-                          <button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || ''); }} className="text-blue-600 dark:text-blue-400 font-bold text-[9px]">
+                          <button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || ''); }} className="text-blue-600 dark:text-blue-400 font-bold min-h-11 sm:min-h-0 px-2 sm:px-0 text-xs sm:text-[9px]">
                             {item.notes ? 'Editar' : '+ Nota'}
                           </button>
                         </div>
@@ -2223,11 +2223,11 @@ return (
                       <button
                         onClick={() => openEmailFor(item)}
                         title="Redactar correo con tu CV"
-                        className="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2.5 py-2 rounded-lg"
+                        className="text-xs sm:text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg"
                       >
                         ✉️
                       </button>
-                      <button onClick={() => changeCrmStatus(item.id, 'seguimiento')} className="text-[10px] font-bold text-sky-700 dark:text-sky-300 flex items-center gap-0.5 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 px-2.5 py-2 rounded-lg">
+                      <button onClick={() => changeCrmStatus(item.id, 'seguimiento')} className="text-xs sm:text-[10px] font-bold text-sky-700 dark:text-sky-300 flex items-center gap-0.5 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg">
                         Seguimiento <MoveRight className="w-3 h-3" />
                       </button>
                     </div>
@@ -2245,7 +2245,7 @@ return (
             <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-sky-500 dark:text-sky-400 tracking-wider">SEGUIMIENTO</span>
-                <span className="bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                <span className="bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                   {crmItems.filter(i => i.status === 'seguimiento').length}
                 </span>
               </div>
@@ -2279,37 +2279,37 @@ return (
                         </div>
                         <button onClick={() => deleteCrmItem(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
                       </div>
-                      <div className={`${badgeColor} border text-[9px] font-semibold px-2 py-1 rounded-lg text-center`}>{trackingMessage}</div>
+                      <div className={`${badgeColor} border text-xs sm:text-[9px] font-semibold px-2 py-1 rounded-lg text-center`}>{trackingMessage}</div>
                       {(item.followup1At || item.followup2At) && (
-                        <p className="text-[9px] text-slate-500 dark:text-slate-400">
+                        <p className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">
                           {[item.followup1At ? `1.er seguimiento: ${fmtDay(item.followup1At)}` : '', item.followup2At ? `2.º seguimiento: ${fmtDay(item.followup2At)}` : ''].filter(Boolean).join(' · ')}
                         </p>
                       )}
                       {daysPassed >= 7 && !item.followup1At && !item.followup2At && (
-                        <button onClick={() => markFollowupSent(item, 1)} className="w-full text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 py-1.5 rounded-lg">
+                        <button onClick={() => markFollowupSent(item, 1)} className="w-full min-h-11 sm:min-h-0 text-xs sm:text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 py-1.5 rounded-lg">
                           Ya envié el primer seguimiento
                         </button>
                       )}
                       {daysPassed >= 14 && !item.followup2At && (
-                        <button onClick={() => markFollowupSent(item, 2)} className="w-full text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 py-1.5 rounded-lg">
+                        <button onClick={() => markFollowupSent(item, 2)} className="w-full min-h-11 sm:min-h-0 text-xs sm:text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 py-1.5 rounded-lg">
                           Ya envié el segundo seguimiento
                         </button>
                       )}
                       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
                         {editingNotesId === item.id ? (
                           <div className="space-y-2">
-                            <textarea value={tempNotes} onChange={(e) => setTempNotes(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-[10px]" rows={2} />
-                            <div className="flex gap-1 justify-end"><button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 text-[10px]">Cancelar</button><button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 text-[10px] rounded font-bold">Guardar</button></div>
+                            <textarea value={tempNotes} onChange={(e) => setTempNotes(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-xs sm:text-[10px]" rows={2} />
+                            <div className="flex gap-1 justify-end"><button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px]">Cancelar</button><button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] rounded font-bold">Guardar</button></div>
                           </div>
                         ) : (
-                          <div className="flex justify-between items-center"><span className="text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[100px]">{item.notes ? `📝 ${item.notes}` : 'Sin notas'}</span><button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || '') }} className="text-blue-600 dark:text-blue-400 font-bold text-[9px]">{item.notes ? 'Editar' : '+ Nota'}</button></div>
+                          <div className="flex justify-between items-center"><span className="text-xs sm:text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[60%] sm:max-w-[100px]">{item.notes ? `📝 ${item.notes}` : 'Sin notas'}</span><button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || '') }} className="text-blue-600 dark:text-blue-400 font-bold min-h-11 sm:min-h-0 px-2 sm:px-0 text-xs sm:text-[9px]">{item.notes ? 'Editar' : '+ Nota'}</button></div>
                         )}
                       </div>
                       {renderReplyControl(item)}
                       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center gap-1">
-                        <button onClick={() => openEmailFor(item)} title="Redactar correo con tu CV" className="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2.5 py-2 rounded-lg">✉️</button>
-                        <span className="text-[9px] text-slate-500 dark:text-slate-400">Día {daysPassed}</span>
-                        <button onClick={() => changeCrmStatus(item.id, 'entrevista')} className="text-[10px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-0.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-2.5 py-2 rounded-lg">Entrevista <MoveRight className="w-3 h-3" /></button>
+                        <button onClick={() => openEmailFor(item)} title="Redactar correo con tu CV" className="text-xs sm:text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg">✉️</button>
+                        <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">Día {daysPassed}</span>
+                        <button onClick={() => changeCrmStatus(item.id, 'entrevista')} className="text-xs sm:text-[10px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-0.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg">Entrevista <MoveRight className="w-3 h-3" /></button>
                       </div>
                     </div>
                   )
@@ -2326,7 +2326,7 @@ return (
             <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-indigo-500 dark:text-indigo-400 tracking-wider">ENTREVISTA</span>
-                <span className="bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 font-bold text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                <span className="bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                   {crmItems.filter(i => i.status === 'entrevista').length}
                 </span>
               </div>
@@ -2342,7 +2342,7 @@ return (
                       </div>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.role}</p>
                     </div>
-                    <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 text-indigo-900 dark:text-indigo-300 text-[9px] font-semibold px-2 py-1 rounded-lg text-center">
+                    <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 text-indigo-900 dark:text-indigo-300 text-xs sm:text-[9px] font-semibold px-2 py-1 rounded-lg text-center">
                       ⭐ En proceso de entrevista
                     </div>
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
@@ -2351,20 +2351,20 @@ return (
                           <textarea
                             value={tempNotes}
                             onChange={(e) => setTempNotes(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-[10px]"
+                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-xs sm:text-[10px]"
                             rows={2}
                           />
                           <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 text-[10px]">Cancelar</button>
-                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 text-[10px] rounded font-bold">Guardar</button>
+                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px]">Cancelar</button>
+                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] rounded font-bold">Guardar</button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex justify-between items-center">
-                          <span className="text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[100px]">
+                          <span className="text-xs sm:text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[60%] sm:max-w-[100px]">
                             {item.notes ? `📝 ${item.notes}` : 'Sin notas'}
                           </span>
-                          <button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || ''); }} className="text-blue-600 dark:text-blue-400 font-bold text-[9px]">
+                          <button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || ''); }} className="text-blue-600 dark:text-blue-400 font-bold min-h-11 sm:min-h-0 px-2 sm:px-0 text-xs sm:text-[9px]">
                             {item.notes ? 'Editar' : '+ Nota'}
                           </button>
                         </div>
@@ -2375,20 +2375,20 @@ return (
                         setSimulatorJob({ company: item.company, role: item.role })
                         setShowInterviewSimulator(true)
                       }}
-                      className="w-full text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 py-2 rounded-lg"
+                      className="w-full text-xs sm:text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 py-2 min-h-11 sm:min-h-0 rounded-lg"
                     >
                       🎤 Practicar esta entrevista
                     </button>
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-1.5">
                       <button
                         onClick={() => changeCrmStatus(item.id, 'aceptado')}
-                        className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold text-[10px] py-2 px-2.5 rounded-lg border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center gap-1 transition-colors"
+                        className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold text-xs sm:text-[10px] py-2 px-2.5 min-h-11 sm:min-h-0 rounded-lg border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center gap-1 transition-colors"
                       >
                         <CheckCircle className="w-3 h-3 text-emerald-600" /> Aceptado
                       </button>
                       <button
                         onClick={() => changeCrmStatus(item.id, 'rechazada')}
-                        className="bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-800 dark:text-rose-300 font-bold text-[10px] py-2 px-2.5 rounded-lg border border-rose-200 dark:border-rose-500/30 flex items-center justify-center gap-1 transition-colors"
+                        className="bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-800 dark:text-rose-300 font-bold text-xs sm:text-[10px] py-2 px-2.5 min-h-11 sm:min-h-0 rounded-lg border border-rose-200 dark:border-rose-500/30 flex items-center justify-center gap-1 transition-colors"
                       >
                         <XCircle className="w-3 h-3 text-rose-600" /> Rechazado
                       </button>
@@ -2407,7 +2407,7 @@ return (
             <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-emerald-800 dark:text-emerald-400 tracking-wider">ACEPTADO</span>
-                <span className="bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-bold text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                <span className="bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                   {crmItems.filter(i => i.status === 'aceptado').length}
                 </span>
               </div>
@@ -2421,11 +2421,11 @@ return (
                       </button>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.role}</p>
-                    <div className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-[9px] font-bold p-1.5 rounded-lg text-center">
+                    <div className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-xs sm:text-[9px] font-bold p-1.5 rounded-lg text-center">
                       🎉 ¡Proceso USCIS iniciado!
                     </div>
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                      <span className="text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
+                      <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
                     </div>
                   </div>
                 ))}
@@ -2441,7 +2441,7 @@ return (
             <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-rose-800 dark:text-rose-400 tracking-wider">NO RESPONDIDO / RECHAZADO</span>
-                <span className="bg-white dark:bg-slate-800 text-rose-700 dark:text-rose-300 font-bold text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                <span className="bg-white dark:bg-slate-800 text-rose-700 dark:text-rose-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
                   {crmItems.filter(i => i.status === 'no_respondido' || i.status === 'rechazada').length}
                 </span>
               </div>
@@ -2455,14 +2455,14 @@ return (
                       </button>
                     </div>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.role}</p>
-                    <div className="bg-rose-50 dark:bg-rose-500/10 text-rose-800 dark:text-rose-300 text-[9px] font-bold p-1.5 rounded-lg text-center">
+                    <div className="bg-rose-50 dark:bg-rose-500/10 text-rose-800 dark:text-rose-300 text-xs sm:text-[9px] font-bold p-1.5 rounded-lg text-center">
                       {item.status === 'no_respondido' ? '⌛ Expirado (21 días sin respuesta)' : '❌ Postulación rechazada'}
                     </div>
                     <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                      <span className="text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
+                      <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
                       <button
                         onClick={() => changeCrmStatus(item.id, 'entrevista')}
-                        className="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 px-2.5 py-2 rounded-lg"
+                        className="text-xs sm:text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg"
                       >
                         Me respondieron
                       </button>

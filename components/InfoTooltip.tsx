@@ -40,7 +40,7 @@ export default function InfoTooltip({ text, children }: InfoTooltipProps) {
         className="inline-flex items-center gap-1 cursor-help"
       >
         {children}
-        <span className="text-[9px] opacity-60">ⓘ</span>
+        <span className="text-xs sm:text-[9px] opacity-60">ⓘ</span>
       </button>
       <span
         role="tooltip"

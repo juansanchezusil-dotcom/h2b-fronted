@@ -90,7 +90,7 @@ export default function TopOffers({ perfilCompletado, onSave, onSeeAll, onOpen }
               <span className="block text-sm font-bold text-slate-900 dark:text-white group-hover:underline">{j.title}</span>
               <span className="block text-xs text-slate-500 dark:text-slate-400">{`${j.employer_name}${j.location ? ` · ${j.location}` : ''}`}</span>
             </button>
-            <span className="w-fit rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+            <span className="w-fit rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 text-xs sm:text-[10px] font-bold text-slate-600 dark:text-slate-300">
               {`${j.score}% compatible`}
             </span>
             <button type="button" onClick={() => onOpen(j.id)} className="text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] hover:underline text-left">

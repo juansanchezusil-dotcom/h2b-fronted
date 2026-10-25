@@ -423,11 +423,11 @@ export default function MapaPublico() {
             )}
             <section className={`${card} space-y-3`}>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">{map.headline}</h2>
-              <ol className="grid grid-cols-5 gap-1.5" aria-label="Tus 5 etapas">
+              <ol className="grid grid-cols-3 gap-1.5 sm:grid-cols-5" aria-label="Tus 5 etapas">
                 {map.stages.map((s, i) => (
                   <li
                     key={s.id}
-                    className={`rounded-lg px-1 py-2 text-center text-[11px] font-bold ${
+                    className={`rounded-lg px-1 py-2 text-center text-xs sm:text-[11px] font-bold ${
                       s.state === 'current'
                         ? 'bg-[#C89B3C] text-[#08131F]'
                         : s.state === 'done'

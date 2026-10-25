@@ -92,7 +92,7 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
         <div className="text-right">
           <p className="text-xs font-semibold text-gray-800 dark:text-slate-100">{user.email}</p>
           <span
-            className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+            className={`text-xs sm:text-[10px] px-2 py-0.5 rounded-full font-bold ${
               hasAccess
                 ? "bg-green-100 text-green-700"
                 : "bg-red-100 text-red-700"

@@ -45,7 +45,7 @@ export default function SponsorHistory({ sponsor, match, variant = 'compact' }: 
       'Esta empresa no tiene peticiones H-2B aprobadas por USCIS en el año fiscal 2026. Puede ser nueva en el programa o usar otro nombre legal. No es algo malo, pero revisa la oferta con más cuidado.';
     return variant === 'compact' ? (
       <InfoTooltip text={text}>
-        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded">
+        <span className="text-xs sm:text-[10px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded">
           Sin historial en USCIS 2026
         </span>
       </InfoTooltip>
@@ -72,7 +72,7 @@ export default function SponsorHistory({ sponsor, match, variant = 'compact' }: 
           }
         >
           <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+            className={`text-xs sm:text-[10px] font-bold px-2 py-0.5 rounded border ${
               abroad
                 ? 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/30'
                 : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30'
@@ -81,7 +81,7 @@ export default function SponsorHistory({ sponsor, match, variant = 'compact' }: 
             {abroad ? '🌎 Contrata desde el extranjero' : 'Solo contrató dentro de EE. UU.'}
           </span>
         </InfoTooltip>
-        <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+        <span className="text-xs sm:text-[10px] font-semibold text-slate-600 dark:text-slate-300">
           {approved} {approved === 1 ? 'visa aprobada' : 'visas aprobadas'} en 2026
           {otherStates && ' · en otros estados'}
         </span>
@@ -114,7 +114,7 @@ export default function SponsorHistory({ sponsor, match, variant = 'compact' }: 
           </li>
         )}
       </ul>
-      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+      <p className="text-xs sm:text-[10px] text-slate-400 dark:text-slate-500">
         Registrada en USCIS como {sponsor.employer_name}. Datos públicos del H-2B Employer Data Hub.
       </p>
     </div>

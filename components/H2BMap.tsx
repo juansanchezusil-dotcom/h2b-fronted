@@ -207,7 +207,7 @@ export default function H2BMap({
       </div>
 
       {/* Etapas */}
-      <ol aria-label="Etapas de tu búsqueda" className="grid grid-cols-5 gap-1 sm:gap-2">
+      <ol aria-label="Etapas de tu búsqueda" className="grid grid-cols-3 gap-x-1 gap-y-4 sm:grid-cols-5 sm:gap-2">
         {map.stages.map((stage) => {
           const Icon = STAGE_ICONS[stage.id]
           const current = stage.state === 'current'
@@ -226,7 +226,7 @@ export default function H2BMap({
                 {done ? <CheckCircle2 className="h-5 w-5" aria-hidden="true" /> : <Icon className="h-5 w-5" aria-hidden="true" />}
               </span>
               <span
-                className={`text-[11px] sm:text-xs font-semibold leading-tight ${
+                className={`text-xs font-semibold leading-tight ${
                   current ? 'text-slate-900 dark:text-white' : done ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
