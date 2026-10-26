@@ -59,13 +59,13 @@ export async function buildCvDocx(cv: BuiltCv): Promise<Blob> {
 
   const sectionTitle = (title: string) =>
     new Paragraph({
-      spacing: { before: 160, after: 50 },
+      spacing: { before: 280, after: 90 },
       keepNext: true,
       border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '000000', space: 1 } },
       children: [run(title, { bold: true, size: 21 })],
     });
 
-  const body = (text: string) => new Paragraph({ spacing: { after: 20 }, children: [run(text)] });
+  const body = (text: string) => new Paragraph({ spacing: { after: 20, line: 264 }, children: [run(text)] });
 
   const children: InstanceType<typeof Paragraph>[] = [];
 
@@ -102,20 +102,20 @@ export async function buildCvDocx(cv: BuiltCv): Promise<Blob> {
       const left = [e.heading, e.location].filter(Boolean).join(' | ');
       children.push(
         new Paragraph({
-          spacing: { before: i === 0 ? 40 : 100, after: 0 },
+          spacing: { before: i === 0 ? 60 : 180, after: 0 },
           keepNext: true,
           tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_WIDTH }],
           children: [run(left, { bold: true }), ...(e.dates ? [run('\t'), run(e.dates, { bold: true })] : [])],
         })
       );
       if (e.subtitle) {
-        children.push(new Paragraph({ spacing: { after: 20 }, keepNext: true, children: [run(e.subtitle, { italics: true })] }));
+        children.push(new Paragraph({ spacing: { after: 40 }, keepNext: true, children: [run(e.subtitle, { italics: true })] }));
       }
       for (const b of e.bullets) {
         children.push(
           new Paragraph({
             numbering: { reference: 'cv-bullets', level: 0 },
-            spacing: { after: 10 },
+            spacing: { after: 20 },
             children: [run(b.text)],
           })
         );

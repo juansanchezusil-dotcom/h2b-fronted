@@ -62,7 +62,7 @@ function cursor(doc: Doc, margin: { left: number; right: number; top: number; bo
     // Texto en una o varias líneas; devuelve nada, avanza y
     paragraph(text: string, opts: { size?: number; style?: 'normal' | 'bold' | 'italic'; align?: 'left' | 'center'; indent?: number; leading?: number; after?: number; bullet?: boolean } = {}) {
       const size = opts.size ?? 10
-      const leading = size * (opts.leading ?? 1.25)
+      const leading = size * (opts.leading ?? 1.32)
       font(opts.style ?? 'normal', size)
       const indent = opts.indent ?? 0
       const lines: string[] = doc.splitTextToSize(clean(text), width - indent)
@@ -86,14 +86,14 @@ export async function buildCvPdf(cv: BuiltCv): Promise<Blob> {
   doc.setProperties({ title: `${cv.header.fullName || 'Candidate'} - CV`, creator: 'Juan Te Avisa' })
   const c = cursor(doc, { left: 40, right: 40, top: 34, bottom: 34 })
 
-  const section = (title: string) => {
-    c.ensure(34)
-    c.gap(8)
+  const section = (title: string, keepWith = 0) => {
+    c.ensure(44 + keepWith)
+    c.gap(14)
     c.font('bold', 10.5)
     c.paragraph(title, { size: 10.5, style: 'bold' })
     doc.setLineWidth(0.6)
     doc.line(c.margin.left, c.y + 1, c.margin.left + c.width, c.y + 1)
-    c.gap(4)
+    c.gap(7)
   }
 
   // Encabezado
@@ -113,11 +113,30 @@ export async function buildCvPdf(cv: BuiltCv): Promise<Blob> {
   }
 
   const experiences = cv.experiences.filter((e) => e.heading && (e.bullets.length > 0 || e.dates))
+  // Alto que ocupa un trabajo completo (cargo, subtítulo y viñetas): así nunca se parte entre dos páginas
+  const experienceHeight = (e: (typeof experiences)[number]) => {
+    c.font('bold', 10)
+    const dates = clean(e.dates || '')
+    const datesWidth = dates ? doc.getTextWidth(dates) + 8 : 0
+    const headingLines = doc.splitTextToSize(clean([e.heading, e.location].filter(Boolean).join(' | ')), c.width - datesWidth).length
+    let height = headingLines * 12.5
+    if (e.subtitle) {
+      c.font('italic', 10)
+      height += doc.splitTextToSize(clean(e.subtitle), c.width).length * 13.2 + 1.5
+    }
+    c.font('normal', 10)
+    for (const b of e.bullets) height += doc.splitTextToSize(clean(b.text), c.width - 14).length * 13.2 + 1.5
+    return height
+  }
+
   if (experiences.length) {
-    section(cv.sectionTitle)
+    // El título de la sección viaja con el primer trabajo: no queda solo al final de una página
+    section(cv.sectionTitle, experienceHeight(experiences[0]) + 3)
     experiences.forEach((e, i) => {
-      c.ensure(40)
-      c.gap(i === 0 ? 2 : 6)
+      const gap = i === 0 ? 3 : 10
+      const yBefore = c.y
+      c.ensure(experienceHeight(e) + gap)
+      if (c.y === yBefore) c.gap(gap)
       const left = clean([e.heading, e.location].filter(Boolean).join(' | '))
       c.font('bold', 10)
       const leading = 12.5
@@ -133,8 +152,8 @@ export async function buildCvPdf(cv: BuiltCv): Promise<Blob> {
         c.gap(leading)
         doc.text(extra, c.margin.left, c.y - 2.5)
       }
-      if (e.subtitle) c.paragraph(e.subtitle, { style: 'italic' })
-      for (const b of e.bullets) c.paragraph(b.text, { indent: 14, after: 0.5, bullet: true })
+      if (e.subtitle) c.paragraph(e.subtitle, { style: 'italic', after: 1.5 })
+      for (const b of e.bullets) c.paragraph(b.text, { indent: 14, after: 1.5, bullet: true })
     })
   }
 
