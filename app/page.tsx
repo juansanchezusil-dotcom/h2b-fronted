@@ -222,6 +222,49 @@ const TABS: Tab[] = ['dashboard', 'jobs', 'employers', 'agencies', 'crm', 'ai', 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
 
+  // En celular la barra de pestañas se desplaza de lado: deja visible la pestaña activa
+  const navRef = useRef<HTMLElement>(null)
+  useEffect(() => {
+    navRef.current
+      ?.querySelector<HTMLElement>(`[data-tab="${activeTab}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+  }, [activeTab])
+
+  // Deslizar a la izquierda o derecha sobre el contenido cambia de pestaña (celular)
+  const swipeStart = useRef<{ x: number; y: number; t: number } | null>(null)
+  const handleSwipeStart = (e: React.TouchEvent<HTMLElement>) => {
+    swipeStart.current = null
+    if (e.touches.length !== 1) return
+    const touch = e.touches[0]
+    // Los bordes de la pantalla son el gesto "atrás" del sistema
+    if (touch.clientX < 24 || touch.clientX > window.innerWidth - 24) return
+    // No robar el gesto a campos, modales ni zonas con scroll horizontal (tablas, CRM)
+    let el = e.target as HTMLElement | null
+    while (el && el !== e.currentTarget) {
+      if (el.matches('input, textarea, select, [contenteditable="true"], [role="dialog"], .fixed, [data-no-swipe]')) return
+      if (el.scrollWidth > el.clientWidth + 1) {
+        const overflowX = getComputedStyle(el).overflowX
+        if (overflowX === 'auto' || overflowX === 'scroll') return
+      }
+      el = el.parentElement
+    }
+    swipeStart.current = { x: touch.clientX, y: touch.clientY, t: Date.now() }
+  }
+  const handleSwipeEnd = (e: React.TouchEvent<HTMLElement>) => {
+    const start = swipeStart.current
+    swipeStart.current = null
+    if (!start || window.getSelection()?.toString()) return
+    const touch = e.changedTouches[0]
+    const dx = touch.clientX - start.x
+    const dy = touch.clientY - start.y
+    // Solo gestos claros: largos, rápidos y casi horizontales (no confunde con el scroll vertical)
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - start.t > 600) return
+    const next = TABS[TABS.indexOf(activeTab) + (dx < 0 ? 1 : -1)]
+    if (!next) return
+    setActiveTab(next)
+    window.scrollTo({ top: 0 })
+  }
+
   // --- ESTADOS DE DATOS REALES ---
   const [jobs, setJobs] = useState<Job[]>([])
   const [totalJobsCount, setTotalJobsCount] = useState<number>(0)
@@ -1190,26 +1233,28 @@ return (
     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <LogoMark size={36} decorative className="shrink-0 rounded-xl shadow-sm" />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-slate-900 dark:text-white text-lg leading-tight">Juan Te Avisa</span>
-                <span className="font-black text-[#b8860b] text-lg leading-tight">PRO</span>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="font-bold text-slate-900 dark:text-white text-base sm:text-lg leading-tight">Juan Te Avisa</span>
+                <span className="font-black text-[#b8860b] text-base sm:text-lg leading-tight">PRO</span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-none">Sistema Operativo H2B</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight truncate">Sistema Operativo H2B</p>
             </div>
           </div>
 
           {/* BOTÓN Y ESTADO DE SESIÓN (EL PORTERO) */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <ThemeToggle />
             <UserMenu onEditProfile={() => setShowOnboarding(true)} />
           </div>
         </div>
-        <nav className="flex items-center gap-1 text-xs sm:text-sm font-medium overflow-x-auto pb-2 scrollbar-none">
+        <nav ref={navRef} aria-label="Secciones" className="flex items-center gap-1 text-xs sm:text-sm font-medium overflow-x-auto pb-2 scrollbar-none">
           <button
             onClick={() => setActiveTab('dashboard')}
+            data-tab="dashboard"
+            aria-current={activeTab === 'dashboard' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'dashboard' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
@@ -1218,6 +1263,8 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('jobs')}
+            data-tab="jobs"
+            aria-current={activeTab === 'jobs' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'jobs' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
@@ -1226,6 +1273,8 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('employers')}
+            data-tab="employers"
+            aria-current={activeTab === 'employers' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'employers' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
@@ -1234,6 +1283,8 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('agencies')}
+            data-tab="agencies"
+            aria-current={activeTab === 'agencies' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'agencies' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
@@ -1242,6 +1293,8 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('crm')}
+            data-tab="crm"
+            aria-current={activeTab === 'crm' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'crm' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
@@ -1250,6 +1303,8 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('ai')}
+            data-tab="ai"
+            aria-current={activeTab === 'ai' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'ai' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
@@ -1258,6 +1313,8 @@ return (
           </button>
           <button
             onClick={() => setActiveTab('checklist')}
+            data-tab="checklist"
+            aria-current={activeTab === 'checklist' ? 'page' : undefined}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-t-lg transition-colors whitespace-nowrap ${activeTab === 'checklist' ? 'text-[#1a3a8f] dark:text-blue-300 font-semibold border-b-2 border-[#f5c518]' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white border-b-2 border-transparent'
               }`}
           >
@@ -1269,7 +1326,13 @@ return (
     </header>
 
     {/* CONTENIDO PRINCIPAL */}
-    <main id="contenido" tabIndex={-1} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 outline-none">
+    <main
+      id="contenido"
+      tabIndex={-1}
+      onTouchStart={handleSwipeStart}
+      onTouchEnd={handleSwipeEnd}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 outline-none"
+    >
 
       {/* DASHBOARD */}
       {activeTab === 'dashboard' && (

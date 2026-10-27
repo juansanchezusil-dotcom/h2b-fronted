@@ -87,9 +87,20 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg px-2 py-1.5 transition-colors"
+        aria-label="Abrir menú de cuenta"
+        className="flex items-center gap-1.5 sm:gap-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg px-1.5 sm:px-2 py-1.5 transition-colors"
       >
-        <div className="text-right">
+        {/* En celular: solo la inicial con un punto de estado; el correo va dentro del menú */}
+        <span className="sm:hidden relative w-9 h-9 rounded-full bg-[#0B2545] text-[#f5c518] font-black text-sm flex items-center justify-center">
+          {(user.email ?? "?").charAt(0).toUpperCase()}
+          <span
+            className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full ring-2 ring-white dark:ring-slate-900 ${
+              hasAccess ? "bg-green-500" : "bg-red-500"
+            }`}
+            aria-hidden="true"
+          />
+        </span>
+        <div className="hidden sm:block text-right">
           <p className="text-xs font-semibold text-gray-800 dark:text-slate-100">{user.email}</p>
           <span
             className={`text-xs sm:text-[10px] px-2 py-0.5 rounded-full font-bold ${
@@ -112,7 +123,17 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 py-1.5 z-50">
+        <div className="absolute right-0 top-full mt-2 w-56 sm:w-48 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-100 dark:border-slate-800 py-1.5 z-50">
+          <div className="sm:hidden px-4 py-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+            <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">{user.email}</p>
+            <span
+              className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-bold ${
+                hasAccess ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+              }`}
+            >
+              {hasAccess ? "PRO ACTIVO" : "SIN MEMBRESÍA"}
+            </span>
+          </div>
           <button
             onClick={() => {
               setIsOpen(false);
