@@ -22,6 +22,14 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        // El service worker siempre se revisa en la red: así los cambios llegan apenas se publican
+        source: '/sw.js',
+        headers: [
+          { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        ],
+      },
+      {
         // Que nadie incruste la app (clickjacking). El Mapa y el dashboard de la masterclass se dejan fuera: pueden
         // mostrarse dentro de juanteavisa.com.
         source: '/((?!mapa|masterclass\\.html).*)',

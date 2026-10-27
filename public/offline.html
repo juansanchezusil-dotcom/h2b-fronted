@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#08131F" />
+  <title>Sin conexión - Juan Te Avisa PRO</title>
+  <style>
+    html, body { margin: 0; height: 100%; }
+    body {
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      background: #08131F; color: #e2e8f0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif; text-align: center;
+    }
+    main { max-width: 340px; }
+    img { width: 72px; height: 72px; border-radius: 16px; }
+    h1 { font-size: 22px; margin: 20px 0 8px; color: #fff; }
+    p { font-size: 15px; line-height: 1.5; color: #94a3b8; margin: 0 0 24px; }
+    button {
+      min-height: 48px; padding: 0 28px; border: 0; border-radius: 12px;
+      background: #f5c518; color: #0B2545; font-size: 15px; font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="/icons/icon-192.png" alt="" />
+    <h1>Estás sin conexión</h1>
+    <p>Revisa tu internet o datos móviles. Tus postulaciones están guardadas y te esperan cuando vuelvas.</p>
+    <button onclick="location.reload()">Reintentar</button>
+  </main>
+</body>
+</html>

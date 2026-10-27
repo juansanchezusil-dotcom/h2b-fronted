@@ -50,6 +50,7 @@ import SponsorHistory from '@/components/SponsorHistory';
 import CVBuilderModal from '@/components/CVBuilderModal';
 import LogoMark from '@/components/LogoMark';
 import MobileTabBar from '@/components/MobileTabBar';
+import InstallAppBanner from '@/components/InstallAppBanner';
 import AssistantModal from '@/components/AssistantModal';
 import MembershipNotices from '@/components/MembershipNotices';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
@@ -1176,6 +1177,11 @@ interface NextAction {
   onClick: () => void
 }
 
+// Postulaciones en "seguimiento" con 7 días o más sin respuesta: van en Tu Prioridad y en la insignia de Mi CRM
+const pendingFollowUps = crmItems.filter(
+  (i) => i.status === 'seguimiento' && (Date.now() - i.createdAt) / (1000 * 60 * 60 * 24) >= 7
+).length
+
 const getNextAction = (): NextAction | null => {
   if (!onboardingUserId || crmLoading) return null
 
@@ -1199,9 +1205,6 @@ const getNextAction = (): NextAction | null => {
     }
   }
 
-  const pendingFollowUps = crmItems.filter(
-    (i) => i.status === 'seguimiento' && (Date.now() - i.createdAt) / (1000 * 60 * 60 * 24) >= 7
-  ).length
   if (pendingFollowUps > 0) {
     return {
       icon: Clock,
@@ -1336,6 +1339,14 @@ return (
           >
             <Send className="w-4 h-4" />
             Mi CRM
+            {pendingFollowUps > 0 && (
+              <span
+                className="min-w-5 h-5 px-1.5 rounded-full bg-rose-600 text-white text-[11px] font-bold leading-5 text-center"
+                aria-label={`${pendingFollowUps} seguimientos pendientes`}
+              >
+                {pendingFollowUps}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('ai')}
@@ -1374,6 +1385,7 @@ return (
       {/* DASHBOARD */}
       {activeTab === 'dashboard' && (
         <div className="space-y-6">
+          <InstallAppBanner />
           <div className="bg-gradient-to-r from-[#091E3A] via-[#0F2B48] to-[#1A365D] rounded-2xl p-6 md:p-8 text-white relative overflow-hidden shadow-md">
             <span className="inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold px-3 py-1 rounded-full mb-3">
               📣 Ofertas oficiales del DOL, actualizadas a diario
@@ -2838,6 +2850,7 @@ return (
 
     <MobileTabBar
       activeTab={activeTab}
+      badges={{ crm: pendingFollowUps }}
       onChange={(tab) => {
         setActiveTab(tab as Tab)
         window.scrollTo({ top: 0 })

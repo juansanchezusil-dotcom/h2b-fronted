@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { useUserAccess } from "@/hooks/useUserAccess";
 import { aiFetch } from "@/lib/aiFetch";
+import { useInstallState } from "@/components/InstallAppBanner";
+import { promptInstall } from "@/lib/pwa";
 
 interface UserMenuProps {
   onEditProfile?: () => void;
@@ -18,6 +20,8 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
   const [busy, setBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const installState = useInstallState();
+  const [showIosSteps, setShowIosSteps] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -146,6 +150,38 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
             </svg>
             Mi Perfil
           </button>
+          {installState === "prompt" && (
+            <button
+              onClick={() => {
+                setIsOpen(false);
+                promptInstall();
+              }}
+              className="w-full text-left px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14" />
+              </svg>
+              Instalar app
+            </button>
+          )}
+          {installState === "ios" && (
+            <div className="px-4 py-2.5">
+              <button
+                onClick={() => setShowIosSteps((v) => !v)}
+                className="w-full text-left text-sm text-slate-700 dark:text-slate-200 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14" />
+                </svg>
+                Instalar app
+              </button>
+              {showIosSteps && (
+                <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Toca Compartir en la barra del navegador y elige <b>Agregar a inicio</b>.
+                </p>
+              )}
+            </div>
+          )}
           <div className="h-px bg-slate-100 dark:bg-slate-800 my-1" />
           <button
             onClick={handleLogout}

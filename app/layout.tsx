@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import PwaInit from "@/components/PwaInit";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,6 +28,11 @@ export const metadata: Metadata = {
     siteName: "Juan Te Avisa PRO",
     locale: "es_LA",
     type: "website",
+  },
+  // Al instalarla en iPhone: abre a pantalla completa y con este nombre bajo el ícono
+  appleWebApp: {
+    capable: true,
+    title: "Juan Te Avisa",
   },
 };
 
@@ -55,6 +61,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
+        <PwaInit />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
         </ThemeProvider>

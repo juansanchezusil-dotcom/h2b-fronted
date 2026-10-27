@@ -21,9 +21,11 @@ const MORE: Item[] = [
 interface MobileTabBarProps {
   activeTab: string
   onChange: (tab: string) => void
+  // Número rojo sobre el ícono (p. ej. seguimientos pendientes en Mi CRM); 0 lo oculta
+  badges?: Partial<Record<string, number>>
 }
 
-export default function MobileTabBar({ activeTab, onChange }: MobileTabBarProps) {
+export default function MobileTabBar({ activeTab, onChange, badges = {} }: MobileTabBarProps) {
   const [moreOpen, setMoreOpen] = useState(false)
   const ref = useRef<HTMLElement>(null)
   const moreActive = MORE.some((i) => i.tab === activeTab)
@@ -83,12 +85,21 @@ export default function MobileTabBar({ activeTab, onChange }: MobileTabBarProps)
       <div className="flex items-stretch">
         {MAIN.map(({ tab, label, icon: Icon }) => {
           const active = activeTab === tab
+          const badge = badges[tab] ?? 0
           return (
             <button key={tab} onClick={() => go(tab)} aria-current={active ? 'page' : undefined} className={itemClass(active)}>
-              <span className={`flex items-center justify-center w-12 h-7 rounded-full ${active ? 'bg-[#f5c518]/25' : ''}`}>
+              <span className={`relative flex items-center justify-center w-12 h-7 rounded-full ${active ? 'bg-[#f5c518]/25' : ''}`}>
                 <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 2} />
+                {badge > 0 && (
+                  <span className="absolute -top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[11px] font-bold leading-[18px] text-center ring-2 ring-white dark:ring-slate-900">
+                    {badge > 9 ? '9+' : badge}
+                  </span>
+                )}
               </span>
-              <span className="truncate max-w-full">{label}</span>
+              <span className="truncate max-w-full">
+                {label}
+                {badge > 0 && <span className="sr-only">, {badge} pendientes</span>}
+              </span>
             </button>
           )
         })}
