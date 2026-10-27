@@ -49,6 +49,7 @@ import Pagination from '@/components/Pagination';
 import SponsorHistory from '@/components/SponsorHistory';
 import CVBuilderModal from '@/components/CVBuilderModal';
 import LogoMark from '@/components/LogoMark';
+import MobileTabBar from '@/components/MobileTabBar';
 import AssistantModal from '@/components/AssistantModal';
 import MembershipNotices from '@/components/MembershipNotices';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
@@ -218,19 +219,44 @@ const splitWage = (wage?: string | null) => {
 
 type Tab = 'dashboard' | 'jobs' | 'employers' | 'agencies' | 'crm' | 'ai' | 'checklist'
 const TABS: Tab[] = ['dashboard', 'jobs', 'employers', 'agencies', 'crm', 'ai', 'checklist']
+// Orden de la barra inferior del celular (las de "Más" al final); el deslizamiento lo sigue
+const SWIPE_ORDER: Tab[] = ['dashboard', 'jobs', 'crm', 'ai', 'employers', 'agencies', 'checklist']
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
 
-  // En celular la barra de pestañas se desplaza de lado: deja visible la pestaña activa
-  const navRef = useRef<HTMLElement>(null)
+  // Al volver a abrir la app, retoma la última pestaña que usaste
+  const tabRestored = useRef(false)
   useEffect(() => {
-    navRef.current
-      ?.querySelector<HTMLElement>(`[data-tab="${activeTab}"]`)
-      ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+    if (!tabRestored.current) {
+      tabRestored.current = true
+      const saved = localStorage.getItem('jta:lastTab')
+      if (saved && (TABS as string[]).includes(saved) && saved !== activeTab) {
+        // localStorage solo existe en el navegador: leerlo al iniciar el estado rompería la hidratación
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setActiveTab(saved as Tab)
+        return
+      }
+    }
+    localStorage.setItem('jta:lastTab', activeTab)
   }, [activeTab])
 
-  // Deslizar a la izquierda o derecha sobre el contenido cambia de pestaña (celular)
+  // Entrada corta del contenido al cambiar de pestaña, desde el lado hacia donde vas
+  const mainRef = useRef<HTMLElement>(null)
+  const prevTab = useRef(activeTab)
+  useEffect(() => {
+    if (prevTab.current === activeTab) return
+    const forward = SWIPE_ORDER.indexOf(activeTab) > SWIPE_ORDER.indexOf(prevTab.current)
+    prevTab.current = activeTab
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    mainRef.current?.animate(
+      [{ opacity: 0, transform: `translateX(${forward ? 24 : -24}px)` }, { opacity: 1, transform: 'none' }],
+      { duration: 200, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }
+    )
+  }, [activeTab])
+
+  // Deslizar a la izquierda o derecha sobre el contenido cambia de pestaña (celular),
+  // en el mismo orden que la barra inferior
   const swipeStart = useRef<{ x: number; y: number; t: number } | null>(null)
   const handleSwipeStart = (e: React.TouchEvent<HTMLElement>) => {
     swipeStart.current = null
@@ -259,7 +285,7 @@ export default function Home() {
     const dy = touch.clientY - start.y
     // Solo gestos claros: largos, rápidos y casi horizontales (no confunde con el scroll vertical)
     if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 2 || Date.now() - start.t > 600) return
-    const next = TABS[TABS.indexOf(activeTab) + (dx < 0 ? 1 : -1)]
+    const next = SWIPE_ORDER[SWIPE_ORDER.indexOf(activeTab) + (dx < 0 ? 1 : -1)]
     if (!next) return
     setActiveTab(next)
     window.scrollTo({ top: 0 })
@@ -381,6 +407,16 @@ export default function Home() {
     setToastMessage(msg)
     setTimeout(() => setToastMessage(null), 3000)
   }
+  // Primera visita en celular: enseña que se puede deslizar entre secciones (una sola vez)
+  useEffect(() => {
+    if (!window.matchMedia('(max-width: 639px)').matches || localStorage.getItem('jta:swipeHint')) return
+    const timer = setTimeout(() => {
+      localStorage.setItem('jta:swipeHint', '1')
+      setToastMessage('Tip: desliza a los lados para cambiar de sección')
+      setTimeout(() => setToastMessage(null), 4000)
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [])
   // Cargar las postulaciones reales del usuario desde Supabase
   useEffect(() => {
   if (!onboardingUserId) return
@@ -1250,7 +1286,7 @@ return (
             <UserMenu onEditProfile={() => setShowOnboarding(true)} />
           </div>
         </div>
-        <nav ref={navRef} aria-label="Secciones" className="flex items-center gap-1 text-xs sm:text-sm font-medium overflow-x-auto pb-2 scrollbar-none">
+        <nav aria-label="Secciones" className="hidden sm:flex items-center gap-1 text-xs sm:text-sm font-medium overflow-x-auto pb-2 scrollbar-none">
           <button
             onClick={() => setActiveTab('dashboard')}
             data-tab="dashboard"
@@ -1328,10 +1364,11 @@ return (
     {/* CONTENIDO PRINCIPAL */}
     <main
       id="contenido"
+      ref={mainRef}
       tabIndex={-1}
       onTouchStart={handleSwipeStart}
       onTouchEnd={handleSwipeEnd}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 outline-none"
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-6 space-y-6 outline-none"
     >
 
       {/* DASHBOARD */}
@@ -2798,6 +2835,14 @@ return (
         </div>
       )}
     </main>
+
+    <MobileTabBar
+      activeTab={activeTab}
+      onChange={(tab) => {
+        setActiveTab(tab as Tab)
+        window.scrollTo({ top: 0 })
+      }}
+    />
     {/* MODAL DE POSTULACIÓN MANUAL */}
     {isManualModalOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
@@ -2993,7 +3038,7 @@ return (
       <div
         role="status"
         aria-live="polite"
-        className="fixed z-[100] left-4 right-4 sm:left-auto sm:right-6 bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:bottom-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold text-center sm:text-left animate-in fade-in slide-in-from-bottom-4"
+        className="fixed z-[100] left-4 right-4 sm:left-auto sm:right-6 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] sm:bottom-6 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-semibold text-center sm:text-left animate-in fade-in slide-in-from-bottom-4"
       >
         {toastMessage}
       </div>
