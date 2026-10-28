@@ -73,7 +73,7 @@ export default function JobDetailModal({
         </div>
 
         {/* HISTORIAL DE LA EMPRESA EN USCIS */}
-        <SponsorHistory sponsor={selectedJob.sponsor} match={selectedJob.sponsor_match} variant="full" />
+        <SponsorHistory sponsor={selectedJob.sponsor} match={selectedJob.sponsor_match ?? null} variant="full" />
 
         {/* RECRUITMENT INFORMATION */}
         <div className="space-y-1 border-t border-slate-100 dark:border-slate-800 pt-3 text-left">

@@ -1,4 +1,5 @@
 // Tipos y datos compartidos de la app H-2B (antes vivían todos en app/page.tsx)
+import type { SponsorData, SponsorMatch } from '@/components/SponsorHistory'
 
 // LISTA COMPLETA DE ESTADOS DE EE. UU. Y TERRITORIOS
 export const US_STATES = [
@@ -77,7 +78,32 @@ export interface Job {
   job_description?: string
   full_time?: string | boolean
   job_order_url?: string
-  [key: string]: any
+  // Nombres alternativos de las mismas columnas según la fuente (scraper del DOL, CareerOneStop, carga manual)
+  case_number?: string
+  job_title?: string
+  emp_name?: string
+  employer?: string
+  start_date?: string
+  fecha_inicio?: string
+  fecha_fin?: string
+  pay_rate?: string
+  workers_needed?: number | string
+  vacantes?: number | string
+  jornada?: string
+  phone?: string
+  phone_to_apply?: string
+  recruitment_phone?: string
+  email?: string
+  emp_email?: string
+  recruitment_email?: string
+  description?: string
+  duties?: string
+  job_duties?: string
+  source?: string
+  created_at?: string
+  // Historial de la empresa en USCIS (ver SponsorHistory)
+  sponsor?: SponsorData | null
+  sponsor_match?: SponsorMatch
 }
 
 export interface SponsorCompany {
@@ -94,7 +120,6 @@ export interface SponsorCompany {
   cap_type?: string
   // Vacantes del catálogo ya vinculadas a esta empresa (ver linkJobs.ts)
   jobs?: { id: number; title: string; location: string }[]
-  [key: string]: any
 }
 
 // Lista oficial del DOL de reclutadores/agentes extranjeros declarados para H-2B
@@ -108,7 +133,6 @@ export interface SponsorAgency {
   country?: string
   case_count?: number
   website?: string
-  [key: string]: any
 }
 
 // ===== CRM: Centro de Comando Kanban expandido =====

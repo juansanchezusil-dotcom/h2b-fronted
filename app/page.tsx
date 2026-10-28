@@ -77,6 +77,22 @@ const CRM_COLUMNS: { id: CrmColumn; label: string }[] = [
 const crmColumnOf = (status: CRMItem['status']): CrmColumn =>
   status === 'no_respondido' || status === 'rechazada' ? 'cerradas' : status
 
+// Columnas que la app lee de la tabla applications
+interface ApplicationRow {
+  id: string
+  company_name: string
+  job_title: string | null
+  state: string | null
+  status: CRMItem['status']
+  created_at: string
+  last_updated: string | null
+  notes: string | null
+  followup1_sent_at: string | null
+  followup2_sent_at: string | null
+  reply_type: CRMItem['replyType']
+  reply_at: string | null
+}
+
 type Tab = 'dashboard' | 'jobs' | 'employers' | 'agencies' | 'crm' | 'ai' | 'checklist'
 const TABS: Tab[] = ['dashboard', 'jobs', 'employers', 'agencies', 'crm', 'ai', 'checklist']
 // Orden de la barra inferior del celular (las de "Más" al final); el deslizamiento lo sigue
@@ -84,6 +100,13 @@ const SWIPE_ORDER: Tab[] = ['dashboard', 'jobs', 'crm', 'ai', 'employers', 'agen
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
+  // La hora "de ahora" para contar días (seguimientos, meta semanal). Se lee una vez y se refresca cada minuto:
+  // leer el reloj en cada render da números que cambian solos entre un dibujo y otro
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60_000)
+    return () => clearInterval(timer)
+  }, [])
   // Celular: los filtros de Ofertas viven en un panel que sube desde abajo
   const [jobFiltersOpen, setJobFiltersOpen] = useState(false)
   useBackToClose(jobFiltersOpen, () => setJobFiltersOpen(false))
@@ -318,7 +341,7 @@ export default function Home() {
       .order('created_at', { ascending: false })
 
     if (!error && data) {
-      const mapped: CRMItem[] = data.map((row: any) => ({
+      const mapped: CRMItem[] = (data as ApplicationRow[]).map((row) => ({
         id: row.id,
         company: row.company_name,
         role: row.job_title || 'Vacante H2B',
@@ -484,7 +507,7 @@ useEffect(() => {
   }
 }, [activeTab, onboardingUserId])
 
-const [matchScores, setMatchScores] = useState<Record<string, { score: number; breakdown: any }>>({})
+const [matchScores, setMatchScores] = useState<Record<string, { score: number; breakdown: unknown }>>({})
 
 useEffect(() => {
   async function loadMatchScores() {
@@ -493,8 +516,8 @@ useEffect(() => {
       const res = await fetch('/api/jobs/matches')
       if (!res.ok) return
       const data = await res.json()
-      const map: Record<string, { score: number; breakdown: any }> = {}
-      data.forEach((row: any) => {
+      const map: Record<string, { score: number; breakdown: unknown }> = {}
+      ;(data as { job_id: string; match_score: number; match_breakdown: unknown }[]).forEach((row) => {
         map[row.job_id] = { score: row.match_score, breakdown: row.match_breakdown }
       })
       setMatchScores(map)
@@ -934,7 +957,7 @@ const viewJobsFor = (sponsorId: number, employerName: string) => {
 }
 
 // Días desde que se postuló de verdad (no desde que se guardó la tarjeta)
-const daysSinceApplied = (item: CRMItem) => Math.floor((Date.now() - (appliedAtById[item.id] ?? item.createdAt)) / (1000 * 60 * 60 * 24))
+const daysSinceApplied = (item: CRMItem) => Math.floor((now - (appliedAtById[item.id] ?? item.createdAt)) / (1000 * 60 * 60 * 24))
 
 // El correo que corresponde según el día: el mismo criterio del aviso que ve la persona en la tarjeta
 const emailTypeFor = (item: CRMItem): 'initial' | 'followup_7d' | 'followup_14d' => {
@@ -1041,7 +1064,7 @@ const checklistDone = [profileCompleted, hasCv, manualSteps.passport, crmItems.l
 const checklistPercentage = Math.round((checklistDone / CHECKLIST_TOTAL_TASKS) * 100)
 const weeklyTarget = goalFor(profileIndustry, profileRole).perWeek
 // Postulaciones movidas fuera de "guardadas" en los últimos 7 días (no el total histórico)
-const applicationsThisWeek = crmItems.filter(i => i.status !== 'guardadas' && Date.now() - i.lastUpdated < 7 * 24 * 60 * 60 * 1000).length
+const applicationsThisWeek = crmItems.filter(i => i.status !== 'guardadas' && now - i.lastUpdated < 7 * 24 * 60 * 60 * 1000).length
 const searchHealthPercentage = Math.min(100, Math.round((applicationsThisWeek / weeklyTarget) * 100))
 
 // ===== TU PRIORIDAD (Next Best Action) =====
@@ -1058,7 +1081,7 @@ interface NextAction {
 
 // Postulaciones en "seguimiento" con 7 días o más sin respuesta: van en Tu Prioridad y en la insignia de Mi CRM
 const pendingFollowUps = crmItems.filter(
-  (i) => i.status === 'seguimiento' && (Date.now() - i.createdAt) / (1000 * 60 * 60 * 24) >= 7
+  (i) => i.status === 'seguimiento' && (now - i.createdAt) / (1000 * 60 * 60 * 24) >= 7
 ).length
 
 const getNextAction = (): NextAction | null => {
@@ -1755,7 +1778,7 @@ return (
                       )
                     })()}
 
-                    <SponsorHistory sponsor={job.sponsor} match={job.sponsor_match} />
+                    <SponsorHistory sponsor={job.sponsor} match={job.sponsor_match ?? null} />
                   </div>
                   <div className="space-y-2">
                     <button

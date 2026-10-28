@@ -67,8 +67,8 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
       if (!res.ok) throw new Error(data.error || "No pudimos borrar tu cuenta. Intenta de nuevo.");
       await supabase.auth.signOut();
       window.location.href = "/login";
-    } catch (err: any) {
-      setDeleteError(err.message || "No pudimos borrar tu cuenta. Intenta de nuevo.");
+    } catch (err) {
+      setDeleteError((err instanceof Error && err.message) || "No pudimos borrar tu cuenta. Intenta de nuevo.");
       setBusy(false);
     }
   };
