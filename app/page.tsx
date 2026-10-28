@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import dynamic from 'next/dynamic'
 
 import OnboardingModal from '@/components/OnboardingModal';
 import UserMenu from '@/components/UserMenu';
@@ -27,9 +28,6 @@ import {
   Clock,
   XCircle,
   CheckCircle,
-  X,
-  Mail,
-  ShieldAlert,
   Check,
   Plane,
   Compass,
@@ -50,167 +48,20 @@ import MembershipNotices from '@/components/MembershipNotices';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
 import { useBackToClose } from '@/hooks/useBackToClose';
 import { useLastSeen } from '@/hooks/useLastSeen';
-// LISTA COMPLETA DE ESTADOS DE EE. UU. Y TERRITORIOS
-const US_STATES = [
-  { code: 'AL', name: 'Alabama' },
-  { code: 'AK', name: 'Alaska' },
-  { code: 'AZ', name: 'Arizona' },
-  { code: 'AR', name: 'Arkansas' },
-  { code: 'CA', name: 'California' },
-  { code: 'CO', name: 'Colorado' },
-  { code: 'CT', name: 'Connecticut' },
-  { code: 'DE', name: 'Delaware' },
-  { code: 'DC', name: 'District of Columbia' },
-  { code: 'FL', name: 'Florida' },
-  { code: 'GA', name: 'Georgia' },
-  { code: 'HI', name: 'Hawaii' },
-  { code: 'ID', name: 'Idaho' },
-  { code: 'IL', name: 'Illinois' },
-  { code: 'IN', name: 'Indiana' },
-  { code: 'IA', name: 'Iowa' },
-  { code: 'KS', name: 'Kansas' },
-  { code: 'KY', name: 'Kentucky' },
-  { code: 'LA', name: 'Louisiana' },
-  { code: 'ME', name: 'Maine' },
-  { code: 'MD', name: 'Maryland' },
-  { code: 'MA', name: 'Massachusetts' },
-  { code: 'MI', name: 'Michigan' },
-  { code: 'MN', name: 'Minnesota' },
-  { code: 'MS', name: 'Mississippi' },
-  { code: 'MO', name: 'Missouri' },
-  { code: 'MT', name: 'Montana' },
-  { code: 'NE', name: 'Nebraska' },
-  { code: 'NV', name: 'Nevada' },
-  { code: 'NH', name: 'New Hampshire' },
-  { code: 'NJ', name: 'New Jersey' },
-  { code: 'NM', name: 'New Mexico' },
-  { code: 'NY', name: 'New York' },
-  { code: 'NC', name: 'North Carolina' },
-  { code: 'ND', name: 'North Dakota' },
-  { code: 'OH', name: 'Ohio' },
-  { code: 'OK', name: 'Oklahoma' },
-  { code: 'OR', name: 'Oregon' },
-  { code: 'PA', name: 'Pennsylvania' },
-  { code: 'RI', name: 'Rhode Island' },
-  { code: 'SC', name: 'South Carolina' },
-  { code: 'SD', name: 'South Dakota' },
-  { code: 'TN', name: 'Tennessee' },
-  { code: 'TX', name: 'Texas' },
-  { code: 'UT', name: 'Utah' },
-  { code: 'VT', name: 'Vermont' },
-  { code: 'VA', name: 'Virginia' },
-  { code: 'WA', name: 'Washington' },
-  { code: 'WV', name: 'West Virginia' },
-  { code: 'WI', name: 'Wisconsin' },
-  { code: 'WY', name: 'Wyoming' },
-  { code: 'PR', name: 'Puerto Rico' },
-  { code: 'GU', name: 'Guam' },
-  { code: 'VI', name: 'Virgin Islands' },
-]
 
 // Cliente Supabase (instancia única para evitar duplicación de cliente)
 import { supabase } from '@/lib/supabaseClient'
 import { goalFor } from '@/lib/goals'
+import {
+  US_STATES, REPLY_LABELS, sourceInfo, splitWage, labelForStatus, crmKey,
+  type Job, type SponsorCompany, type SponsorAgency, type CRMItem, type ApplyFlowJob,
+} from '@/lib/h2b'
 
-// Interfaces ajustadas a la BBDD real
-interface Job {
-  id?: string | number
-  job_order_id?: string
-  title?: string
-  employer_name?: string
-  location?: string
-  city?: string
-  state?: string
-  wage?: string
-  begin_date?: string
-  end_date?: string
-  workers_requested?: number
-  email_to_apply?: string
-  industry?: string
-  phone_number?: string
-  job_description?: string
-  full_time?: string | boolean
-  job_order_url?: string
-  [key: string]: any
-}
-
-interface SponsorCompany {
-  id?: string | number
-  employer_name?: string
-  state?: string
-  worksite_states?: string
-  city?: string
-  approval_rate?: string
-  petition_count?: number
-  consular_processed?: number | string
-  total_approved?: number
-  fiscal_year?: string
-  cap_type?: string
-  // Vacantes del catálogo ya vinculadas a esta empresa (ver linkJobs.ts)
-  jobs?: { id: number; title: string; location: string }[]
-  [key: string]: any
-}
-
-// Lista oficial del DOL de reclutadores/agentes extranjeros declarados para H-2B
-// (transparencia contra fraude, no un directorio de servicios). La tabla real
-// solo trae estas columnas — no hay correo, sitio "oficial" alterno ni estado,
-// aunque el nombre sugiera lo contrario.
-interface SponsorAgency {
-  id?: string | number
-  agency_name?: string
-  city?: string
-  country?: string
-  case_count?: number
-  website?: string
-  [key: string]: any
-}
-
-// ===== CRM: Centro de Comando Kanban expandido =====
-interface CRMItem {
-  id: string
-  company: string
-  role: string
-  state: string
-  status: 'guardadas' | 'postulado' | 'seguimiento' | 'entrevista' | 'aceptado' | 'rechazada' | 'no_respondido'
-  dateLabel: string
-  lastUpdated: number
-  // Fecha real de postulación: el cron cuenta los días 7-14-21 desde aquí
-  createdAt: number
-  notes?: string
-  // Cuándo envió su primer y su segundo seguimiento (los registra la persona)
-  followup1At?: number | null
-  followup2At?: number | null
-  // Respuesta del empleador que la persona registró (más datos, entrevista, rechazo u otra)
-  replyType?: 'mas_datos' | 'entrevista' | 'rechazo' | 'otra' | null
-  replyAt?: number | null
-}
-
-const REPLY_LABELS: Record<'mas_datos' | 'entrevista' | 'rechazo' | 'otra', string> = {
-  mas_datos: 'Pidió más datos o documentos',
-  entrevista: 'Me invitó a entrevista',
-  rechazo: 'Me dijo que no por ahora',
-  otra: 'Otra respuesta',
-}
-
-// Cada oferta viene del scraper diario del DOL o de la carga de CareerOneStop (columna "source")
-const sourceInfo = (source?: string) =>
-  source === 'CareerOneStop'
-    ? {
-        label: 'CareerOneStop',
-        tooltip: 'Oferta H-2B publicada en CareerOneStop, el portal de empleo del Departamento de Trabajo de EE. UU. La revisamos y la reunimos aquí junto a las demás para que no tengas que buscar en varios sitios.',
-      }
-    : {
-        label: 'DOL',
-        tooltip: 'Oferta con certificación laboral H-2B del Departamento de Trabajo de EE. UU. (DOL). La tomamos del registro oficial cada día y la reunimos aquí con sus datos de contacto para que postules directo.',
-      }
-
-// El scraper guarda el salario como "$21.12 / hour"; se separa para destacar el monto
-const WAGE_UNITS: Record<string, string> = { hour: 'hora', week: 'semana', month: 'mes', year: 'año' }
-const splitWage = (wage?: string | null) => {
-  if (!wage) return null
-  const [amount, unit] = wage.split('/').map(s => s.trim())
-  return { amount, unit: unit ? WAGE_UNITS[unit.toLowerCase()] || unit : '' }
-}
+// Pestañas y ventanas que no se ven al abrir la app: se descargan recién cuando se usan
+const EmployersTab = dynamic(() => import('@/components/EmployersTab'))
+const AgenciesTab = dynamic(() => import('@/components/AgenciesTab'))
+const AiToolsTab = dynamic(() => import('@/components/AiToolsTab'))
+const JobDetailModal = dynamic(() => import('@/components/JobDetailModal'))
 
 type Tab = 'dashboard' | 'jobs' | 'employers' | 'agencies' | 'crm' | 'ai' | 'checklist'
 const TABS: Tab[] = ['dashboard', 'jobs', 'employers', 'agencies', 'crm', 'ai', 'checklist']
@@ -315,7 +166,7 @@ export default function Home() {
   const [catalogTotals, setCatalogTotals] = useState({ jobs: 0, employers: 0, agencies: 0 })
   const [catalogLoaded, setCatalogLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [selectedJob, setSelectedJob] = useState<any | null>(null)
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   useBackToClose(!!selectedJob, () => setSelectedJob(null))
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [profileCompleted, setProfileCompleted] = useState(false)
@@ -408,7 +259,7 @@ export default function Home() {
     }
   }, [onboardingUserId, crmItems.length])
   // Oferta que se está postulando ahora mismo (flujo "Postular ahora" del detalle)
-  const [applyFlowJob, setApplyFlowJob] = useState<{ title: string; employerName: string; location?: string; contactEmail?: string; duties?: string; reference?: string } | null>(null)
+  const [applyFlowJob, setApplyFlowJob] = useState<ApplyFlowJob | null>(null)
 
   const refreshHasCv = async (userId: string) => {
     if (!userId) return
@@ -498,18 +349,7 @@ export default function Home() {
   }
 }, [onboardingUserId])
 
-const labelForStatus = (status: string) => {
-  const labels: Record<string, string> = {
-    guardadas: 'Guardado recientemente',
-    postulado: 'Postulado',
-    seguimiento: 'En seguimiento',
-    entrevista: 'En entrevista',
-    aceptado: '¡Oferta aceptada!',
-    rechazada: 'Rechazado',
-    no_respondido: 'No respondido',
-  }
-  return labels[status] || 'Actualizado'
-}
+
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null)
   const [tempNotes, setTempNotes] = useState<string>('')
 
@@ -896,7 +736,6 @@ useEffect(() => {
 }, [activeTab, agencyPage, agencySearch, selectedAgencyCountry])
 
 // ACCIONES CRM
-const crmKey = (company: string, role: string) => `${company}|${role}`.trim().toLowerCase()
 
 const addToCRM = async (company?: string, role?: string, stateStr?: string): Promise<boolean> => {
   if (!onboardingUserId) return false
@@ -1911,343 +1750,39 @@ return (
 
       {/* TABLA 2: EMPRESAS USCIS (employers) */}
       {activeTab === 'employers' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white">Empresas Patrocinadoras (USCIS)</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Historial real de USCIS: <strong className="text-slate-900 dark:text-white">{totalEmployersCount} empresas con estos filtros</strong> ya
-                  tuvieron visas H-2B aprobadas. Si tienen una vacante publicada ahora, te llevamos directo a ella.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-2">
-              <div className="relative">
-                <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-3.5" />
-                <input
-                  type="text"
-                  aria-label="Buscar empresa por nombre o ciudad"
-                  value={companySearch}
-                  onChange={(e) => {
-                    setCompanySearch(e.target.value)
-                    setCompanyPage(1)
-                  }}
-                  placeholder="Buscar por nombre o ciudad..."
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
-                />
-              </div>
-
-              <select
-                aria-label="Tipo de cupo"
-                value={selectedCapType}
-                onChange={(e) => {
-                  setSelectedCapType(e.target.value)
-                  setCompanyPage(1)
-                }}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
-              >
-                <option value="ALL">Todas las Temporadas / Cap Type</option>
-                <option value="1st Half">❄️ Invierno (1st Half)</option>
-                <option value="2nd Half">☀️ Verano (2nd Half)</option>
-                <option value="Exempt">🛡️ Exempt (Exentas)</option>
-                <option value="Supplement">⚡ Supplement (Suplementarias)</option>
-              </select>
-              {/* SELECTOR COMPLETO DE ESTADOS PARA EMPRESAS */}
-              <select
-                aria-label="Estado de EE. UU."
-                value={selectedCompanyState}
-                onChange={(e) => {
-                  setSelectedCompanyState(e.target.value)
-                  setCompanyPage(1)
-                }}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
-              >
-                <option value="ALL">Todos los Estados (EE. UU.)</option>
-                {US_STATES.map((st) => (
-                  <option key={st.code} value={st.code}>
-                    {st.name} ({st.code})
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="Sector de la empresa"
-                value={selectedCompanySector}
-                onChange={(e) => {
-                  setSelectedCompanySector(e.target.value)
-                  setCompanyPage(1)
-                }}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
-              >
-                <option value="ALL">Todos los Sectores</option>
-                <option value="Hotelería">Hotelería y Restaurantes</option>
-                <option value="Construcción">Construcción y Mantenimiento</option>
-                <option value="Paisajismo">Paisajismo y Jardinería (Landscaping)</option>
-                <option value="Agricultura">Agricultura y Cosecha</option>
-                <option value="Limpieza">Limpieza y Housekeeping</option>
-                <option value="Cocina">Cocina y Preparación de Alimentos</option>
-                <option value="Procesamiento">Procesamiento de Alimentos / Carnes</option>
-                <option value="Bodega">Bodega, Almacén y Logística</option>
-                <option value="Fábrica">Fábricas y Manufactura</option>
-              </select>
-            </div>
-          </div>
-
-          {isLoading ? (
-            // Esqueletos: tarjetas en celular, filas de tabla en escritorio
-            <div role="status" aria-label="Cargando empresas">
-              <div className="md:hidden space-y-3">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 motion-safe:animate-pulse">
-                    <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
-                    <div className="h-3 w-1/2 rounded bg-slate-100 dark:bg-slate-800/70" />
-                    <div className="flex gap-2 pt-1">
-                      <div className="h-6 w-20 rounded-full bg-slate-100 dark:bg-slate-800/70" />
-                      <div className="h-6 w-16 rounded-full bg-slate-100 dark:bg-slate-800/70" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="hidden md:block bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 motion-safe:animate-pulse">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-6 px-5 py-4">
-                    <div className="h-4 w-1/4 rounded bg-slate-200 dark:bg-slate-800" />
-                    <div className="h-3 w-1/6 rounded bg-slate-100 dark:bg-slate-800/70" />
-                    <div className="h-3 w-1/6 rounded bg-slate-100 dark:bg-slate-800/70" />
-                    <div className="h-3 w-1/12 rounded bg-slate-100 dark:bg-slate-800/70" />
-                    <div className="ml-auto h-8 w-24 rounded-lg bg-slate-100 dark:bg-slate-800/70" />
-                  </div>
-                ))}
-              </div>
-              <span className="sr-only">Cargando empresas...</span>
-            </div>
-          ) : (
-            <>
-              {/* CELULAR: tarjetas apiladas — una tabla de 6 columnas no cabe en 390px */}
-              <div className="md:hidden space-y-3">
-                {employers.map((comp, idx) => {
-                  const abroad = String(comp.consular_processed || '').toLowerCase() === 'yes'
-                  return (
-                    <div key={comp.id || idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-2.5">
-                      <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-snug">{comp.employer_name || 'Sin Nombre'}</h3>
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] border ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
-                            comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' :
-                              comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/30' :
-                                'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
-                          }`}>
-                          {comp.cap_type || 'General'}
-                        </span>
-                        <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] border ${abroad ? 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/30' : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'}`}>
-                          {abroad ? '🌎 Contrata desde el extranjero' : 'Solo contrató dentro de EE. UU.'}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700">
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                          <span>{comp.worksite_states || comp.state || '-'}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <ShieldCheck className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                          <span>{comp.total_approved || 0} visas aprobadas</span>
-                        </div>
-                      </div>
-                      {comp.jobs && comp.jobs.length > 0 ? (
-                        <button
-                          onClick={() => viewJobsFor(Number(comp.id), comp.employer_name || '')}
-                          className="w-full bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-xs py-2 rounded-xl transition-all"
-                        >
-                          Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
-                        </button>
-                      ) : (
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400 italic text-center py-1.5">Sin vacantes publicadas ahora</p>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-
-              {/* ESCRITORIO: tabla completa */}
-              <div className="hidden md:block bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-600 dark:text-slate-300">
-                    <thead className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-xs sm:text-[10px]">
-                      <tr>
-                        <th className="p-4">Empresa Patrocinadora</th>
-                        <th className="p-4">Tipo de Cupo (Cap)</th>
-                        <th className="p-4">Ubicación</th>
-                        <th className="p-4">Consular Processed</th>
-                        <th className="p-4">Visas Aprobadas</th>
-                        <th className="p-4 text-right">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                      {employers.map((comp, idx) => (
-                        <tr key={comp.id || idx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                          <td className="p-4 font-bold text-slate-900 dark:text-white">{comp.employer_name || 'Sin Nombre'}</td>
-                          <td className="p-4">
-                            <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
-                                comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' :
-                                  comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/30' :
-                                    'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
-                              }`}>
-                              {comp.cap_type || 'General'}
-                            </span>
-                          </td>
-                          <td className="p-4">{comp.worksite_states || comp.state || '-'}</td>
-                          <td className="p-4 font-semibold">{comp.consular_processed ?? 0}</td>
-                          <td className="p-4 font-semibold">{comp.total_approved || 0} visas</td>
-                          <td className="p-4 text-right">
-                            {comp.jobs && comp.jobs.length > 0 ? (
-                              <button
-                                onClick={() => viewJobsFor(Number(comp.id), comp.employer_name || '')}
-                                className="bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-[11px] px-3 py-1.5 rounded-lg transition-all"
-                              >
-                                Ver {comp.jobs.length === 1 ? 'su vacante' : `sus ${comp.jobs.length} vacantes`}
-                              </button>
-                            ) : (
-                              <span className="text-[11px] text-slate-500 dark:text-slate-400 italic">Sin vacantes ahora</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          )}
-
-          <Pagination
-            page={companyPage}
-            totalPages={totalCompanyPages}
-            totalItems={totalEmployersCount}
-            itemLabel="empresas"
-            disabled={isLoading}
-            onChange={setCompanyPage}
-          />
-        </div>
+        <EmployersTab
+          employers={employers}
+          isLoading={isLoading}
+          totalEmployersCount={totalEmployersCount}
+          totalCompanyPages={totalCompanyPages}
+          companyPage={companyPage}
+          setCompanyPage={setCompanyPage}
+          companySearch={companySearch}
+          setCompanySearch={setCompanySearch}
+          selectedCompanyState={selectedCompanyState}
+          setSelectedCompanyState={setSelectedCompanyState}
+          selectedCompanySector={selectedCompanySector}
+          setSelectedCompanySector={setSelectedCompanySector}
+          selectedCapType={selectedCapType}
+          setSelectedCapType={setSelectedCapType}
+          viewJobsFor={viewJobsFor}
+        />
       )}
 
       {/* TABLA 3: AGENCIAS DOL (sponsor_agencies) */}
       {activeTab === 'agencies' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white">Verifica un Reclutador</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Lista oficial del DOL de agencias y reclutadores declarados para H-2B —{' '}
-                  <strong className="text-slate-900 dark:text-white">{totalAgenciesCount} con estos filtros</strong>. Úsala para revisar si
-                  quien te contactó está en la lista oficial antes de dar tus datos.
-                </p>
-              </div>
-            </div>
-            <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl px-3.5 py-2.5 text-xs text-amber-900 dark:text-amber-300">
-              ⚠️ ¿Te contactó alguien pidiendo dinero o tus documentos? Aunque aparezca aquí, revísalo con el{' '}
-              <strong>Detector de Estafas</strong> en Asistentes IA antes de responder.
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-              <input
-                type="text"
-                aria-label="Buscar agencia por nombre o ciudad"
-                value={agencySearch}
-                onChange={(e) => {
-                  setAgencySearch(e.target.value)
-                  setAgencyPage(1)
-                }}
-                placeholder="Buscar agencia por nombre o ciudad..."
-                className="w-full sm:w-80 px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <select
-                aria-label="País de la agencia"
-                value={selectedAgencyCountry}
-                onChange={(e) => {
-                  setSelectedAgencyCountry(e.target.value)
-                  setAgencyPage(1)
-                }}
-                className="w-full sm:w-56 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="ALL">Todos los Países</option>
-                <option value="MEXICO">México</option>
-                <option value="JAMAICA">Jamaica</option>
-                <option value="SOUTH AFRICA">Sudáfrica</option>
-                <option value="MOLDOVA">Moldavia</option>
-                <option value="EL SALVADOR">El Salvador</option>
-                <option value="US">Estados Unidos (US)</option>
-                <option value="GUATEMALA">Guatemala</option>
-                <option value="HONDURAS">Honduras</option>
-                <option value="NICARAGUA">Nicaragua</option>
-              </select>
-            </div>
-          </div>
-
-          {isLoading ? (
-            <div role="status" aria-label="Cargando agencias" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 motion-safe:animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 w-4/5 rounded bg-slate-200 dark:bg-slate-800" />
-                      <div className="h-3 w-1/2 rounded bg-slate-100 dark:bg-slate-800/70" />
-                    </div>
-                  </div>
-                  <div className="h-3 w-full rounded bg-slate-100 dark:bg-slate-800/70" />
-                  <div className="h-9 w-full rounded-xl bg-slate-100 dark:bg-slate-800/70" />
-                </div>
-              ))}
-              <span className="sr-only">Cargando agencias...</span>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {agencies.map((agency, idx) => {
-                const webLink = agency.website
-                const location = [agency.city, agency.country].filter(Boolean).join(', ')
-                return (
-                  <div key={agency.id || idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-2">
-                    <span className="bg-emerald-50 text-emerald-800 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30 inline-block">
-                      ✓ En la lista oficial del DOL
-                    </span>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-snug">{agency.agency_name}</h3>
-                    {location && (
-                      <p className="text-xs text-slate-500 dark:text-slate-400">📍 <strong className="text-slate-800 dark:text-slate-200">{location}</strong></p>
-                    )}
-
-                    {webLink ? (
-                      <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1">
-                        <span>🌐</span>
-                        <a
-                          href={webLink.startsWith('http') ? webLink : `https://${webLink}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 hover:underline font-medium truncate max-w-[180px]"
-                          title={webLink}
-                        >
-                          {webLink.replace(/^https?:\/\/(www\.)?/, '')}
-                        </a>
-                      </p>
-                    ) : (
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 italic mt-1">
-                        Sin sitio web en la lista oficial — no significa que algo esté mal, el DOL no lo pide para todas.
-                      </p>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          <Pagination
-            page={agencyPage}
-            totalPages={totalAgencyPages}
-            totalItems={totalAgenciesCount}
-            itemLabel="agencias"
-            disabled={isLoading}
-            onChange={setAgencyPage}
-          />
-        </div>
+        <AgenciesTab
+          agencies={agencies}
+          isLoading={isLoading}
+          totalAgenciesCount={totalAgenciesCount}
+          totalAgencyPages={totalAgencyPages}
+          agencyPage={agencyPage}
+          setAgencyPage={setAgencyPage}
+          agencySearch={agencySearch}
+          setAgencySearch={setAgencySearch}
+          selectedAgencyCountry={selectedAgencyCountry}
+          setSelectedAgencyCountry={setSelectedAgencyCountry}
+        />
       )}
 
       {/* MI CRM — CENTRO DE COMANDO KANBAN */}
@@ -2705,95 +2240,13 @@ return (
 
       {/* TAB 5: ASISTENTES IA */}
       {activeTab === 'ai' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-2">
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white">Asistentes Virtuales IA</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Herramientas inteligentes para acelerar tu proceso de postulación laboral H2B.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Adaptador de CV H2B</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {hasCv
-                      ? 'Tu CV ya está listo y alimenta el redactor de correos.'
-                      : 'Cuéntanos tu experiencia real y la IA la adapta al formato que esperan los empleadores.'}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowCvBuilder(true)}
-                className="w-full bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-xs py-2.5 rounded-xl transition-all"
-              >
-                {hasCv ? 'Editar mi CV' : 'Generar mi CV con IA'}
-              </button>
-            </div>
-
-            {/* Tarjeta 3: Asistente de Correo IA */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-start space-x-4 mb-4">
-                <div className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl">
-                  <Mail className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-800 dark:text-white text-base">Redactor de Correos H2B</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Crea emails de postulación y seguimiento profesionales para enviar por Gmail u Outlook.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowEmailAssistant(true)}
-                className="w-full bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition-colors"
-              >
-                Abrir Redactor
-              </button>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Simulador de Entrevista</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Práctica preguntas habituales de los patrocinadores laborales.</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowInterviewSimulator(true)}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all"
-              >
-                Practicar Entrevista
-              </button>
-            </div>
-
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold">
-                  <ShieldAlert className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">Detector de Estafas</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Sube una captura o foto sospechosa y revisa si hay señales de fraude H-2B.
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowScamDetector(true)}
-                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs py-2.5 rounded-xl transition-all"
-              >
-                Abrir Detector
-              </button>
-            </div>
-          </div>
-        </div>
+        <AiToolsTab
+          hasCv={hasCv}
+          setShowCvBuilder={setShowCvBuilder}
+          setShowEmailAssistant={setShowEmailAssistant}
+          setShowInterviewSimulator={setShowInterviewSimulator}
+          setShowScamDetector={setShowScamDetector}
+        />
       )}
 
      {/* TAB CHECKLIST EN app/page.tsx */}
@@ -2823,158 +2276,13 @@ return (
 )}
       {/* MODAL DETALLE DE OFERTA LABORAL (ÚNICO) */}
       {selectedJob && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center sm:p-4">
-          {/* Celular: pantalla completa. Escritorio: ventana de 90vh. El botón cerrar y Postular quedan
-              fuera del scroll interno, así nunca se van con el contenido */}
-          <div role="dialog" aria-modal="true" aria-label="Detalle de la oferta" className="bg-white dark:bg-slate-900 sm:rounded-3xl max-w-lg w-full h-dvh sm:h-auto sm:max-h-[90vh] shadow-2xl relative overflow-hidden flex flex-col pt-[env(safe-area-inset-top)] sm:pt-0">
-
-            {/* BOTÓN CERRAR */}
-            <button
-              onClick={() => setSelectedJob(null)}
-              aria-label="Cerrar"
-              className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] sm:top-5 right-3 sm:right-5 w-11 h-11 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors z-20"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
-
-            {/* ENCABEZADO CON ID, TITULO Y FECHAS (a la derecha en escritorio, debajo en celular) */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 pr-10 sm:pr-6">
-              <div className="space-y-1">
-                <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[11px] font-bold px-2.5 py-0.5 rounded">
-                  Job Order ID: {selectedJob.case_number || selectedJob.job_order_id || selectedJob.id}
-                </span>
-                <h2 className="text-xl font-black text-slate-900 dark:text-white mt-1">{selectedJob.title || selectedJob.job_title}</h2>
-                <p className="text-xs font-bold text-blue-700 dark:text-blue-400">{selectedJob.employer_name || selectedJob.emp_name}</p>
-              </div>
-
-              <div className="sm:text-right text-[11px] shrink-0 sm:pt-1 leading-tight">
-                <p className="text-slate-600 dark:text-slate-300 font-medium">
-                  <strong>Begin date:</strong> {selectedJob.begin_date || selectedJob.start_date || selectedJob.fecha_inicio || "N/A"}
-                </p>
-                <p className="text-slate-600 dark:text-slate-300 font-medium mt-0.5">
-                  <strong>End date:</strong> {selectedJob.end_date || selectedJob.fecha_fin || "N/A"}
-                </p>
-              </div>
-            </div>
-
-            {/* GRILLA RESUMEN */}
-            <div className="grid grid-cols-3 gap-2 text-xs bg-slate-50/80 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-slate-100/80 dark:border-slate-700/80">
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block font-medium text-[11px]">Ubicación:</span>
-                <strong className="text-slate-800 dark:text-slate-100 font-bold">{selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim() || 'N/A'}</strong>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block font-medium text-[11px]">Salario:</span>
-                <strong className="text-slate-800 dark:text-slate-100 font-bold">{selectedJob.wage || selectedJob.pay_rate || 'N/A'}</strong>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block font-medium text-[11px]">Vacantes:</span>
-                <strong className="text-slate-800 dark:text-slate-100 font-bold">{selectedJob.workers_requested || selectedJob.workers_needed || selectedJob.vacantes || 'N/A'}</strong>
-              </div>
-            </div>
-
-            {/* HISTORIAL DE LA EMPRESA EN USCIS */}
-            <SponsorHistory sponsor={selectedJob.sponsor} match={selectedJob.sponsor_match} variant="full" />
-
-            {/* RECRUITMENT INFORMATION */}
-            <div className="space-y-1 border-t border-slate-100 dark:border-slate-800 pt-3 text-left">
-              <h3 className="font-bold text-blue-900 dark:text-blue-300 text-xs">Recruitment Information</h3>
-              <p className="text-[11px] text-slate-700 dark:text-slate-300">
-                <strong>Telephone Number to Apply:</strong> {selectedJob.phone_to_apply || selectedJob.phone || selectedJob.recruitment_phone || "N/A"}
-              </p>
-              <p className="text-[11px] text-slate-700 dark:text-slate-300">
-                <strong>Email address to Apply:</strong>{" "}
-                {(selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email) ? (
-                  <a
-                    href={`mailto:${selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email}`}
-                    className="text-blue-600 dark:text-blue-400 underline font-medium"
-                  >
-                    {selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email}
-                  </a>
-                ) : (
-                  "N/A"
-                )}
-              </p>
-            </div>
-
-            {/* JOB DESCRIPTION */}
-            <div className="space-y-1 border-t border-slate-100 dark:border-slate-800 pt-3 text-left">
-              <h3 className="font-bold text-blue-900 dark:text-blue-300 text-xs">Job Description</h3>
-              <p className="text-[11px] text-slate-700 dark:text-slate-300">
-                <strong>Full Time:</strong> {(selectedJob.full_time !== undefined ? (selectedJob.full_time ? "Yes" : "No") : (selectedJob.jornada === 'Tiempo Completo' ? "Yes" : "No"))}
-              </p>
-              <p className="text-[11px] text-slate-700 dark:text-slate-300">
-                <strong>Number of Workers Requested:</strong> {selectedJob.workers_requested || selectedJob.workers_needed || selectedJob.vacantes || "N/A"}
-              </p>
-
-              <div className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50/80 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700 mt-2">
-                <strong>Job Duties:</strong>
-                {/*
-                     - Se removió 'max-h-28' y se cambió a 'max-h-48'
-                     - 'overflow-y-auto' muestra scroll SOLO si sobrepasa la altura
-                  */}
-                <p className="mt-0.5 sm:max-h-48 sm:overflow-y-auto pr-1 whitespace-pre-line text-slate-600 dark:text-slate-300 scrollbar-thin">
-                  {selectedJob.job_description || selectedJob.job_duties || selectedJob.description || selectedJob.duties || "Sin descripción disponible."}
-                </p>
-              </div>
-            </div>
-
-            </div>
-
-            {/* BOTONES FIJOS ABAJO: guardar en el CRM y postular */}
-            <div className="shrink-0 border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 bg-white dark:bg-slate-900">
-              {(() => {
-                const key = crmKey(
-                  selectedJob.employer_name || selectedJob.emp_name || '',
-                  selectedJob.title || selectedJob.job_title || ''
-                )
-                const existing = crmItems.find(i => crmKey(i.company, i.role) === key)
-                if (existing && existing.status !== 'guardadas') {
-                  return (
-                    <div className="w-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold text-xs py-3 rounded-xl text-center">
-                      ✓ Ya postulaste — estado: {labelForStatus(existing.status)}
-                    </div>
-                  )
-                }
-                return (
-                  <div className="flex gap-2">
-                  {existing ? (
-                    <span className="shrink-0 inline-flex items-center gap-1.5 min-h-12 px-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold">
-                      <Check className="w-4 h-4" /> Guardada
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => addToCRM(
-                        selectedJob.employer_name || selectedJob.emp_name,
-                        selectedJob.title || selectedJob.job_title,
-                        selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim()
-                      )}
-                      className="shrink-0 inline-flex items-center gap-1.5 min-h-12 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold"
-                    >
-                      <Plus className="w-4 h-4" /> Guardar
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setApplyFlowJob({
-                      title: selectedJob.title || selectedJob.job_title || 'Vacante H2B',
-                      employerName: selectedJob.employer_name || selectedJob.emp_name || 'Empresa Generica',
-                      location: selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim(),
-                      contactEmail: selectedJob.email_to_apply || selectedJob.email || selectedJob.recruitment_email || selectedJob.emp_email || '',
-                      duties: selectedJob.job_description || selectedJob.job_duties || selectedJob.description || selectedJob.duties || '',
-                      reference: selectedJob.case_number || selectedJob.job_order_id || '',
-                    })}
-                    className="flex-1 min-h-12 bg-[#00A86B] hover:bg-[#008f5b] text-white font-bold text-sm sm:text-xs py-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-sm"
-                  >
-                    ✉️ Postular ahora
-                  </button>
-                  </div>
-                )
-              })()}
-            </div>
-          </div>
-        </div>
+        <JobDetailModal
+          selectedJob={selectedJob}
+          setSelectedJob={setSelectedJob}
+          crmItems={crmItems}
+          addToCRM={addToCRM}
+          setApplyFlowJob={setApplyFlowJob}
+        />
       )}
     </main>
 
