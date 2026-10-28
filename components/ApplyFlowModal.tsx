@@ -5,6 +5,7 @@ import { X, Mail, ExternalLink, Copy, Check, Loader2, FileText, Sparkles, Target
 import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
 import { aiFetch } from '@/lib/aiFetch';
+import { errorMessage } from '@/lib/errors';
 
 // Flujo único de postulación: genera el correo con el CV real del candidato,
 // lo abre listo para enviar al contacto real de la oferta, y al confirmar que
@@ -93,9 +94,12 @@ export default function ApplyFlowModal({
   const [sent, setSent] = useState(false); // ya tocó abrir Gmail/Outlook/mailto
   const [marking, setMarking] = useState(false);
   const [marked, setMarked] = useState(false);
+  const canAdaptCv = !!onAdaptCv;
 
   useEffect(() => {
     if (!isOpen || !userId) return;
+    // Cada vez que se abre la ventana vuelve a su estado inicial (la ventana no se desmonta al cerrarse)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoadingProfile(true);
     setStep('email');
     setEmail(null);
@@ -118,10 +122,10 @@ export default function ApplyFlowModal({
       });
       setHasCv(cv.trim().length >= 30);
       // Mismo puesto que el principal: directo al correo. Otro puesto: se ofrece ver el encaje antes.
-      if (onAdaptCv && cv.trim().length >= 30 && !sameRole(data?.target_role || '', job?.title || '')) setStep('fit');
+      if (canAdaptCv && cv.trim().length >= 30 && !sameRole(data?.target_role || '', job?.title || '')) setStep('fit');
       setLoadingProfile(false);
     })();
-  }, [isOpen, userId, job?.title]);
+  }, [isOpen, userId, job?.title, canAdaptCv]);
 
   useEffect(() => {
     if (!isOpen || !job || !candidate || !hasCv || step !== 'email' || email || loading) return;
@@ -148,8 +152,8 @@ export default function ApplyFlowModal({
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'No se pudo generar el correo.');
         setEmail(data);
-      } catch (err: any) {
-        setError(err.message || 'No se pudo generar el correo. Intenta de nuevo.');
+      } catch (err) {
+        setError(errorMessage(err, 'No se pudo generar el correo. Intenta de nuevo.'));
       } finally {
         setLoading(false);
       }

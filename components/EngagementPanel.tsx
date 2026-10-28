@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Loader2, Mail, Check, X as XIcon, Send } from 'lucide-react'
 import { aiFetch } from '@/lib/aiFetch'
+import { errorMessage } from '@/lib/errors'
 
 type Mode = 'off' | 'test' | 'on'
 
@@ -73,14 +74,16 @@ export default function EngagementPanel() {
       const body = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(body.error || 'No se pudo cargar el estado de los correos.')
       setData(body)
-    } catch (err: any) {
-      setError(err.message || 'No se pudo cargar el estado de los correos.')
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo cargar el estado de los correos.'))
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
+    // Carga inicial de datos al abrir el panel; load() es la misma función del botón Actualizar
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [load])
 
@@ -101,8 +104,8 @@ export default function EngagementPanel() {
           ? `Se enviaron ${body.sent} a ${body.to}. Fallaron: ${body.failed.join(', ')}.`
           : `Listo: enviamos ${body.sent} correos de ejemplo a ${body.to}. Revisa también la carpeta de spam.`
       )
-    } catch (err: any) {
-      setError(err.message || 'No se pudieron enviar los ejemplos.')
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudieron enviar los ejemplos.'))
     } finally {
       setSending(false)
     }

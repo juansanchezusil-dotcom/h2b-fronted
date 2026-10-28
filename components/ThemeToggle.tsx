@@ -9,6 +9,8 @@ export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
 
   // Evita mismatch de hidratación: el tema real solo se conoce en cliente
+  // El tema real solo se conoce en el navegador: hasta montar se muestra un hueco del mismo tamaño
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {

@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
 import { aiFetch } from '@/lib/aiFetch';
 import { buildCvDocx, buildLetterDocx, docxFileName, downloadBlob, type BuiltCv } from '@/lib/cvDocx';
+import { errorMessage } from '@/lib/errors';
 
 interface CVBuilderModalProps {
   isOpen: boolean;
@@ -166,6 +167,8 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
   // Cada vez que se abre: vuelve al inicio y precarga lo que ya haya guardado
   useEffect(() => {
     if (!isOpen || !userId) return;
+    // Cada vez que se abre la ventana vuelve a su estado inicial (la ventana no se desmonta al cerrarse)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStage('start');
     setError(null);
     setResult(null);
@@ -249,8 +252,8 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
           const att = await prepareAttachment(file);
           if (att.kind === 'doc') doc = { base64: att.base64, mediaType: att.mediaType };
           else cvText = att.text;
-        } catch (err: any) {
-          setError(err.message);
+        } catch (err) {
+          setError(errorMessage(err));
           return;
         }
       } else if (pastedCv.trim().length < 30) {
@@ -270,8 +273,8 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
       });
       setStage('chat');
       applyReply(data, []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -309,8 +312,8 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo generar la carta.');
       setLetter(data);
-    } catch (err: any) {
-      setError(err.message || 'No se pudo generar la carta. Intenta de nuevo.');
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo generar la carta. Intenta de nuevo.'));
     } finally {
       setLetterLoading(false);
     }
@@ -376,12 +379,12 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
         }),
         base
       );
-    } catch (err: any) {
+    } catch (err) {
       // Devuelve el mensaje y el archivo al cuadro para que no se pierdan
       setTurns(turns);
       setInput(typed);
       setAttached(file);
-      setError(err.message);
+      setError(errorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -403,8 +406,8 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
       setResult(data);
       setLetter(null);
       setStage('result');
-    } catch (err: any) {
-      setError(err.message || 'No se pudo generar el CV. Intenta de nuevo.');
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo generar el CV. Intenta de nuevo.'));
     } finally {
       setLoading(false);
     }
@@ -632,7 +635,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                   </>
                 )}
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">
-                  Es lo mejor para entenderte. Sirve aunque esté en español, incompleto o sin formato estadounidense: lo leemos, resumimos lo que entendimos y solo te preguntamos lo que falte. Si no tienes CV, elige "Empezar de cero". No lo reemplazamos.
+                  Es lo mejor para entenderte. Sirve aunque esté en español, incompleto o sin formato estadounidense: lo leemos, resumimos lo que entendimos y solo te preguntamos lo que falte. Si no tienes CV, elige “Empezar de cero”. No lo reemplazamos.
                 </p>
               </div>
             )}
@@ -745,8 +748,8 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                       setAttaching(true);
                       try {
                         setAttached(await prepareAttachment(f));
-                      } catch (err: any) {
-                        setError(err.message);
+                      } catch (err) {
+                        setError(errorMessage(err));
                       } finally {
                         setAttaching(false);
                       }

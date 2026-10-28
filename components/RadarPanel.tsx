@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Loader2, RefreshCw, Radar, Check } from 'lucide-react'
 import { aiFetch } from '@/lib/aiFetch'
+import { errorMessage } from '@/lib/errors'
 
 type Estado = 'activo' | 'enfriandose' | 'en_riesgo' | 'inactivo' | 'nunca_entro'
 
@@ -129,14 +130,16 @@ export default function RadarPanel() {
       const body = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(body.error || 'No se pudo cargar el radar.')
       setData(body)
-    } catch (err: any) {
-      setError(err.message || 'No se pudo cargar el radar.')
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo cargar el radar.'))
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
+    // Carga inicial de datos al abrir el panel; load() es la misma función del botón Actualizar
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [load])
 
@@ -154,8 +157,8 @@ export default function RadarPanel() {
       setEditando(null)
       setNota('')
       await load()
-    } catch (err: any) {
-      setError(err.message || 'No se pudo guardar.')
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo guardar.'))
     } finally {
       setGuardando(false)
     }

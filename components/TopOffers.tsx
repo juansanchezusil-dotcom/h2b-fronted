@@ -46,7 +46,7 @@ export default function TopOffers({ perfilCompletado, onSave, onSeeAll, onOpen }
           .select('id, title, employer_name, location')
           .in('id', top.map((r) => r.job_id))
         if (cancelled || !data) return
-        const byId = new Map<string, { id: string; title: string; employer_name: string; location: string | null }>(data.map((j: any) => [String(j.id), j]))
+        const byId = new Map<string, { id: string; title: string; employer_name: string; location: string | null }>((data as { id: string | number; title: string; employer_name: string; location: string | null }[]).map((j) => [String(j.id), { ...j, id: String(j.id) }]))
         const list: TopJob[] = top
           .map((r) => {
             const j = byId.get(String(r.job_id))

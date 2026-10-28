@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Check, Copy, Loader2 } from 'lucide-react'
 import { aiFetch } from '@/lib/aiFetch'
+import { errorMessage } from '@/lib/errors'
 
 interface Lead {
   email: string
@@ -71,8 +72,8 @@ export default function MapLeadsPanel() {
       setNotice(`Pegaste ${data.recibidos} correos; ${data.coinciden} estaban en esta lista y ya no recibirán el recordatorio.`)
       setPasted('')
       await reload()
-    } catch (err: any) {
-      setError(err.message || 'No se pudo guardar.')
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo guardar.'))
     } finally {
       setBusy(false)
     }
@@ -97,8 +98,8 @@ export default function MapLeadsPanel() {
         )
         await reload()
       }
-    } catch (err: any) {
-      setError(err.message || 'No se pudo completar la acción.')
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo completar la acción.'))
     } finally {
       setBusy(false)
       setArmed(false)

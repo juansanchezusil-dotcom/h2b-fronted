@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, ArrowRight, Check, Loader2 } from 'lucide-react'
 import LogoMark from '@/components/LogoMark'
 import { buildMap } from '@/lib/h2bMap'
+import { errorMessage } from '@/lib/errors'
 
 // Mapa H2B público: sin cuenta. Cinco preguntas, el correo (con consentimiento) y el mapa en pantalla.
 // Usa la misma lógica que Mi Mapa de los miembros (lib/h2bMap.ts), solo que sin CRM ni datos guardados.
@@ -91,13 +92,19 @@ export default function MapaPublico() {
   const [inApp, setInApp] = useState(false)
   // Casillas del plan que la persona marca; se recuerdan en su navegador
   const [plan, setPlan] = useState<Record<string, boolean>>({})
+  // Hora de apertura para contar días (leer el reloj dentro del cálculo daría números distintos en cada dibujo)
+  const [openedAt] = useState(() => Date.now())
 
   useEffect(() => {
     const preview = new URLSearchParams(window.location.search).get('preview') === '1'
+    // Solo se puede leer en el navegador, después de hidratar (en el servidor no existe)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setGate(preview || Date.now() >= ACTIVATION ? 'open' : 'closed')
   }, [])
 
   useEffect(() => {
+    // Solo se puede leer en el navegador, después de hidratar (en el servidor no existe)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setInApp(/Instagram|FBAN|FBAV|FB_IAB|Snapchat|TikTok|MicroMessenger|Line\//i.test(navigator.userAgent))
     // Llegó desde el enlace del correo: se recuperan sus respuestas y se muestra su mapa
     const token = new URLSearchParams(window.location.search).get('r')
@@ -126,6 +133,8 @@ export default function MapaPublico() {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(PLAN_KEY)
+      // localStorage solo se puede leer en el navegador, después de hidratar (en el servidor no existe)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (raw) setPlan(JSON.parse(raw))
       const done = window.localStorage.getItem(DONE_KEY)
       if (done) {
@@ -202,9 +211,9 @@ export default function MapaPublico() {
         manualPlan: plan,
         dia: null,
         applied30: 0,
-        now: Date.now(),
+        now: openedAt,
       }),
-    [a, plan]
+    [a, plan, openedAt]
   )
 
   // Antes del 25-nov se muestra solo una parte del mapa; el plan completo y el dashboard se abren con la masterclass
@@ -237,8 +246,8 @@ export default function MapaPublico() {
         // idem
       }
       setStep(6)
-    } catch (err: any) {
-      setError(err.message || 'No pudimos guardar tu correo. Intenta de nuevo.')
+    } catch (err) {
+      setError(errorMessage(err, 'No pudimos guardar tu correo. Intenta de nuevo.'))
     } finally {
       setSending(false)
     }

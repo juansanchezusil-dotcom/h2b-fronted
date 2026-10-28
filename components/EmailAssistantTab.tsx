@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Mail, Copy, ExternalLink, Sparkles, Check, Loader2, FileText } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { aiFetch } from '@/lib/aiFetch';
+import { errorMessage } from '@/lib/errors';
 
 interface SavedOffer {
   company: string;
@@ -141,8 +142,8 @@ export function EmailAssistantTab({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'No se pudo generar el correo.');
       setEmails((prev) => ({ ...prev, [type]: data }));
-    } catch (err: any) {
-      setError(err.message || 'No se pudo generar el correo. Intenta de nuevo.');
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo generar el correo. Intenta de nuevo.'));
     } finally {
       setLoading(false);
     }
@@ -150,7 +151,9 @@ export function EmailAssistantTab({
 
   // Genera el correo del tipo activo si aún no existe (o cambiaron empresa/puesto)
   useEffect(() => {
-    // La respuesta a la empresa no se genera sola: hace falta pegar primero su mensaje
+    // La respuesta a la empresa no se genera sola: hace falta pegar primero su mensaje.
+    // Generar es la reacción buscada al cambiar de tipo de correo, empresa o puesto
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (hasCv && !current && !loading && emailType !== 'reply') generate(emailType);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [emailType, hasCv, companyName, jobTitle, location]);
@@ -441,12 +444,12 @@ export function EmailAssistantTab({
                         <li key={q}>{q}</li>
                       ))}
                     </ul>
-                    <p>Escríbelo en el campo de disponibilidad y pulsa "Escribir mi respuesta" otra vez.</p>
+                    <p>Escríbelo en el campo de disponibilidad y pulsa “Escribir mi respuesta” otra vez.</p>
                   </div>
                 )}
                 {current?.es_invitacion_entrevista && onMoveToInterview && (
                   <div className="text-xs text-indigo-900 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 rounded-lg px-3 py-2 space-y-1.5">
-                    <p>Te invitaron a una entrevista. Mueve esta postulación a "Entrevista" para detener los recordatorios de seguimiento de los días 7 y 14.</p>
+                    <p>Te invitaron a una entrevista. Mueve esta postulación a “Entrevista” para detener los recordatorios de seguimiento de los días 7 y 14.</p>
                     {movedToInterview ? (
                       <p role="status" className="font-semibold">✓ Movida a Entrevista en tu CRM.</p>
                     ) : (

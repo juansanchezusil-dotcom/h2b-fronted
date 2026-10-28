@@ -4,6 +4,23 @@ import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Loader2, FileText, ChevronRight, RotateCcw, Sparkles, HelpCircle, Briefcase, Landmark } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { aiFetch } from '@/lib/aiFetch';
+import { errorMessage } from '@/lib/errors';
+
+// Lo que usamos del dictado por voz del navegador (Web Speech API; TypeScript no trae sus tipos)
+interface SpeechRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+const speechRecognitionCtor = (): (new () => SpeechRecognitionLike) | undefined => {
+  const w = window as unknown as Record<string, (new () => SpeechRecognitionLike) | undefined>;
+  return w.SpeechRecognition || w.webkitSpeechRecognition;
+};
 
 // Simulador de entrevistas H-2B: entrevista adaptativa, una pregunta por turno, sin correcciones durante la
 // práctica (solo si se pausa para pedir ayuda) y un informe final con puntuación y plan de mejora.
@@ -108,7 +125,7 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
   // Dictado por voz (transcripción en el navegador; no se guarda audio)
   const [listening, setListening] = useState(false);
   const [canDictate, setCanDictate] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
 
   const storageKey = `jta-sim-v2-${userId}`;
 
@@ -130,7 +147,9 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
   }, [userId]);
 
   useEffect(() => {
-    setCanDictate(typeof window !== 'undefined' && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition));
+    // Solo se puede leer en el navegador, después de hidratar (en el servidor no existe)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCanDictate(typeof window !== 'undefined' && !!speechRecognitionCtor());
     // Retoma una práctica a medias de esta misma persona
     try {
       const raw = window.localStorage.getItem(storageKey);
@@ -206,8 +225,8 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
       setReport(null);
       setStage('interview');
       persist({ module, turns: [], question: q });
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -222,8 +241,8 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
       setStage('report');
       persist(null);
       return true;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errorMessage(err));
       return false;
     } finally {
       setBusy(false);
@@ -248,10 +267,10 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
       setQuestion(q);
       setAnswer('');
       persist({ module, turns: next, question: q });
-    } catch (err: any) {
+    } catch (err) {
       // La respuesta no se pierde: vuelve al cuadro para reenviarla
       setTurns(turns);
-      setError(err.message);
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -263,8 +282,8 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
     setError(null);
     try {
       setHelp(await call({ mode: 'help', questionEn: question.question_en }));
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(errorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -275,16 +294,16 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
       recognitionRef.current?.stop?.();
       return;
     }
-    const Ctor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const Ctor = speechRecognitionCtor();
     if (!Ctor) return;
     const rec = new Ctor();
     rec.lang = 'en-US';
     rec.interimResults = false;
     rec.continuous = true;
-    rec.onresult = (e: any) => {
-      const text = Array.from(e.results as ArrayLike<any>)
+    rec.onresult = (e) => {
+      const text = Array.from(e.results)
         .slice(e.resultIndex)
-        .map((r: any) => r[0]?.transcript || '')
+        .map((r) => r[0]?.transcript || '')
         .join(' ')
         .trim();
       if (text) setAnswer((prev) => (prev ? `${prev} ${text}` : text));
@@ -433,7 +452,7 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
           ) : (
             <div className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 space-y-1.5">
               <p>
-                Todavía no tienes un CV guardado. Puedes practicar igual, pero las preguntas serán menos personalizadas y la coherencia con tus documentos aparecerá como "No evaluable".
+                Todavía no tienes un CV guardado. Puedes practicar igual, pero las preguntas serán menos personalizadas y la coherencia con tus documentos aparecerá como “No evaluable”.
               </p>
               {onOpenCvBuilder && (
                 <button type="button" onClick={onOpenCvBuilder} className="inline-flex items-center gap-1 font-semibold text-[#0B4079] dark:text-[#C89B3C] underline">

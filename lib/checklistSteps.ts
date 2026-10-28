@@ -1,3 +1,4 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 // Pasos manuales del mapa (pasaporte y DS-160). Se guardan en la base (profiles.manual_steps) para que no
 // se pierdan al cambiar de dispositivo y para que el radar los vea. El navegador conserva una copia con la
 // misma clave que usaba la hoja de ruta anterior: sirve para mostrar el avance al instante y para subir a la
@@ -38,10 +39,7 @@ export function writeChecklistSteps(userId: string, steps: ManualSteps) {
   }
 }
 
-// Cliente mínimo de Supabase que necesitamos (evita depender del tipo completo)
-interface DbClient {
-  from: (table: string) => any
-}
+type DbClient = Pick<SupabaseClient, 'from'>
 
 // Guarda los pasos en la base. Si falla, el avance sigue en el navegador y se vuelve a intentar al marcar otra vez.
 export async function saveStepsRemote(db: DbClient, userId: string, steps: ManualSteps): Promise<boolean> {

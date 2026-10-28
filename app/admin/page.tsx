@@ -69,6 +69,8 @@ export default function AdminPage() {
   }, [])
 
   useEffect(() => {
+    // Carga inicial de datos al abrir el panel; load() es la misma función del botón Actualizar
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [load])
 

@@ -67,6 +67,8 @@ export default function H2BMap({
   onOpenJob,
 }: H2BMapProps) {
   const [profile, setProfile] = useState<ProfileRow>(EMPTY_PROFILE)
+  // Hora de apertura para contar días (leer el reloj dentro del cálculo daría números distintos en cada dibujo)
+  const [openedAt] = useState(() => Date.now())
   const [hasCover, setHasCover] = useState(false)
   const [steps, setSteps] = useState<ManualSteps>({ passport: false, ds160: false })
   const notices = useMembershipNotices(userId)
@@ -141,9 +143,9 @@ export default function H2BMap({
         hasCoverLetter: hasCover,
         dia: notices?.dia ?? null,
         applied30: notices ? notices.postulaciones : appliedFallback,
-        now: Date.now(),
+        now: openedAt,
       }),
-    [profile, perfilCompletado, hasCv, hasCover, crmItems, steps, notices, appliedFallback]
+    [profile, perfilCompletado, hasCv, hasCover, crmItems, steps, notices, appliedFallback, openedAt]
   )
 
   const run = (action: StepAction) => {

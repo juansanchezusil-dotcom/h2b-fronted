@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { ShieldAlert, Upload, X, Loader2, ExternalLink, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { aiFetch } from '@/lib/aiFetch';
+import { errorMessage } from '@/lib/errors';
 
 const MAX_IMAGES = 5;
 const REPORT_URL = 'https://travel.state.gov/en/report-visa-fraud.html';
@@ -89,8 +90,8 @@ export default function ScamDetectorTab() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'No se pudo analizar la imagen.');
       setResult(data);
-    } catch (err: any) {
-      setError(err.message || 'No se pudo analizar la imagen. Intenta de nuevo.');
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo analizar la imagen. Intenta de nuevo.'));
     } finally {
       setLoading(false);
     }

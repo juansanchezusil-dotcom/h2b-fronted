@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const next = /^\/(?![/\\])[A-Za-z0-9_\-./?=&%#]*$/.test(rawNext) ? rawNext : "/";
 
   if (code) {
-    let response = NextResponse.redirect(`${origin}${next}`);
+    const response = NextResponse.redirect(`${origin}${next}`);
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

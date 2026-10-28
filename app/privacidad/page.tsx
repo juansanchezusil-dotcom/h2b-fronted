@@ -108,7 +108,7 @@ export default function PrivacidadPage() {
           ]}
         />
         <p className="mt-2">
-          Puedes borrar tu cuenta tú mismo desde el menú de tu cuenta, en "Borrar mi cuenta". Para cualquier otra solicitud, responde a cualquier correo que te hayamos enviado o escríbenos por la comunidad. Te respondemos lo antes posible.
+          Puedes borrar tu cuenta tú mismo desde el menú de tu cuenta, en “Borrar mi cuenta”. Para cualquier otra solicitud, responde a cualquier correo que te hayamos enviado o escríbenos por la comunidad. Te respondemos lo antes posible.
         </p>
 
         <H>Seguridad</H>
