@@ -33,6 +33,7 @@ import {
   Check,
   Plane,
   Compass,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
 import H2BMap from '@/components/H2BMap';
@@ -218,6 +219,22 @@ const SWIPE_ORDER: Tab[] = ['dashboard', 'jobs', 'crm', 'ai', 'employers', 'agen
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
+  // Celular: los filtros de Ofertas viven en un panel que sube desde abajo
+  const [jobFiltersOpen, setJobFiltersOpen] = useState(false)
+  useBackToClose(jobFiltersOpen, () => setJobFiltersOpen(false))
+  // Celular: el header se esconde al bajar y vuelve al subir, para ganar pantalla al leer
+  const [headerHidden, setHeaderHidden] = useState(false)
+  useEffect(() => {
+    let lastY = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      if (Math.abs(y - lastY) < 8) return
+      setHeaderHidden(y > lastY && y > 120 && window.innerWidth < 640)
+      lastY = y
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // Al volver a abrir la app, retoma la última pestaña que usaste
   const tabRestored = useRef(false)
@@ -240,6 +257,8 @@ export default function Home() {
   const prevTab = useRef(activeTab)
   useEffect(() => {
     if (prevTab.current === activeTab) return
+    setJobFiltersOpen(false)
+    setHeaderHidden(false)
     const forward = SWIPE_ORDER.indexOf(activeTab) > SWIPE_ORDER.indexOf(prevTab.current)
     prevTab.current = activeTab
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -1246,6 +1265,8 @@ const getNextAction = (): NextAction | null => {
 }
 
 const nextAction = getNextAction()
+const activeJobFilters =
+  [selectedSeason !== 'ALL', selectedJobState !== 'ALL', selectedJobSector !== 'ALL', onlyHiresAbroad, jobSortBy !== 'recent'].filter(Boolean).length
 // Para la etiqueta "temporada actual" del filtro de Ofertas (ver nota junto a selectedSeason)
 const isSummerNow = (() => { const m = new Date().getMonth(); return !(m >= 3 && m <= 8) })()
 
@@ -1259,7 +1280,9 @@ return (
     </a>
 
     {/* HEADER Y NAVEGACIÓN */}
-    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-xs">
+    <header
+      className={`bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-xs transition-transform duration-200 motion-reduce:transition-none ${headerHidden ? '-translate-y-full' : ''}`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -1553,10 +1576,10 @@ return (
       {/* TABLA 1: OFERTAS LABORALES (jobs) */}
       {activeTab === 'jobs' && (
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white">Ofertas Laborales Activas</h1>
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Ofertas Laborales Activas</h1>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Mostrando 21 ofertas por página de <strong className="text-slate-900 dark:text-white">{totalJobsCount} vacantes con estos filtros</strong>.
                 </p>
@@ -1577,8 +1600,10 @@ return (
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
-              <div className="relative">
+            {/* Celular: buscador + botón Filtros (el resto va en el panel). Escritorio: todo en línea como siempre */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-y-4">
+              <div className="flex gap-2">
+              <div className="relative flex-1">
                 <input
                   type="text"
                   aria-label="Buscar por puesto, empresa, ciudad"
@@ -1592,6 +1617,47 @@ return (
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 pl-10 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
                 <span className="absolute left-3.5 top-3 text-slate-400 dark:text-slate-500 text-xs">🔍</span>
+              </div>
+              <button
+                onClick={() => setJobFiltersOpen(true)}
+                aria-expanded={jobFiltersOpen}
+                className="md:hidden shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                Filtros
+                {activeJobFilters > 0 && (
+                  <span className="min-w-5 h-5 px-1 rounded-full bg-[#0B4079] text-white text-[11px] leading-5 text-center">{activeJobFilters}</span>
+                )}
+              </button>
+              </div>
+
+              {jobFiltersOpen && (
+                <div className="md:hidden fixed inset-0 z-40 bg-slate-900/50" onClick={() => setJobFiltersOpen(false)} aria-hidden="true" />
+              )}
+              <div
+                role={jobFiltersOpen ? 'dialog' : undefined}
+                aria-modal={jobFiltersOpen ? true : undefined}
+                aria-label={jobFiltersOpen ? 'Filtros de ofertas' : undefined}
+                className={jobFiltersOpen
+                  ? 'fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-white dark:bg-slate-900 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3 shadow-2xl md:contents'
+                  : 'hidden md:contents'}
+              >
+              <div className="md:hidden">
+                <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300 dark:bg-slate-700" aria-hidden="true" />
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-black text-slate-900 dark:text-white">Filtros</h2>
+                  {activeJobFilters > 0 && (
+                    <button
+                      onClick={() => {
+                        setSelectedSeason('ALL'); setSelectedJobState('ALL'); setSelectedJobSector('ALL')
+                        setOnlyHiresAbroad(false); setJobSortBy('recent'); setJobPage(1)
+                      }}
+                      className="text-xs font-bold text-blue-700 dark:text-blue-400 min-h-11 px-2"
+                    >
+                      Limpiar
+                    </button>
+                  )}
+                </div>
               </div>
               <select
                 aria-label="Temporada H-2B"
@@ -1644,9 +1710,8 @@ return (
                 <option value="Bodega">Bodega, Almacén y Logística</option>
                 <option value="Fábrica">Fábricas y Manufactura</option>
               </select>
-            </div>
 
-            <label className="flex items-start gap-2.5 cursor-pointer bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 rounded-xl px-3.5 py-2.5">
+            <label className="md:col-span-4 flex items-start gap-2.5 cursor-pointer bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 rounded-xl px-3.5 py-2.5">
               <input
                 type="checkbox"
                 checked={onlyHiresAbroad}
@@ -1664,7 +1729,7 @@ return (
               </span>
             </label>
 
-            <div className="flex items-center gap-2">
+            <div className="md:col-span-4 flex flex-wrap items-center gap-2">
               <label htmlFor="job-sort" className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Ordenar por:</label>
               <select
                 id="job-sort"
@@ -1678,6 +1743,15 @@ return (
               {jobSortBy === 'match' && !profileCompleted && (
                 <span className="text-[11px] text-amber-700 dark:text-amber-400">Completa tu perfil para ver esto ordenado de verdad.</span>
               )}
+            </div>
+
+              <button
+                onClick={() => { setJobFiltersOpen(false); window.scrollTo({ top: 0 }) }}
+                className="md:hidden w-full min-h-12 rounded-xl bg-[#0B4079] text-white text-sm font-bold"
+              >
+                {isLoading ? 'Buscando…' : `Ver ${totalJobsCount} ofertas`}
+              </button>
+              </div>
             </div>
           </div>
 
@@ -2749,24 +2823,24 @@ return (
 )}
       {/* MODAL DETALLE DE OFERTA LABORAL (ÚNICO) */}
       {selectedJob && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          {/* Shell fijo max-h-[90vh]: el botón cerrar queda afuera del scroll interno,
-              así nunca se va con el contenido en pantallas de celular */}
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full max-h-[90vh] shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center sm:p-4">
+          {/* Celular: pantalla completa. Escritorio: ventana de 90vh. El botón cerrar y Postular quedan
+              fuera del scroll interno, así nunca se van con el contenido */}
+          <div role="dialog" aria-modal="true" aria-label="Detalle de la oferta" className="bg-white dark:bg-slate-900 sm:rounded-3xl max-w-lg w-full h-dvh sm:h-auto sm:max-h-[90vh] shadow-2xl relative overflow-hidden flex flex-col pt-[env(safe-area-inset-top)] sm:pt-0">
 
             {/* BOTÓN CERRAR */}
             <button
               onClick={() => setSelectedJob(null)}
               aria-label="Cerrar"
-              className="absolute top-5 right-5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white p-2 transition-colors z-20"
+              className="absolute top-[calc(0.75rem+env(safe-area-inset-top))] sm:top-5 right-3 sm:right-5 w-11 h-11 flex items-center justify-center rounded-full bg-white/90 dark:bg-slate-900/90 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors z-20"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="max-h-[90vh] overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
 
-            {/* ENCABEZADO CON ID, TITULO Y FECHAS A LA DERECHA */}
-            <div className="flex justify-between items-start gap-4 pr-6">
+            {/* ENCABEZADO CON ID, TITULO Y FECHAS (a la derecha en escritorio, debajo en celular) */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-4 pr-10 sm:pr-6">
               <div className="space-y-1">
                 <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono text-[11px] font-bold px-2.5 py-0.5 rounded">
                   Job Order ID: {selectedJob.case_number || selectedJob.job_order_id || selectedJob.id}
@@ -2775,7 +2849,7 @@ return (
                 <p className="text-xs font-bold text-blue-700 dark:text-blue-400">{selectedJob.employer_name || selectedJob.emp_name}</p>
               </div>
 
-              <div className="text-right text-[11px] shrink-0 pt-1 leading-tight">
+              <div className="sm:text-right text-[11px] shrink-0 sm:pt-1 leading-tight">
                 <p className="text-slate-600 dark:text-slate-300 font-medium">
                   <strong>Begin date:</strong> {selectedJob.begin_date || selectedJob.start_date || selectedJob.fecha_inicio || "N/A"}
                 </p>
@@ -2841,14 +2915,16 @@ return (
                      - Se removió 'max-h-28' y se cambió a 'max-h-48'
                      - 'overflow-y-auto' muestra scroll SOLO si sobrepasa la altura
                   */}
-                <p className="mt-0.5 max-h-48 overflow-y-auto pr-1 whitespace-pre-line text-slate-600 dark:text-slate-300 scrollbar-thin">
+                <p className="mt-0.5 sm:max-h-48 sm:overflow-y-auto pr-1 whitespace-pre-line text-slate-600 dark:text-slate-300 scrollbar-thin">
                   {selectedJob.job_description || selectedJob.job_duties || selectedJob.description || selectedJob.duties || "Sin descripción disponible."}
                 </p>
               </div>
             </div>
 
-            {/* BOTÓN POSTULAR */}
-            <div className="pt-1">
+            </div>
+
+            {/* BOTONES FIJOS ABAJO: guardar en el CRM y postular */}
+            <div className="shrink-0 border-t border-slate-100 dark:border-slate-800 px-5 sm:px-6 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-4 bg-white dark:bg-slate-900">
               {(() => {
                 const key = crmKey(
                   selectedJob.employer_name || selectedJob.emp_name || '',
@@ -2863,6 +2939,23 @@ return (
                   )
                 }
                 return (
+                  <div className="flex gap-2">
+                  {existing ? (
+                    <span className="shrink-0 inline-flex items-center gap-1.5 min-h-12 px-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold">
+                      <Check className="w-4 h-4" /> Guardada
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => addToCRM(
+                        selectedJob.employer_name || selectedJob.emp_name,
+                        selectedJob.title || selectedJob.job_title,
+                        selectedJob.location || `${selectedJob.city || ''}, ${selectedJob.state || ''}`.trim()
+                      )}
+                      className="shrink-0 inline-flex items-center gap-1.5 min-h-12 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold"
+                    >
+                      <Plus className="w-4 h-4" /> Guardar
+                    </button>
+                  )}
                   <button
                     onClick={() => setApplyFlowJob({
                       title: selectedJob.title || selectedJob.job_title || 'Vacante H2B',
@@ -2872,13 +2965,13 @@ return (
                       duties: selectedJob.job_description || selectedJob.job_duties || selectedJob.description || selectedJob.duties || '',
                       reference: selectedJob.case_number || selectedJob.job_order_id || '',
                     })}
-                    className="w-full bg-[#00A86B] hover:bg-[#008f5b] text-white font-bold text-xs py-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-sm"
+                    className="flex-1 min-h-12 bg-[#00A86B] hover:bg-[#008f5b] text-white font-bold text-sm sm:text-xs py-3 rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-sm"
                   >
                     ✉️ Postular ahora
                   </button>
+                  </div>
                 )
               })()}
-            </div>
             </div>
           </div>
         </div>
