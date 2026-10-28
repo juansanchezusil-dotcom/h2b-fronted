@@ -207,3 +207,16 @@ export const labelForStatus = (status: string) => {
 
 // Clave para reconocer la misma postulación aunque cambien mayúsculas o espacios
 export const crmKey = (company: string, role: string) => `${company}|${role}`.trim().toLowerCase()
+
+// Columnas del tablero de Mi CRM (la última junta "no respondido" y "rechazada")
+export type CrmColumn = 'guardadas' | 'postulado' | 'seguimiento' | 'entrevista' | 'aceptado' | 'cerradas'
+export const CRM_COLUMNS: { id: CrmColumn; label: string }[] = [
+  { id: 'guardadas', label: 'Guardadas' },
+  { id: 'postulado', label: 'Postulado' },
+  { id: 'seguimiento', label: 'Seguimiento' },
+  { id: 'entrevista', label: 'Entrevista' },
+  { id: 'aceptado', label: 'Aceptado' },
+  { id: 'cerradas', label: 'Cerradas' },
+]
+export const crmColumnOf = (status: CRMItem['status']): CrmColumn =>
+  status === 'no_respondido' || status === 'rechazada' ? 'cerradas' : status

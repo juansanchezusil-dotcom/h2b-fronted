@@ -7,7 +7,6 @@ import UserMenu from '@/components/UserMenu';
 import ThemeToggle from '@/components/ThemeToggle';
 import ScamDetectorTab from '@/components/ScamDetectorTab';
 import InterviewSimulatorTab from '@/components/InterviewSimulatorTab';
-import EmptyState from '@/components/EmptyState';
 import {
   Briefcase,
   Building2,
@@ -16,34 +15,23 @@ import {
   CheckCircle2,
   Search,
   Sparkles,
-  Plus,
-  Trash2,
-  MoveRight,
   TrendingUp,
   FileText,
   UserCheck,
-  MapPin,
-  Calendar,
-  Users,
   Clock,
-  XCircle,
-  CheckCircle,
   Check,
   Plane,
   Compass,
-  SlidersHorizontal,
 } from 'lucide-react'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
 import H2BMap from '@/components/H2BMap';
 import { loadSteps, CHECKLIST_TOTAL_TASKS } from '@/lib/checklistSteps';
-import InfoTooltip from '@/components/InfoTooltip';
-import Pagination from '@/components/Pagination';
-import SponsorHistory from '@/components/SponsorHistory';
 import CVBuilderModal from '@/components/CVBuilderModal';
 import LogoMark from '@/components/LogoMark';
 import MobileTabBar from '@/components/MobileTabBar';
 import InstallAppBanner from '@/components/InstallAppBanner';
 import { PushPromptCard } from '@/components/PushNotifications';
+import PullToRefresh from '@/components/PullToRefresh';
 import AssistantModal from '@/components/AssistantModal';
 import MembershipNotices from '@/components/MembershipNotices';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
@@ -54,28 +42,17 @@ import { useLastSeen } from '@/hooks/useLastSeen';
 import { supabase } from '@/lib/supabaseClient'
 import { goalFor } from '@/lib/goals'
 import {
-  US_STATES, REPLY_LABELS, sourceInfo, splitWage, labelForStatus, crmKey,
+  REPLY_LABELS, labelForStatus, crmKey,
   type Job, type SponsorCompany, type SponsorAgency, type CRMItem, type ApplyFlowJob,
 } from '@/lib/h2b'
 
 // Pestañas y ventanas que no se ven al abrir la app: se descargan recién cuando se usan
 const EmployersTab = dynamic(() => import('@/components/EmployersTab'))
 const AgenciesTab = dynamic(() => import('@/components/AgenciesTab'))
+const JobsTab = dynamic(() => import('@/components/JobsTab'))
+const CrmTab = dynamic(() => import('@/components/CrmTab'))
 const AiToolsTab = dynamic(() => import('@/components/AiToolsTab'))
 const JobDetailModal = dynamic(() => import('@/components/JobDetailModal'))
-
-// Columnas del tablero de Mi CRM (la última junta "no respondido" y "rechazada")
-type CrmColumn = 'guardadas' | 'postulado' | 'seguimiento' | 'entrevista' | 'aceptado' | 'cerradas'
-const CRM_COLUMNS: { id: CrmColumn; label: string }[] = [
-  { id: 'guardadas', label: 'Guardadas' },
-  { id: 'postulado', label: 'Postulado' },
-  { id: 'seguimiento', label: 'Seguimiento' },
-  { id: 'entrevista', label: 'Entrevista' },
-  { id: 'aceptado', label: 'Aceptado' },
-  { id: 'cerradas', label: 'Cerradas' },
-]
-const crmColumnOf = (status: CRMItem['status']): CrmColumn =>
-  status === 'no_respondido' || status === 'rechazada' ? 'cerradas' : status
 
 // Columnas que la app lee de la tabla applications
 interface ApplicationRow {
@@ -396,15 +373,6 @@ export default function Home() {
 
 
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null)
-  // Celular: Mi CRM muestra una columna a la vez; null = la más urgente que tenga postulaciones
-  const [crmColumn, setCrmColumn] = useState<CrmColumn | null>(null)
-  const crmChipsRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    // Deja a la vista el chip de la columna abierta: la fila se desplaza de lado (nunca mueve la página)
-    const row = crmChipsRef.current
-    const chip = row?.querySelector<HTMLElement>('[aria-selected="true"]')
-    if (row && chip) row.scrollLeft = chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2
-  }, [activeTab, crmColumn, crmLoading])
   const [tempNotes, setTempNotes] = useState<string>('')
 
   // Modal Postulación Manual
@@ -1158,16 +1126,6 @@ const getNextAction = (): NextAction | null => {
 }
 
 const nextAction = getNextAction()
-const crmCounts = CRM_COLUMNS.reduce(
-  (acc, c) => ({ ...acc, [c.id]: crmItems.filter((i) => crmColumnOf(i.status) === c.id).length }),
-  {} as Record<CrmColumn, number>
-)
-const visibleCrmColumn: CrmColumn =
-  crmColumn ??
-  (['seguimiento', 'entrevista', 'postulado', 'guardadas', 'aceptado', 'cerradas'] as CrmColumn[]).find((c) => crmCounts[c] > 0) ??
-  'guardadas'
-// En celular solo se ve la columna elegida; en escritorio, todas
-const crmColClass = (c: CrmColumn) => (visibleCrmColumn === c ? 'flex' : 'hidden md:flex')
 const activeJobFilters =
   [selectedSeason !== 'ALL', selectedJobState !== 'ALL', selectedJobSector !== 'ALL', onlyHiresAbroad, jobSortBy !== 'recent'].filter(Boolean).length
 // Para la etiqueta "temporada actual" del filtro de Ofertas (ver nota junto a selectedSeason)
@@ -1479,338 +1437,38 @@ return (
 
       {/* TABLA 1: OFERTAS LABORALES (jobs) */}
       {activeTab === 'jobs' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Ofertas Laborales Activas</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Mostrando 21 ofertas por página de <strong className="text-slate-900 dark:text-white">{totalJobsCount} vacantes con estos filtros</strong>.
-                </p>
-              </div>
-            </div>
-
-            {sponsorFilter && (
-              <div className="flex items-center justify-between gap-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl px-3.5 py-2">
-                <span className="text-xs text-blue-900 dark:text-blue-300">
-                  Mostrando solo vacantes de <strong>{sponsorFilter.name}</strong>
-                </span>
-                <button
-                  onClick={() => { setSponsorFilter(null); setJobPage(1) }}
-                  className="text-xs font-bold text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 shrink-0"
-                >
-                  Quitar ✕
-                </button>
-              </div>
-            )}
-
-            {/* Celular: buscador + botón Filtros (el resto va en el panel). Escritorio: todo en línea como siempre */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-y-4">
-              <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  aria-label="Buscar por puesto, empresa, ciudad"
-                  placeholder="Buscar por puesto, empresa, ciudad..."
-                  value={jobSearch}
-                  onChange={(e) => {
-                    setJobSearch(e.target.value)
-                    setSponsorFilter(null)
-                    setJobPage(1)
-                  }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 pl-10 text-xs text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-                <span className="absolute left-3.5 top-3 text-slate-400 dark:text-slate-500 text-xs">🔍</span>
-              </div>
-              <button
-                onClick={() => setJobFiltersOpen(true)}
-                aria-expanded={jobFiltersOpen}
-                className="md:hidden shrink-0 inline-flex items-center gap-1.5 min-h-11 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200"
-              >
-                <SlidersHorizontal className="w-4 h-4" />
-                Filtros
-                {activeJobFilters > 0 && (
-                  <span className="min-w-5 h-5 px-1 rounded-full bg-[#0B4079] text-white text-[11px] leading-5 text-center">{activeJobFilters}</span>
-                )}
-              </button>
-              </div>
-
-              {jobFiltersOpen && (
-                <div className="md:hidden fixed inset-0 z-40 bg-slate-900/50" onClick={() => setJobFiltersOpen(false)} aria-hidden="true" />
-              )}
-              <div
-                role={jobFiltersOpen ? 'dialog' : undefined}
-                aria-modal={jobFiltersOpen ? true : undefined}
-                aria-label={jobFiltersOpen ? 'Filtros de ofertas' : undefined}
-                className={jobFiltersOpen
-                  ? 'fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-white dark:bg-slate-900 px-4 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] space-y-3 shadow-2xl md:contents'
-                  : 'hidden md:contents'}
-              >
-              <div className="md:hidden">
-                <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300 dark:bg-slate-700" aria-hidden="true" />
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-black text-slate-900 dark:text-white">Filtros</h2>
-                  {activeJobFilters > 0 && (
-                    <button
-                      onClick={() => {
-                        setSelectedSeason('ALL'); setSelectedJobState('ALL'); setSelectedJobSector('ALL')
-                        setOnlyHiresAbroad(false); setJobSortBy('recent'); setJobPage(1)
-                      }}
-                      className="text-xs font-bold text-blue-700 dark:text-blue-400 min-h-11 px-2"
-                    >
-                      Limpiar
-                    </button>
-                  )}
-                </div>
-              </div>
-              <select
-                aria-label="Temporada H-2B"
-                value={selectedSeason}
-                onChange={(e) => {
-                  setSelectedSeason(e.target.value)
-                  setJobPage(1)
-                }}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              >
-                <option value="ALL">Todas las Fechas de Inicio</option>
-                <option value="SUMMER">☀️ Verano (Abril a Septiembre){isSummerNow ? ' — temporada actual' : ''}</option>
-                <option value="WINTER">❄️ Invierno (Octubre a Marzo){!isSummerNow ? ' — temporada actual' : ''}</option>
-              </select>
-
-              {/* SELECTOR COMPLETO DE ESTADOS PARA OFERTAS */}
-              <select
-                aria-label="Estado de EE. UU."
-                value={selectedJobState}
-                onChange={(e) => {
-                  setSelectedJobState(e.target.value)
-                  setJobPage(1)
-                }}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              >
-                <option value="ALL">Todos los Estados (EE. UU.)</option>
-                {US_STATES.map((st) => (
-                  <option key={st.code} value={st.code}>
-                    {st.name} ({st.code})
-                  </option>
-                ))}
-              </select>
-              <select
-                aria-label="Sector de la oferta"
-                value={selectedJobSector}
-                onChange={(e) => {
-                  setSelectedJobSector(e.target.value)
-                  setJobPage(1)
-                }}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-              >
-                <option value="ALL">Todos los Sectores</option>
-                <option value="Hotelería">Hotelería y Restaurantes</option>
-                <option value="Construcción">Construcción y Mantenimiento</option>
-                <option value="Paisajismo">Paisajismo y Jardinería (Landscaping)</option>
-                <option value="Agricultura">Agricultura y Cosecha</option>
-                <option value="Limpieza">Limpieza y Housekeeping</option>
-                <option value="Cocina">Cocina y Preparación de Alimentos</option>
-                <option value="Procesamiento">Procesamiento de Alimentos / Carnes</option>
-                <option value="Bodega">Bodega, Almacén y Logística</option>
-                <option value="Fábrica">Fábricas y Manufactura</option>
-              </select>
-
-            <label className="md:col-span-4 flex items-start gap-2.5 cursor-pointer bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 rounded-xl px-3.5 py-2.5">
-              <input
-                type="checkbox"
-                checked={onlyHiresAbroad}
-                onChange={(e) => {
-                  setOnlyHiresAbroad(e.target.checked)
-                  setJobPage(1)
-                }}
-                className="mt-0.5 w-4 h-4 accent-[#0B4079]"
-              />
-              <span className="text-xs text-sky-900 dark:text-sky-300">
-                <strong>🌎 Solo empresas que contratan desde el extranjero</strong>
-                <span className="block text-[11px] text-sky-800/80 dark:text-sky-400/80">
-                  Empresas que en 2026 trajeron trabajadores con visa tramitada en un consulado fuera de EE. UU.
-                </span>
-              </span>
-            </label>
-
-            <div className="md:col-span-4 flex flex-wrap items-center gap-2">
-              <label htmlFor="job-sort" className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Ordenar por:</label>
-              <select
-                id="job-sort"
-                value={jobSortBy}
-                onChange={(e) => setJobSortBy(e.target.value as 'recent' | 'match')}
-                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              >
-                <option value="recent">Más recientes</option>
-                <option value="match">Mejor compatible con tu perfil</option>
-              </select>
-              {jobSortBy === 'match' && !profileCompleted && (
-                <span className="text-[11px] text-amber-700 dark:text-amber-400">Completa tu perfil para ver esto ordenado de verdad.</span>
-              )}
-            </div>
-
-              <button
-                onClick={() => { setJobFiltersOpen(false); window.scrollTo({ top: 0 }) }}
-                className="md:hidden w-full min-h-12 rounded-xl bg-[#0B4079] text-white text-sm font-bold"
-              >
-                {isLoading ? 'Buscando…' : `Ver ${totalJobsCount} ofertas`}
-              </button>
-              </div>
-            </div>
-          </div>
-
-          {isLoading ? (
-            // Esqueletos con la forma de las tarjetas: la lista no "salta" cuando llegan los datos
-            <div role="status" aria-label="Cargando ofertas" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-3 motion-safe:animate-pulse"
-                >
-                  <div className="h-3 w-2/5 rounded bg-slate-200 dark:bg-slate-800" />
-                  <div className="h-4 w-4/5 rounded bg-slate-200 dark:bg-slate-800" />
-                  <div className="h-8 w-1/3 rounded bg-slate-200 dark:bg-slate-800" />
-                  <div className="h-3 w-3/5 rounded bg-slate-100 dark:bg-slate-800/70" />
-                  <div className="h-9 w-full rounded-xl bg-slate-100 dark:bg-slate-800/70" />
-                </div>
-              ))}
-              <span className="sr-only">Cargando ofertas...</span>
-            </div>
-          ) : filteredJobs.length === 0 ? (
-            <EmptyState
-              icons={[MapPin, Search, Briefcase]}
-              title="No hay ofertas con estos filtros"
-              description="Prueba con otra temporada, otro estado o quita algún filtro. Cada día entran ofertas nuevas del DOL."
-              action={{
-                label: 'Quitar todos los filtros',
-                onClick: () => {
-                  setJobSearch('')
-                  setSelectedSeason('ALL')
-                  setSelectedJobState('ALL')
-                  setSelectedJobSector('ALL')
-                  setOnlyHiresAbroad(false)
-                  setSponsorFilter(null)
-                  setJobPage(1)
-                },
-              }}
-            />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredJobs.map((job, idx) => (
-                <div
-                  key={job.id || job.job_order_id || idx}
-                  onClick={() => setSelectedJob(job)}
-                  onKeyDown={(e) => {
-                    // El botón "Guardar" de adentro también es foco-able; solo abre
-                    // el detalle si Enter/Espacio se presionó sobre la tarjeta misma
-                    if (e.target !== e.currentTarget) return
-                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedJob(job) }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Ver detalle de ${job.title || 'oferta'} en ${job.employer_name || 'empresa registrada'}`}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                >
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-start gap-2">
-                      <p className="text-xs font-bold text-blue-700 dark:text-blue-400 leading-snug">{job.employer_name || 'Empleador Registrado'}</p>
-                      {(() => {
-                        const source = sourceInfo(job.source)
-                        return (
-                          <InfoTooltip text={source.tooltip}>
-                            <span className="shrink-0 bg-emerald-50 text-emerald-800 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30">
-                              ✓ Verificada · {source.label}
-                            </span>
-                          </InfoTooltip>
-                        )
-                      })()}
-                    </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">{job.title || 'Oferta de Trabajo'}</h3>
-
-                    {(() => {
-                      const wage = splitWage(job.wage)
-                      return wage ? (
-                        <p className="flex items-baseline gap-1">
-                          <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white tabular-nums">{wage.amount}</span>
-                          {wage.unit && <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">/ {wage.unit}</span>}
-                        </p>
-                      ) : (
-                        <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Salario según contrato</p>
-                      )
-                    })()}
-
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 dark:text-slate-300">
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                        {job.location || `${job.city || ''} ${job.state || ''}`.trim() || 'EE. UU.'}
-                      </span>
-                      {job.begin_date && (
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                          Inicia {job.begin_date}
-                        </span>
-                      )}
-                      {Number(job.workers_requested) > 0 && (
-                        <span className="inline-flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                          {job.workers_requested} vacantes
-                        </span>
-                      )}
-                    </div>
-
-                    {(() => {
-                      const match = job.id != null ? matchScores[String(job.id)] : undefined
-                      if (!match) return null
-                      return (
-                        <InfoTooltip text="Qué tanto encaja esta oferta con tu perfil (industria, experiencia e inglés). No es la probabilidad de que te den la visa.">
-                          <span
-                            className={`font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded border ${
-                              match.score >= 80
-                                ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30'
-                                : match.score >= 50
-                                ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30'
-                                : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                            }`}
-                          >
-                            {match.score >= 80 ? '🔥' : match.score >= 50 ? '🟡' : '⚪'} {match.score}% compatible
-                          </span>
-                        </InfoTooltip>
-                      )
-                    })()}
-
-                    <SponsorHistory sponsor={job.sponsor} match={job.sponsor_match ?? null} />
-                  </div>
-                  <div className="space-y-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCRM(job.employer_name, job.title, job.location);
-                      }}
-                      disabled={savingCrmKey !== null}
-                      className="w-full bg-[#0B4079] hover:bg-[#08305c] disabled:opacity-50 text-white font-bold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
-                    >
-                      {crmItems.some(i => crmKey(i.company, i.role) === crmKey(job.employer_name || 'Empresa Generica', job.title || 'Vacante H2B'))
-                        ? '✓ Ya está en tu CRM'
-                        : '+ Guardar Oferta en Mi CRM'}
-                    </button>
-                    <p className="text-xs sm:text-[10px] font-mono text-slate-400 dark:text-slate-500 text-center">
-                      {job.case_number || job.job_order_id || `ID: ${job.id || idx + 1}`}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <Pagination
-            page={jobPage}
-            totalPages={totalJobPages}
-            totalItems={totalJobsCount}
-            itemLabel="ofertas"
-            disabled={isLoading}
-            onChange={setJobPage}
-          />
-        </div>
+        <JobsTab
+          filteredJobs={filteredJobs}
+          isLoading={isLoading}
+          totalJobsCount={totalJobsCount}
+          totalJobPages={totalJobPages}
+          jobPage={jobPage}
+          setJobPage={setJobPage}
+          jobSearch={jobSearch}
+          setJobSearch={setJobSearch}
+          selectedSeason={selectedSeason}
+          setSelectedSeason={setSelectedSeason}
+          selectedJobState={selectedJobState}
+          setSelectedJobState={setSelectedJobState}
+          selectedJobSector={selectedJobSector}
+          setSelectedJobSector={setSelectedJobSector}
+          onlyHiresAbroad={onlyHiresAbroad}
+          setOnlyHiresAbroad={setOnlyHiresAbroad}
+          jobSortBy={jobSortBy}
+          setJobSortBy={setJobSortBy}
+          sponsorFilter={sponsorFilter}
+          setSponsorFilter={setSponsorFilter}
+          jobFiltersOpen={jobFiltersOpen}
+          setJobFiltersOpen={setJobFiltersOpen}
+          activeJobFilters={activeJobFilters}
+          isSummerNow={isSummerNow}
+          profileCompleted={profileCompleted}
+          matchScores={matchScores}
+          crmItems={crmItems}
+          savingCrmKey={savingCrmKey}
+          addToCRM={addToCRM}
+          setSelectedJob={setSelectedJob}
+        />
       )}
 
       {/* TABLA 2: EMPRESAS USCIS (employers) */}
@@ -1852,481 +1510,30 @@ return (
 
       {/* MI CRM — CENTRO DE COMANDO KANBAN */}
       {activeTab === 'crm' && (
-        <div className="space-y-4 sm:space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Centro de Comando de Postulaciones</h1>
-                <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Gestiona tus postulaciones, seguimiento de 7-14-21 días, entrevistas y estados finales de forma visual.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsManualModalOpen(true)}
-                className="relative z-10 cursor-pointer w-full md:w-auto justify-center min-h-11 md:min-h-0 bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-sm md:text-xs px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                Agregar Postulación Manual
-              </button>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="space-y-1 w-full sm:w-auto">
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-xs text-slate-800 dark:text-slate-100 uppercase tracking-wider">Salud de tu búsqueda semanal:</span>
-                  <span className="bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-extrabold text-[11px] px-2.5 py-0.5 rounded-full">
-                    {applicationsThisWeek} de {weeklyTarget} aplicadas
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">Mantén el ritmo de postulaciones recomendado para maximizar tus resultados H2B.</p>
-              </div>
-              <div className="w-full sm:w-48 bg-slate-200 dark:bg-slate-700 h-3 rounded-full overflow-hidden">
-                <div
-                  className="bg-blue-600 h-full transition-all duration-500 rounded-full"
-                  style={{ width: `${searchHealthPercentage}%` }}
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          {crmError && (
-            <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-800 dark:text-rose-300 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <p className="text-xs font-semibold">
-                No pudimos cargar tus postulaciones. Tus datos siguen guardados; revisa tu conexión y vuelve a intentarlo.
-              </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold px-4 py-2 rounded-lg shrink-0"
-              >
-                Reintentar
-              </button>
-            </div>
-          )}
-
-          {crmLoading && !crmError && (
-            // Esqueleto con la forma del tablero: una columna en celular, seis en escritorio
-            <div role="status" aria-label="Cargando tus postulaciones" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-start motion-safe:animate-pulse">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className={`${i > 0 ? 'hidden md:block' : ''} ${i > 1 ? 'md:hidden lg:block' : ''} bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 space-y-3`}>
-                  <div className="h-4 w-1/2 rounded bg-slate-200 dark:bg-slate-800" />
-                  {Array.from({ length: i === 0 ? 3 : 2 }).map((_, j) => (
-                    <div key={j} className="bg-white dark:bg-slate-900 rounded-xl p-3 space-y-2">
-                      <div className="h-3.5 w-4/5 rounded bg-slate-200 dark:bg-slate-800" />
-                      <div className="h-3 w-1/2 rounded bg-slate-100 dark:bg-slate-800/70" />
-                    </div>
-                  ))}
-                </div>
-              ))}
-              <span className="sr-only">Cargando tus postulaciones...</span>
-            </div>
-          )}
-
-          {!crmError && !crmLoading && crmItems.length === 0 && (
-            <EmptyState
-              icons={[Briefcase, Send, CheckCircle2]}
-              title="Tu CRM está vacío"
-              description="Guarda ofertas desde la pestaña Ofertas y aquí verás cada postulación avanzar: postulado, seguimiento, entrevista y aceptado."
-              action={{ label: 'Buscar ofertas', onClick: () => setActiveTab('jobs') }}
-            />
-          )}
-
-          {!crmError && !crmLoading && crmItems.length > 0 && (
-            <div ref={crmChipsRef} role="tablist" aria-label="Columnas de Mi CRM" className="md:hidden relative flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1">
-              {CRM_COLUMNS.map((c) => {
-                const active = visibleCrmColumn === c.id
-                return (
-                  <button
-                    key={c.id}
-                    role="tab"
-                    aria-selected={active}
-                    onClick={() => setCrmColumn(c.id)}
-                    className={`shrink-0 inline-flex items-center gap-1.5 min-h-10 px-3.5 rounded-full text-xs font-bold border transition-colors ${
-                      active
-                        ? 'bg-[#0B4079] border-[#0B4079] text-white'
-                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
-                    }`}
-                  >
-                    {c.label}
-                    <span className={`min-w-5 h-5 px-1 rounded-full text-[11px] leading-5 text-center ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'} ${c.id === 'seguimiento' && pendingFollowUps > 0 && !active ? '!bg-rose-600 text-white' : ''}`}>
-                      {crmCounts[c.id]}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-
-          <div className={`${crmError || crmLoading || crmItems.length === 0 ? "hidden" : "grid"} grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-start overflow-x-auto pb-4`}>
-            {/* COLUMNA 1: GUARDADAS */}
-            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('guardadas')}`}>
-              <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <span className="font-extrabold text-[11px] text-slate-500 dark:text-slate-400 tracking-wider">GUARDADAS</span>
-                <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-                  {crmItems.filter(i => i.status === 'guardadas').length}
-                </span>
-              </div>
-              <div className="space-y-3 flex-1">
-                {crmItems.filter(i => i.status === 'guardadas').map(item => (
-                  <div key={item.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-2xs space-y-3 relative group">
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-bold text-slate-900 dark:text-white text-xs leading-tight">{item.company}</h3>
-                        <button onClick={() => deleteCrmItem(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400">
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.role}</p>
-                    </div>
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-                      {editingNotesId === item.id ? (
-                        <div className="space-y-2">
-                          <textarea
-                            value={tempNotes}
-                            onChange={(e) => setTempNotes(e.target.value)}
-                            placeholder="Nota rápida..."
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-xs sm:text-[10px] focus:outline-none"
-                            rows={2}
-                          />
-                          <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] text-slate-500 dark:text-slate-400">Cancelar</button>
-                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] rounded font-bold">Guardar</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs sm:text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[60%] sm:max-w-[100px]">
-                            {item.notes ? `📝 ${item.notes}` : 'Sin notas'}
-                          </span>
-                          <button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || ''); }} className="text-blue-600 dark:text-blue-400 font-bold min-h-11 sm:min-h-0 px-2 sm:px-0 text-xs sm:text-[9px]">
-                            {item.notes ? 'Editar' : '+ Nota'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                      <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
-                      <button onClick={() => changeCrmStatus(item.id, 'postulado')} className="text-xs sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-0.5 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg">
-                        Postular <MoveRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {crmItems.filter(i => i.status === 'guardadas').length === 0 && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic p-3 text-center leading-relaxed">
-                    Guarda una oferta desde la pestaña Ofertas para empezar tu seguimiento.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* COLUMNA 2: POSTULADO */}
-            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('postulado')}`}>
-              <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <span className="font-extrabold text-[11px] text-sky-500 dark:text-sky-400 tracking-wider">POSTULADO</span>
-                <span className="bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-                  {crmItems.filter(i => i.status === 'postulado').length}
-                </span>
-              </div>
-              <div className="space-y-3 flex-1">
-                {crmItems.filter(i => i.status === 'postulado').map(item => (
-                  <div key={item.id} className="bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-xl p-3.5 shadow-2xs space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-bold text-slate-900 dark:text-white text-xs leading-tight">{item.company}</h3>
-                        <button onClick={() => deleteCrmItem(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400">
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.role}</p>
-                    </div>
-                    <div className="bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 text-sky-800 dark:text-sky-300 text-xs sm:text-[9px] font-semibold px-2 py-1 rounded-lg">
-                      ✅ Marcaste que ya postulaste
-                    </div>
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-                      {editingNotesId === item.id ? (
-                        <div className="space-y-2">
-                          <textarea
-                            value={tempNotes}
-                            onChange={(e) => setTempNotes(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-xs sm:text-[10px]"
-                            rows={2}
-                          />
-                          <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px]">Cancelar</button>
-                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] rounded font-bold">Guardar</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs sm:text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[60%] sm:max-w-[100px]">
-                            {item.notes ? `📝 ${item.notes}` : 'Sin notas'}
-                          </span>
-                          <button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || ''); }} className="text-blue-600 dark:text-blue-400 font-bold min-h-11 sm:min-h-0 px-2 sm:px-0 text-xs sm:text-[9px]">
-                            {item.notes ? 'Editar' : '+ Nota'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    {renderReplyControl(item)}
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center gap-1">
-                      <button
-                        onClick={() => openEmailFor(item)}
-                        title="Redactar correo con tu CV"
-                        className="text-xs sm:text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg"
-                      >
-                        ✉️
-                      </button>
-                      <button onClick={() => changeCrmStatus(item.id, 'seguimiento')} className="text-xs sm:text-[10px] font-bold text-sky-700 dark:text-sky-300 flex items-center gap-0.5 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg">
-                        Seguimiento <MoveRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {crmItems.filter(i => i.status === 'postulado').length === 0 && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic p-3 text-center leading-relaxed">
-                    Cuando postules a una oferta guardada, aparecerá aquí.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* COLUMNA 3: SEGUIMIENTO (7-14-21 DÍAS) */}
-            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('seguimiento')}`}>
-              <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <span className="font-extrabold text-[11px] text-sky-500 dark:text-sky-400 tracking-wider">SEGUIMIENTO</span>
-                <span className="bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-                  {crmItems.filter(i => i.status === 'seguimiento').length}
-                </span>
-              </div>
-              <div className="space-y-3 flex-1">
-                {crmItems.filter(i => i.status === 'seguimiento').map(item => {
-                  const daysPassed = daysSinceApplied(item)
-                  let trackingMessage = 'En seguimiento activo'
-                  let badgeColor = 'bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300'
-                  if (daysPassed >= 14) {
-                    trackingMessage = '📧 Envía tu segundo correo de seguimiento'
-                    badgeColor = 'bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/30 text-rose-800 dark:text-rose-300 font-bold'
-                  } else if (daysPassed >= 7) {
-                    trackingMessage = '✉️ Envía tu primer correo de seguimiento'
-                    badgeColor = 'bg-amber-100 dark:bg-amber-500/20 border-amber-300 dark:border-amber-500/40 text-amber-900 dark:text-amber-200 font-bold'
-                  }
-                  // Con el seguimiento ya enviado, el aviso cambia: ya no toca escribir, toca esperar
-                  if (item.followup2At) {
-                    trackingMessage = '✅ Segundo seguimiento enviado. Espera su respuesta'
-                    badgeColor = 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
-                  } else if (item.followup1At && daysPassed < 14) {
-                    trackingMessage = '✅ Primer seguimiento enviado. El segundo toca el día 14'
-                    badgeColor = 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300'
-                  }
-                  const fmtDay = (t: number) => new Date(t).toLocaleDateString('es', { day: 'numeric', month: 'short' })
-                  return (
-                    <div key={item.id} className="bg-white dark:bg-slate-900 border border-sky-200 dark:border-sky-800 rounded-xl p-3.5 shadow-2xs space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-bold text-slate-900 dark:text-white text-xs leading-tight">{item.company}</h3>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.role}</p>
-                        </div>
-                        <button onClick={() => deleteCrmItem(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400"><Trash2 className="w-3 h-3" /></button>
-                      </div>
-                      <div className={`${badgeColor} border text-xs sm:text-[9px] font-semibold px-2 py-1 rounded-lg text-center`}>{trackingMessage}</div>
-                      {(item.followup1At || item.followup2At) && (
-                        <p className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">
-                          {[item.followup1At ? `1.er seguimiento: ${fmtDay(item.followup1At)}` : '', item.followup2At ? `2.º seguimiento: ${fmtDay(item.followup2At)}` : ''].filter(Boolean).join(' · ')}
-                        </p>
-                      )}
-                      {daysPassed >= 7 && !item.followup1At && !item.followup2At && (
-                        <button onClick={() => markFollowupSent(item, 1)} className="w-full min-h-11 sm:min-h-0 text-xs sm:text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 py-1.5 rounded-lg">
-                          Ya envié el primer seguimiento
-                        </button>
-                      )}
-                      {daysPassed >= 14 && !item.followup2At && (
-                        <button onClick={() => markFollowupSent(item, 2)} className="w-full min-h-11 sm:min-h-0 text-xs sm:text-[10px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 hover:bg-sky-100 dark:hover:bg-sky-500/20 py-1.5 rounded-lg">
-                          Ya envié el segundo seguimiento
-                        </button>
-                      )}
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-                        {editingNotesId === item.id ? (
-                          <div className="space-y-2">
-                            <textarea value={tempNotes} onChange={(e) => setTempNotes(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-xs sm:text-[10px]" rows={2} />
-                            <div className="flex gap-1 justify-end"><button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px]">Cancelar</button><button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] rounded font-bold">Guardar</button></div>
-                          </div>
-                        ) : (
-                          <div className="flex justify-between items-center"><span className="text-xs sm:text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[60%] sm:max-w-[100px]">{item.notes ? `📝 ${item.notes}` : 'Sin notas'}</span><button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || '') }} className="text-blue-600 dark:text-blue-400 font-bold min-h-11 sm:min-h-0 px-2 sm:px-0 text-xs sm:text-[9px]">{item.notes ? 'Editar' : '+ Nota'}</button></div>
-                        )}
-                      </div>
-                      {renderReplyControl(item)}
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center gap-1">
-                        <button onClick={() => openEmailFor(item)} title="Redactar correo con tu CV" className="text-xs sm:text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-0.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg">✉️</button>
-                        <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">Día {daysPassed}</span>
-                        <button onClick={() => changeCrmStatus(item.id, 'entrevista')} className="text-xs sm:text-[10px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-0.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 dark:hover:bg-amber-500/20 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg">Entrevista <MoveRight className="w-3 h-3" /></button>
-                      </div>
-                    </div>
-                  )
-                })}
-                {crmItems.filter(i => i.status === 'seguimiento').length === 0 && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic p-3 text-center leading-relaxed">
-                    A los 7 días de postular, la tarjeta pasa aquí sola y te avisamos por correo para que escribas a la empresa.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* COLUMNA 4: ENTREVISTA */}
-            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('entrevista')}`}>
-              <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <span className="font-extrabold text-[11px] text-indigo-500 dark:text-indigo-400 tracking-wider">ENTREVISTA</span>
-                <span className="bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-                  {crmItems.filter(i => i.status === 'entrevista').length}
-                </span>
-              </div>
-              <div className="space-y-3 flex-1">
-                {crmItems.filter(i => i.status === 'entrevista').map(item => (
-                  <div key={item.id} className="bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 rounded-xl p-3.5 shadow-2xs space-y-3">
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-bold text-slate-900 dark:text-white text-xs leading-tight">{item.company}</h3>
-                        <button onClick={() => deleteCrmItem(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400">
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{item.role}</p>
-                    </div>
-                    <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 text-indigo-900 dark:text-indigo-300 text-xs sm:text-[9px] font-semibold px-2 py-1 rounded-lg text-center">
-                      ⭐ En proceso de entrevista
-                    </div>
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
-                      {editingNotesId === item.id ? (
-                        <div className="space-y-2">
-                          <textarea
-                            value={tempNotes}
-                            onChange={(e) => setTempNotes(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg p-1.5 text-xs sm:text-[10px]"
-                            rows={2}
-                          />
-                          <div className="flex gap-1 justify-end">
-                            <button onClick={() => setEditingNotesId(null)} className="px-2 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px]">Cancelar</button>
-                            <button onClick={() => saveNotes(item.id)} className="bg-blue-600 text-white px-2.5 py-1.5 min-h-11 sm:min-h-0 text-xs sm:text-[10px] rounded font-bold">Guardar</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs sm:text-[10px] text-slate-600 dark:text-slate-400 italic truncate max-w-[60%] sm:max-w-[100px]">
-                            {item.notes ? `📝 ${item.notes}` : 'Sin notas'}
-                          </span>
-                          <button onClick={() => { setEditingNotesId(item.id); setTempNotes(item.notes || ''); }} className="text-blue-600 dark:text-blue-400 font-bold min-h-11 sm:min-h-0 px-2 sm:px-0 text-xs sm:text-[9px]">
-                            {item.notes ? 'Editar' : '+ Nota'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => {
-                        setSimulatorJob({ company: item.company, role: item.role })
-                        setShowInterviewSimulator(true)
-                      }}
-                      className="w-full text-xs sm:text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/30 py-2 min-h-11 sm:min-h-0 rounded-lg"
-                    >
-                      🎤 Practicar esta entrevista
-                    </button>
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-1.5">
-                      <button
-                        onClick={() => changeCrmStatus(item.id, 'aceptado')}
-                        className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold text-xs sm:text-[10px] py-2 px-2.5 min-h-11 sm:min-h-0 rounded-lg border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center gap-1 transition-colors"
-                      >
-                        <CheckCircle className="w-3 h-3 text-emerald-600" /> Aceptado
-                      </button>
-                      <button
-                        onClick={() => changeCrmStatus(item.id, 'rechazada')}
-                        className="bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-800 dark:text-rose-300 font-bold text-xs sm:text-[10px] py-2 px-2.5 min-h-11 sm:min-h-0 rounded-lg border border-rose-200 dark:border-rose-500/30 flex items-center justify-center gap-1 transition-colors"
-                      >
-                        <XCircle className="w-3 h-3 text-rose-600" /> Rechazado
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {crmItems.filter(i => i.status === 'entrevista').length === 0 && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic p-3 text-center leading-relaxed">
-                    Aquí verás las postulaciones en las que te llamaron a entrevista.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* COLUMNA 5: ACEPTADO */}
-            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('aceptado')}`}>
-              <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <span className="font-extrabold text-[11px] text-emerald-800 dark:text-emerald-400 tracking-wider">ACEPTADO</span>
-                <span className="bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-                  {crmItems.filter(i => i.status === 'aceptado').length}
-                </span>
-              </div>
-              <div className="space-y-3 flex-1">
-                {crmItems.filter(i => i.status === 'aceptado').map(item => (
-                  <div key={item.id} className="bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-800 rounded-xl p-3.5 shadow-2xs space-y-2">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-bold text-slate-900 dark:text-white text-xs">{item.company}</h3>
-                      <button onClick={() => deleteCrmItem(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400">
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.role}</p>
-                    <div className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-xs sm:text-[9px] font-bold p-1.5 rounded-lg text-center">
-                      🎉 ¡Proceso USCIS iniciado!
-                    </div>
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
-                      <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
-                    </div>
-                  </div>
-                ))}
-                {crmItems.filter(i => i.status === 'aceptado').length === 0 && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic p-3 text-center leading-relaxed">
-                    Aquí verás las ofertas que aceptaste.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* COLUMNA 6: NO RESPONDIDO / RECHAZADA */}
-            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('cerradas')}`}>
-              <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
-                <span className="font-extrabold text-[11px] text-rose-800 dark:text-rose-400 tracking-wider">NO RESPONDIDO / RECHAZADO</span>
-                <span className="bg-white dark:bg-slate-800 text-rose-700 dark:text-rose-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
-                  {crmItems.filter(i => i.status === 'no_respondido' || i.status === 'rechazada').length}
-                </span>
-              </div>
-              <div className="space-y-3 flex-1">
-                {crmItems.filter(i => i.status === 'no_respondido' || i.status === 'rechazada').map(item => (
-                  <div key={item.id} className="bg-white dark:bg-slate-900 border border-rose-200 dark:border-rose-800 rounded-xl p-3.5 shadow-2xs space-y-2 opacity-80">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-bold text-slate-900 dark:text-white text-xs">{item.company}</h3>
-                      <button onClick={() => deleteCrmItem(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400">
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.role}</p>
-                    <div className="bg-rose-50 dark:bg-rose-500/10 text-rose-800 dark:text-rose-300 text-xs sm:text-[9px] font-bold p-1.5 rounded-lg text-center">
-                      {item.status === 'no_respondido' ? '⌛ Expirado (21 días sin respuesta)' : '❌ Postulación rechazada'}
-                    </div>
-                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                      <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
-                      <button
-                        onClick={() => changeCrmStatus(item.id, 'entrevista')}
-                        className="text-xs sm:text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg"
-                      >
-                        Me respondieron
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {crmItems.filter(i => i.status === 'no_respondido' || i.status === 'rechazada').length === 0 && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 italic p-3 text-center leading-relaxed">
-                    Si una empresa no responde en 21 días, la tarjeta pasa aquí. Si luego te responden, puedes reactivarla.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <CrmTab
+          crmItems={crmItems}
+          crmError={crmError}
+          crmLoading={crmLoading}
+          applicationsThisWeek={applicationsThisWeek}
+          weeklyTarget={weeklyTarget}
+          searchHealthPercentage={searchHealthPercentage}
+          pendingFollowUps={pendingFollowUps}
+          changeCrmStatus={changeCrmStatus}
+          deleteCrmItem={deleteCrmItem}
+          daysSinceApplied={daysSinceApplied}
+          markFollowupSent={markFollowupSent}
+          openEmailFor={openEmailFor}
+          renderReplyControl={renderReplyControl}
+          saveNotes={saveNotes}
+          editingNotesId={editingNotesId}
+          setEditingNotesId={setEditingNotesId}
+          tempNotes={tempNotes}
+          setTempNotes={setTempNotes}
+          setIsManualModalOpen={setIsManualModalOpen}
+          setShowInterviewSimulator={setShowInterviewSimulator}
+          setSimulatorJob={setSimulatorJob}
+          goToJobs={() => setActiveTab('jobs')}
+        />
       )}
 
       {/* TAB 5: ASISTENTES IA */}
@@ -2377,6 +1584,7 @@ return (
       )}
     </main>
 
+    <PullToRefresh />
     <MobileTabBar
       activeTab={activeTab}
       badges={{ crm: pendingFollowUps }}
