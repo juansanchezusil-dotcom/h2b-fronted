@@ -15,23 +15,16 @@ import {
   CheckCircle2,
   Search,
   Sparkles,
-  RefreshCw,
   Plus,
   Trash2,
   MoveRight,
   TrendingUp,
   FileText,
   UserCheck,
-  Globe,
   MapPin,
   Calendar,
   Users,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  AlertCircle,
   Clock,
-  StickyNote,
   XCircle,
   CheckCircle,
   X,
@@ -301,6 +294,7 @@ export default function Home() {
   const [totalAgenciesCount, setTotalAgenciesCount] = useState<number>(0)
   // Totales del catálogo completo (sin filtros): no cambian al buscar
   const [catalogTotals, setCatalogTotals] = useState({ jobs: 0, employers: 0, agencies: 0 })
+  const [catalogLoaded, setCatalogLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [selectedJob, setSelectedJob] = useState<any | null>(null)
   useBackToClose(!!selectedJob, () => setSelectedJob(null))
@@ -623,21 +617,17 @@ useEffect(() => {
 
 // CARGA INICIAL DE TOTALES
 useEffect(() => {
+  // Las tres cuentas van a la vez: antes se esperaban una tras otra
   const fetchInitialCounts = async () => {
-    const { count: cJobs } = await supabase
-      .from('jobs')
-      .select('*', { count: 'exact', head: true })
+    const [{ count: cJobs }, { count: cEmployers }, { count: cAgencies }] = await Promise.all([
+      supabase.from('jobs').select('*', { count: 'exact', head: true }),
+      supabase.from('sponsor_companies').select('*', { count: 'exact', head: true }),
+      supabase.from('sponsor_agencies').select('*', { count: 'exact', head: true }),
+    ])
     if (cJobs !== null) { setTotalJobsCount(cJobs); setCatalogTotals(t => ({ ...t, jobs: cJobs })) }
-
-    const { count: cEmployers } = await supabase
-      .from('sponsor_companies')
-      .select('*', { count: 'exact', head: true })
     if (cEmployers !== null) { setTotalEmployersCount(cEmployers); setCatalogTotals(t => ({ ...t, employers: cEmployers })) }
-
-    const { count: cAgencies } = await supabase
-      .from('sponsor_agencies')
-      .select('*', { count: 'exact', head: true })
     if (cAgencies !== null) { setTotalAgenciesCount(cAgencies); setCatalogTotals(t => ({ ...t, agencies: cAgencies })) }
+    setCatalogLoaded(true)
   }
   fetchInitialCounts()
 }, [])
@@ -1386,18 +1376,19 @@ return (
       {activeTab === 'dashboard' && (
         <div className="space-y-6">
           <InstallAppBanner />
-          <div className="bg-gradient-to-r from-[#091E3A] via-[#0F2B48] to-[#1A365D] rounded-2xl p-6 md:p-8 text-white relative overflow-hidden shadow-md">
+          <div className="bg-gradient-to-r from-[#091E3A] via-[#0F2B48] to-[#1A365D] rounded-2xl p-5 sm:p-6 md:p-8 text-white relative overflow-hidden shadow-md">
             <span className="inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold px-3 py-1 rounded-full mb-3">
               📣 Ofertas oficiales del DOL, actualizadas a diario
             </span>
-            <h1 className="text-2xl md:text-3xl font-black mb-2 tracking-tight">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black mb-2 tracking-tight">
               ¡Bienvenido a tu Centro de Control H2B!
             </h1>
-            <p className="text-slate-300 text-xs md:text-sm max-w-2xl mb-6 leading-relaxed">
+            {/* En celular se omite: el título y los pasos ya lo dicen, y así Tu Prioridad sube */}
+            <p className="hidden sm:block text-slate-300 text-xs md:text-sm max-w-2xl mb-6 leading-relaxed">
               Encuentra ofertas H-2B oficiales, empresas con visas aprobadas por USCIS y agencias reguladas, y lleva el seguimiento de cada postulación.
             </p>
             {/* BARRA DE PROGRESO — BÚSCALAS / POSTULA / VIAJA */}
-            <ol aria-label="Tu avance" className="flex items-start mb-6 max-w-md">
+            <ol aria-label="Tu avance" className="flex items-start mt-4 sm:mt-0 mb-5 sm:mb-6 max-w-md">
               {(() => {
                 const hasApplied = crmItems.some(i => i.status !== 'guardadas')
                 const hasAccepted = crmItems.some(i => i.status === 'aceptado')
@@ -1452,7 +1443,7 @@ return (
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setActiveTab('jobs')}
-                className="bg-[#f5c518] hover:bg-[#e0b30f] text-[#0B2545] font-bold text-xs px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
+                className="w-full sm:w-auto justify-center min-h-11 bg-[#f5c518] hover:bg-[#e0b30f] text-[#0B2545] font-bold text-sm sm:text-xs px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2 shadow-sm"
               >
                 <Search className="w-4 h-4" /> Explora las Vacantes
               </button>
@@ -1460,19 +1451,34 @@ return (
           </div>
 
           {/* TU PRIORIDAD — la única acción que más importa ahora mismo */}
-          {nextAction && (
-            <div className="bg-white dark:bg-slate-900 border-2 border-[#f5c518]/60 dark:border-[#f5c518]/40 rounded-2xl p-5 md:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                <nextAction.icon className="w-6 h-6" />
+          {!nextAction && crmLoading && (
+            <div role="status" aria-label="Cargando tu prioridad" className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4 motion-safe:animate-pulse">
+              <div className="flex items-start gap-3 flex-1">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0" />
+                <div className="flex-1 space-y-2 pt-1">
+                  <div className="h-2.5 w-24 rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
+                  <div className="h-3 w-full rounded bg-slate-100 dark:bg-slate-800/70" />
+                </div>
               </div>
-              <div className="flex-1">
-                <span className="text-xs sm:text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">🎯 Tu prioridad</span>
-                <h2 className="text-base font-black text-slate-900 dark:text-white mt-0.5">{nextAction.title}</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{nextAction.desc}</p>
+              <div className="h-11 sm:h-9 w-full sm:w-32 rounded-xl bg-slate-100 dark:bg-slate-800/70" />
+            </div>
+          )}
+          {nextAction && (
+            <div className="bg-white dark:bg-slate-900 border-2 border-[#f5c518]/60 dark:border-[#f5c518]/40 rounded-2xl p-4 sm:p-5 md:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <nextAction.icon className="w-5 h-5 sm:w-6 sm:h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs sm:text-[10px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">🎯 Tu prioridad</span>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white mt-0.5">{nextAction.title}</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{nextAction.desc}</p>
+                </div>
               </div>
               <button
                 onClick={nextAction.onClick}
-                className="bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shrink-0 whitespace-nowrap"
+                className="w-full sm:w-auto min-h-11 sm:min-h-0 bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-sm sm:text-xs px-5 py-2.5 rounded-xl transition-all shrink-0 whitespace-nowrap"
               >
                 {nextAction.buttonLabel}
               </button>
@@ -1482,51 +1488,35 @@ return (
           {/* Avance del Compromiso de PRO y, si falta poco, aviso de vencimiento */}
           <MembershipNotices userId={onboardingUserId} />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-              <div>
-                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">OFERTA DE EMPLEO (DOL)</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{catalogTotals.jobs}</p>
-                <p className="text-xs sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> Ofertas publicadas
-                </p>
-              </div>
-              <div className="w-11 h-11 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl flex items-center justify-center">
-                <Briefcase className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-              <div>
-                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">EMPRESAS USCIS</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{catalogTotals.employers}</p>
-                <p className="text-xs sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">● En el catálogo</p>
-              </div>
-              <div className="w-11 h-11 bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl flex items-center justify-center">
-                <Building2 className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-              <div>
-                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AGENCIAS REGULADAS</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{catalogTotals.agencies}</p>
-                <p className="text-xs sm:text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">● En el catálogo</p>
-              </div>
-              <div className="w-11 h-11 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-            </div>
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-              <div>
-                <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">TU MAPA H2B</p>
-                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{checklistPercentage}%</p>
-                <p className="text-xs sm:text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5">
-                  {checklistDone > 0 ? `${checklistDone} de ${CHECKLIST_TOTAL_TASKS} completados` : 'Sin iniciar'}
-                </p>
-              </div>
-              <div className="w-11 h-11 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center">
-                <Compass className="w-5 h-5" />
-              </div>
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {([
+              { tab: 'jobs', label: 'Ofertas (DOL)', value: catalogTotals.jobs, loading: !catalogLoaded, note: 'Ofertas publicadas', noteClass: 'text-emerald-600 dark:text-emerald-400', icon: Briefcase, iconClass: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400' },
+              { tab: 'employers', label: 'Empresas USCIS', value: catalogTotals.employers, loading: !catalogLoaded, note: '● En el catálogo', noteClass: 'text-emerald-600 dark:text-emerald-400', icon: Building2, iconClass: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400' },
+              { tab: 'agencies', label: 'Agencias reguladas', value: catalogTotals.agencies, loading: !catalogLoaded, note: '● En el catálogo', noteClass: 'text-emerald-600 dark:text-emerald-400', icon: ShieldCheck, iconClass: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+              { tab: 'checklist', label: 'Tu Mapa H2B', value: `${checklistPercentage}%`, loading: false, note: checklistDone > 0 ? `${checklistDone} de ${CHECKLIST_TOTAL_TASKS} completados` : 'Sin iniciar', noteClass: 'text-indigo-600 dark:text-indigo-400', icon: Compass, iconClass: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
+            ] as const).map(({ tab, label, value, loading, note, noteClass, icon: Icon, iconClass }) => (
+              <button
+                key={tab}
+                onClick={() => { setActiveTab(tab); window.scrollTo({ top: 0 }) }}
+                className="text-left bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl p-3.5 sm:p-4 flex justify-between items-center gap-2 shadow-sm"
+              >
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-tight">{label}</p>
+                  {loading ? (
+                    <span className="block h-7 w-16 mt-1.5 rounded bg-slate-200 dark:bg-slate-800 motion-safe:animate-pulse" aria-label="Cargando" />
+                  ) : (
+                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{value}</p>
+                  )}
+                  <p className={`text-xs sm:text-[10px] font-semibold mt-0.5 flex items-center gap-1 ${noteClass}`}>
+                    {tab === 'jobs' && <TrendingUp className="w-3 h-3 shrink-0" />}
+                    <span className="truncate">{note}</span>
+                  </p>
+                </div>
+                <div className={`hidden sm:flex w-11 h-11 rounded-xl items-center justify-center shrink-0 ${iconClass}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+              </button>
+            ))}
           </div>
 
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
@@ -1931,9 +1921,32 @@ return (
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Cargando empresas...</p>
+            // Esqueletos: tarjetas en celular, filas de tabla en escritorio
+            <div role="status" aria-label="Cargando empresas">
+              <div className="md:hidden space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-2.5 motion-safe:animate-pulse">
+                    <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-3 w-1/2 rounded bg-slate-100 dark:bg-slate-800/70" />
+                    <div className="flex gap-2 pt-1">
+                      <div className="h-6 w-20 rounded-full bg-slate-100 dark:bg-slate-800/70" />
+                      <div className="h-6 w-16 rounded-full bg-slate-100 dark:bg-slate-800/70" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden md:block bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800 motion-safe:animate-pulse">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-6 px-5 py-4">
+                    <div className="h-4 w-1/4 rounded bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-3 w-1/6 rounded bg-slate-100 dark:bg-slate-800/70" />
+                    <div className="h-3 w-1/6 rounded bg-slate-100 dark:bg-slate-800/70" />
+                    <div className="h-3 w-1/12 rounded bg-slate-100 dark:bg-slate-800/70" />
+                    <div className="ml-auto h-8 w-24 rounded-lg bg-slate-100 dark:bg-slate-800/70" />
+                  </div>
+                ))}
+              </div>
+              <span className="sr-only">Cargando empresas...</span>
             </div>
           ) : (
             <>
@@ -2097,9 +2110,21 @@ return (
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-              <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-2" />
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Cargando agencias...</p>
+            <div role="status" aria-label="Cargando agencias" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 space-y-3 motion-safe:animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-4/5 rounded bg-slate-200 dark:bg-slate-800" />
+                      <div className="h-3 w-1/2 rounded bg-slate-100 dark:bg-slate-800/70" />
+                    </div>
+                  </div>
+                  <div className="h-3 w-full rounded bg-slate-100 dark:bg-slate-800/70" />
+                  <div className="h-9 w-full rounded-xl bg-slate-100 dark:bg-slate-800/70" />
+                </div>
+              ))}
+              <span className="sr-only">Cargando agencias...</span>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -2205,8 +2230,20 @@ return (
           )}
 
           {crmLoading && !crmError && (
-            <div className="flex items-center justify-center gap-2 py-4 text-xs text-slate-500 dark:text-slate-400">
-              <Loader2 className="w-4 h-4 animate-spin" /> Cargando tus postulaciones...
+            // Esqueleto con la forma del tablero: una columna en celular, seis en escritorio
+            <div role="status" aria-label="Cargando tus postulaciones" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-start motion-safe:animate-pulse">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className={`${i > 0 ? 'hidden md:block' : ''} ${i > 1 ? 'md:hidden lg:block' : ''} bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 space-y-3`}>
+                  <div className="h-4 w-1/2 rounded bg-slate-200 dark:bg-slate-800" />
+                  {Array.from({ length: i === 0 ? 3 : 2 }).map((_, j) => (
+                    <div key={j} className="bg-white dark:bg-slate-900 rounded-xl p-3 space-y-2">
+                      <div className="h-3.5 w-4/5 rounded bg-slate-200 dark:bg-slate-800" />
+                      <div className="h-3 w-1/2 rounded bg-slate-100 dark:bg-slate-800/70" />
+                    </div>
+                  ))}
+                </div>
+              ))}
+              <span className="sr-only">Cargando tus postulaciones...</span>
             </div>
           )}
 
