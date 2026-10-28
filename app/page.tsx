@@ -43,6 +43,7 @@ import CVBuilderModal from '@/components/CVBuilderModal';
 import LogoMark from '@/components/LogoMark';
 import MobileTabBar from '@/components/MobileTabBar';
 import InstallAppBanner from '@/components/InstallAppBanner';
+import { PushPromptCard } from '@/components/PushNotifications';
 import AssistantModal from '@/components/AssistantModal';
 import MembershipNotices from '@/components/MembershipNotices';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
@@ -92,7 +93,15 @@ export default function Home() {
   useEffect(() => {
     if (!tabRestored.current) {
       tabRestored.current = true
-      const saved = localStorage.getItem('jta:lastTab')
+      // Un aviso push abre la app con ?tab=crm o ?tab=jobs: esa pestaña manda sobre la guardada
+      const params = new URLSearchParams(window.location.search)
+      const fromLink = params.get('tab')
+      if (fromLink) {
+        params.delete('tab')
+        const qs = params.toString()
+        window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''))
+      }
+      const saved = fromLink && (TABS as string[]).includes(fromLink) ? fromLink : localStorage.getItem('jta:lastTab')
       if (saved && (TABS as string[]).includes(saved) && saved !== activeTab) {
         // localStorage solo existe en el navegador: leerlo al iniciar el estado rompería la hidratación
         // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -1238,6 +1247,7 @@ return (
       {activeTab === 'dashboard' && (
         <div className="space-y-6">
           <InstallAppBanner />
+          <PushPromptCard />
           <div className="bg-gradient-to-r from-[#091E3A] via-[#0F2B48] to-[#1A365D] rounded-2xl p-5 sm:p-6 md:p-8 text-white relative overflow-hidden shadow-md">
             <span className="inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold px-3 py-1 rounded-full mb-3">
               📣 Ofertas oficiales del DOL, actualizadas a diario

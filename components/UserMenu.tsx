@@ -6,6 +6,7 @@ import { useUserAccess } from "@/hooks/useUserAccess";
 import { aiFetch } from "@/lib/aiFetch";
 import { useInstallState } from "@/components/InstallAppBanner";
 import { promptInstall } from "@/lib/pwa";
+import { PushMenuItem } from "@/components/PushNotifications";
 
 interface UserMenuProps {
   onEditProfile?: () => void;
@@ -150,6 +151,7 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
             </svg>
             Mi Perfil
           </button>
+          <PushMenuItem />
           {installState === "prompt" && (
             <button
               onClick={() => {
