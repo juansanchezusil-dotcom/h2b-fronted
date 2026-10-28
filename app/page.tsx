@@ -64,6 +64,19 @@ const AgenciesTab = dynamic(() => import('@/components/AgenciesTab'))
 const AiToolsTab = dynamic(() => import('@/components/AiToolsTab'))
 const JobDetailModal = dynamic(() => import('@/components/JobDetailModal'))
 
+// Columnas del tablero de Mi CRM (la última junta "no respondido" y "rechazada")
+type CrmColumn = 'guardadas' | 'postulado' | 'seguimiento' | 'entrevista' | 'aceptado' | 'cerradas'
+const CRM_COLUMNS: { id: CrmColumn; label: string }[] = [
+  { id: 'guardadas', label: 'Guardadas' },
+  { id: 'postulado', label: 'Postulado' },
+  { id: 'seguimiento', label: 'Seguimiento' },
+  { id: 'entrevista', label: 'Entrevista' },
+  { id: 'aceptado', label: 'Aceptado' },
+  { id: 'cerradas', label: 'Cerradas' },
+]
+const crmColumnOf = (status: CRMItem['status']): CrmColumn =>
+  status === 'no_respondido' || status === 'rechazada' ? 'cerradas' : status
+
 type Tab = 'dashboard' | 'jobs' | 'employers' | 'agencies' | 'crm' | 'ai' | 'checklist'
 const TABS: Tab[] = ['dashboard', 'jobs', 'employers', 'agencies', 'crm', 'ai', 'checklist']
 // Orden de la barra inferior del celular (las de "Más" al final); el deslizamiento lo sigue
@@ -360,6 +373,15 @@ export default function Home() {
 
 
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null)
+  // Celular: Mi CRM muestra una columna a la vez; null = la más urgente que tenga postulaciones
+  const [crmColumn, setCrmColumn] = useState<CrmColumn | null>(null)
+  const crmChipsRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    // Deja a la vista el chip de la columna abierta: la fila se desplaza de lado (nunca mueve la página)
+    const row = crmChipsRef.current
+    const chip = row?.querySelector<HTMLElement>('[aria-selected="true"]')
+    if (row && chip) row.scrollLeft = chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2
+  }, [activeTab, crmColumn, crmLoading])
   const [tempNotes, setTempNotes] = useState<string>('')
 
   // Modal Postulación Manual
@@ -1113,6 +1135,16 @@ const getNextAction = (): NextAction | null => {
 }
 
 const nextAction = getNextAction()
+const crmCounts = CRM_COLUMNS.reduce(
+  (acc, c) => ({ ...acc, [c.id]: crmItems.filter((i) => crmColumnOf(i.status) === c.id).length }),
+  {} as Record<CrmColumn, number>
+)
+const visibleCrmColumn: CrmColumn =
+  crmColumn ??
+  (['seguimiento', 'entrevista', 'postulado', 'guardadas', 'aceptado', 'cerradas'] as CrmColumn[]).find((c) => crmCounts[c] > 0) ??
+  'guardadas'
+// En celular solo se ve la columna elegida; en escritorio, todas
+const crmColClass = (c: CrmColumn) => (visibleCrmColumn === c ? 'flex' : 'hidden md:flex')
 const activeJobFilters =
   [selectedSeason !== 'ALL', selectedJobState !== 'ALL', selectedJobSector !== 'ALL', onlyHiresAbroad, jobSortBy !== 'recent'].filter(Boolean).length
 // Para la etiqueta "temporada actual" del filtro de Ofertas (ver nota junto a selectedSeason)
@@ -1797,19 +1829,19 @@ return (
 
       {/* MI CRM — CENTRO DE COMANDO KANBAN */}
       {activeTab === 'crm' && (
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-white">Centro de Comando de Postulaciones</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">Centro de Comando de Postulaciones</h1>
+                <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Gestiona tus postulaciones, seguimiento de 7-14-21 días, entrevistas y estados finales de forma visual.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsManualModalOpen(true)}
-                className="relative z-10 cursor-pointer bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-xs px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                className="relative z-10 cursor-pointer w-full md:w-auto justify-center min-h-11 md:min-h-0 bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-sm md:text-xs px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
               >
                 <Plus className="w-4 h-4" />
                 Agregar Postulación Manual
@@ -1875,9 +1907,35 @@ return (
             />
           )}
 
+          {!crmError && !crmLoading && crmItems.length > 0 && (
+            <div ref={crmChipsRef} role="tablist" aria-label="Columnas de Mi CRM" className="md:hidden relative flex gap-2 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1">
+              {CRM_COLUMNS.map((c) => {
+                const active = visibleCrmColumn === c.id
+                return (
+                  <button
+                    key={c.id}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setCrmColumn(c.id)}
+                    className={`shrink-0 inline-flex items-center gap-1.5 min-h-10 px-3.5 rounded-full text-xs font-bold border transition-colors ${
+                      active
+                        ? 'bg-[#0B4079] border-[#0B4079] text-white'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
+                    }`}
+                  >
+                    {c.label}
+                    <span className={`min-w-5 h-5 px-1 rounded-full text-[11px] leading-5 text-center ${active ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'} ${c.id === 'seguimiento' && pendingFollowUps > 0 && !active ? '!bg-rose-600 text-white' : ''}`}>
+                      {crmCounts[c.id]}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           <div className={`${crmError || crmLoading || crmItems.length === 0 ? "hidden" : "grid"} grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-start overflow-x-auto pb-4`}>
             {/* COLUMNA 1: GUARDADAS */}
-            <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
+            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('guardadas')}`}>
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-slate-500 dark:text-slate-400 tracking-wider">GUARDADAS</span>
                 <span className="bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
@@ -1939,7 +1997,7 @@ return (
             </div>
 
             {/* COLUMNA 2: POSTULADO */}
-            <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
+            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('postulado')}`}>
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-sky-500 dark:text-sky-400 tracking-wider">POSTULADO</span>
                 <span className="bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
@@ -2010,7 +2068,7 @@ return (
             </div>
 
             {/* COLUMNA 3: SEGUIMIENTO (7-14-21 DÍAS) */}
-            <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
+            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('seguimiento')}`}>
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-sky-500 dark:text-sky-400 tracking-wider">SEGUIMIENTO</span>
                 <span className="bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
@@ -2091,7 +2149,7 @@ return (
             </div>
 
             {/* COLUMNA 4: ENTREVISTA */}
-            <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
+            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('entrevista')}`}>
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-indigo-500 dark:text-indigo-400 tracking-wider">ENTREVISTA</span>
                 <span className="bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
@@ -2172,7 +2230,7 @@ return (
             </div>
 
             {/* COLUMNA 5: ACEPTADO */}
-            <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
+            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('aceptado')}`}>
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-emerald-800 dark:text-emerald-400 tracking-wider">ACEPTADO</span>
                 <span className="bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
@@ -2206,7 +2264,7 @@ return (
             </div>
 
             {/* COLUMNA 6: NO RESPONDIDO / RECHAZADA */}
-            <div className="bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex flex-col space-y-3">
+            <div className={`bg-slate-100/70 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl p-3 md:min-h-[500px] flex-col space-y-3 ${crmColClass('cerradas')}`}>
               <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200 dark:border-slate-700">
                 <span className="font-extrabold text-[11px] text-rose-800 dark:text-rose-400 tracking-wider">NO RESPONDIDO / RECHAZADO</span>
                 <span className="bg-white dark:bg-slate-800 text-rose-700 dark:text-rose-300 font-bold text-xs sm:text-[10px] px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
