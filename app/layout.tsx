@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import PwaInit from "@/components/PwaInit";
+import ErrorReporter from "@/components/ErrorReporter";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -62,6 +63,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <PwaInit />
+        <ErrorReporter />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           {children}
         </ThemeProvider>

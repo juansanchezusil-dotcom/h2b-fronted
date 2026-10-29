@@ -1,17 +1,19 @@
 'use client' // Los límites de error deben ser componentes de cliente
 
 import { useEffect } from 'react'
+import { reportError } from '@/lib/reportError'
 
-// En esta versión de Next el reintento se llama unstable_retry (antes era reset).
+// retry vuelve a pedir y dibujar la pantalla (estable desde Next 16.3; antes unstable_retry)
 export default function Error({
   error,
-  unstable_retry,
+  retry,
 }: {
   error: Error & { digest?: string }
-  unstable_retry: () => void
+  retry: () => void
 }) {
   useEffect(() => {
     console.error(error)
+    reportError('pantalla', error)
   }, [error])
 
   return (
@@ -23,7 +25,7 @@ export default function Error({
         </p>
         <button
           type="button"
-          onClick={() => unstable_retry()}
+          onClick={() => retry()}
           className="rounded-xl bg-[#C89B3C] px-5 py-3 text-sm font-bold text-[#08131F] shadow-md hover:bg-[#b08833] transition"
         >
           Intentar de nuevo

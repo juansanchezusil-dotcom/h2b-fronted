@@ -8,6 +8,7 @@ import EngagementPanel from '@/components/EngagementPanel'
 import ClassOffersPanel from '@/components/ClassOffersPanel'
 import MapLeadsPanel from '@/components/MapLeadsPanel'
 import ResultadosPanel from '@/components/ResultadosPanel'
+import ErrorsPanel from '@/components/ErrorsPanel'
 
 interface Acceso {
   email: string
@@ -226,7 +227,11 @@ export default function AdminPage() {
         <RadarPanel />
       </Section>
 
-      <Section title="Correos automáticos" hint="Renovación y reenganche: estado, pruebas y a quién se escribiría.">
+      <Section title="Errores de la app" hint="Fallas en los celulares de los miembros (últimos 7 días). Te llega un resumen diario por correo si hay.">
+        <ErrorsPanel />
+      </Section>
+
+      <Section title="Correos automáticos"hint="Renovación y reenganche: estado, pruebas y a quién se escribiría.">
         <EngagementPanel />
       </Section>
     </div>

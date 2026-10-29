@@ -84,7 +84,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // manifest, sw.js y offline.html se piden sin sesión (instalar la app y la página sin conexión)
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw\\.js|offline\\.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // manifest, sw.js y offline.html se piden sin sesión (instalar la app y la página sin conexión), y los errores
+    // de la app se reportan aunque la persona aún no haya entrado
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw\\.js|offline\\.html|api/client-errors|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
