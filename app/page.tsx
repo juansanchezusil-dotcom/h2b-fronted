@@ -32,6 +32,7 @@ import MobileTabBar from '@/components/MobileTabBar';
 import InstallAppBanner from '@/components/InstallAppBanner';
 import { PushPromptCard } from '@/components/PushNotifications';
 import PullToRefresh from '@/components/PullToRefresh';
+import { aiFetch } from '@/lib/aiFetch';
 import AssistantModal from '@/components/AssistantModal';
 import MembershipNotices from '@/components/MembershipNotices';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
@@ -109,8 +110,18 @@ export default function Home() {
       // Un aviso push abre la app con ?tab=crm o ?tab=jobs: esa pestaña manda sobre la guardada
       const params = new URLSearchParams(window.location.search)
       const fromLink = params.get('tab')
-      if (fromLink) {
+      // Llegó tocando un aviso: se anota para medir si los avisos sirven (ver /admin)
+      if (params.get('from') === 'push') {
+        void aiFetch('/api/push', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind: params.get('kind') }),
+        }).catch(() => {})
+      }
+      if (fromLink || params.has('from')) {
         params.delete('tab')
+        params.delete('from')
+        params.delete('kind')
         const qs = params.toString()
         window.history.replaceState(null, '', window.location.pathname + (qs ? `?${qs}` : ''))
       }

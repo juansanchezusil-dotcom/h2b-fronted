@@ -205,8 +205,9 @@ export const labelForStatus = (status: string) => {
   return labels[status] || 'Actualizado'
 }
 
-// Clave para reconocer la misma postulación aunque cambien mayúsculas o espacios
-export const crmKey = (company: string, role: string) => `${company}|${role}`.trim().toLowerCase()
+// Clave para reconocer la misma postulación aunque cambien mayúsculas o espacios (también los de en medio)
+const normalizeKeyPart = (s: string) => s.trim().replace(/\s+/g, ' ')
+export const crmKey = (company: string, role: string) => `${normalizeKeyPart(company)}|${normalizeKeyPart(role)}`.toLowerCase()
 
 // Columnas del tablero de Mi CRM (la última junta "no respondido" y "rechazada")
 export type CrmColumn = 'guardadas' | 'postulado' | 'seguimiento' | 'entrevista' | 'aceptado' | 'cerradas'

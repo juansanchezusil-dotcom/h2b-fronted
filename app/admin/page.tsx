@@ -9,6 +9,7 @@ import ClassOffersPanel from '@/components/ClassOffersPanel'
 import MapLeadsPanel from '@/components/MapLeadsPanel'
 import ResultadosPanel from '@/components/ResultadosPanel'
 import ErrorsPanel from '@/components/ErrorsPanel'
+import PushStatsPanel from '@/components/PushStatsPanel'
 
 interface Acceso {
   email: string
@@ -227,7 +228,11 @@ export default function AdminPage() {
         <RadarPanel />
       </Section>
 
-      <Section title="Errores de la app" hint="Fallas en los celulares de los miembros (últimos 7 días). Te llega un resumen diario por correo si hay.">
+      <Section title="Avisos push" hint="Últimos 30 días: cuántos se enviaron y cuántos abrieron la app desde el aviso.">
+        <PushStatsPanel />
+      </Section>
+
+      <Section title="Errores de la app"hint="Fallas en los celulares de los miembros (últimos 7 días). Te llega un resumen diario por correo si hay.">
         <ErrorsPanel />
       </Section>
 
