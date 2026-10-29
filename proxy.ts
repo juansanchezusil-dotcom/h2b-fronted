@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasActiveMembership } from "@/lib/membership";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // mapa.juanteavisa.com muestra directo el Mapa H2B público (abierto, sin cuenta)
   const host = request.headers.get("host") || "";
   if (host.startsWith("mapa.")) {
