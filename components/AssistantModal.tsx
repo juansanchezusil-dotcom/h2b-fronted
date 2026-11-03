@@ -20,15 +20,10 @@ export default function AssistantModal({ isOpen, label, onClose, children }: Ass
 
   useEffect(() => {
     if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
     // El fondo no se desplaza mientras la ventana está abierta
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
-      window.removeEventListener('keydown', onKey);
       document.body.style.overflow = previous;
     };
   }, [isOpen, onClose]);

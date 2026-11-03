@@ -2,11 +2,34 @@
 
 import { useEffect, useRef } from 'react';
 
-// Hace que el botón "Atrás" del celular cierre el modal en vez de salir de la
+// Modales abiertos, del más viejo al más nuevo: Escape cierra solo el de encima
+const openModals: object[] = [];
+
+// Hace que el botón "Atrás" del celular y la tecla Escape cierren el modal en vez de salir de la
 // app (o mandar al login). Al abrir, mete una entrada falsa en el historial;
 // "Atrás" la consume y solo cierra el modal.
 export function useBackToClose(isOpen: boolean, onClose?: () => void) {
   const pushed = useRef(false);
+  const latestClose = useRef(onClose);
+  useEffect(() => {
+    latestClose.current = onClose;
+  });
+
+  useEffect(() => {
+    if (!isOpen || !onClose) return;
+    const token = {};
+    openModals.push(token);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && openModals[openModals.length - 1] === token) latestClose.current?.();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      const at = openModals.indexOf(token);
+      if (at >= 0) openModals.splice(at, 1);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen || !onClose) return;
