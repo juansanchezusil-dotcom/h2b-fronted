@@ -4,6 +4,8 @@
 // Mismo piso en el backend: src/admin/radar.ts (RADAR.goal). Si se cambia allá, cambiarlo aquí también.
 
 export const COMMITMENT_FLOOR = 40
+// Primer hito del plan, antes del reto completo. El dashboard de la masterclass usa el mismo número (META).
+export const FIRST_MILESTONE = 10
 
 export type GoalTier = 'alto' | 'medio' | 'clientes'
 

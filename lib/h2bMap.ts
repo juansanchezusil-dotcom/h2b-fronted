@@ -2,7 +2,7 @@
 // avance del Compromiso). Función pura, sin base ni navegador, para poder probarla. Los textos no
 // prometen visa, patrocinio, entrevista ni empleo: describen dónde está la persona y qué sigue.
 
-import { goalFor, type Goal } from './goals'
+import { FIRST_MILESTONE, goalFor, type Goal } from './goals'
 const DAY = 24 * 60 * 60 * 1000
 
 export type StageId = 'prepare' | 'search' | 'apply' | 'followup' | 'interview'
@@ -129,7 +129,7 @@ export function buildMap(input: MapInput): H2BMapData {
   const { profile, hasCv, crm, steps, now } = input
   const goal = goalFor(profile.industry, profile.targetRole)
   // Primera meta del plan: mínimo 10 empresas distintas. La recomendada por puesto (goal) es una guía aparte.
-  const MAP_GOAL = 10
+  const MAP_GOAL = FIRST_MILESTONE
 
   const count = (status: string) => crm.filter((i) => i.status === status).length
   const guardadas = count('guardadas')

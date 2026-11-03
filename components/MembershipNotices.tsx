@@ -3,6 +3,7 @@
 import { CalendarClock, Target } from 'lucide-react'
 import { COMMITMENT_DAYS, COMMITMENT_GOAL, type Notices } from '@/lib/membershipNotices'
 import { useMembershipNotices } from '@/hooks/useMembershipNotices'
+import { FIRST_MILESTONE } from '@/lib/goals'
 
 // Enlace para renovar, configurable en Vercel sin tocar código (el mismo que usa la pantalla de sin acceso)
 const MEMBERSHIP_URL = process.env.NEXT_PUBLIC_MEMBERSHIP_URL
@@ -64,15 +65,15 @@ export function NoticesView({ notices, renewUrl }: { notices: Notices; renewUrl?
         </div>
         {/* Una sola cadena: con expresiones seguidas de texto en varias líneas el compilador se comía el espacio */}
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          {`El reto: perfil completo, CV hecho y ${COMMITMENT_GOAL} postulaciones a empresas distintas en ${COMMITMENT_DAYS} días. Es tu avance, no una promesa de resultado. Se registran cuando postulas desde la app o mueves una oferta fuera de “guardadas”.`}
+          {`El reto: perfil completo, CV hecho y ${COMMITMENT_GOAL} postulaciones a empresas distintas en ${COMMITMENT_DAYS} días. Tu primer hito son ${FIRST_MILESTONE}. Mira, encontrar patrocinador no es suerte, es sistema, y el sistema empieza por postular. No te prometo una entrevista ni una visa: esto mide tu avance. Cuenta cuando postulas desde la app o mueves una oferta fuera de “guardadas”.`}
         </p>
         {notices.postulaciones >= COMMITMENT_GOAL ? (
           <p role="status" className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-            {`Llegaste a las ${COMMITMENT_GOAL} postulaciones. Esto lo hiciste tú. Sigue con tu seguimiento 7-14-21.`}
+            {`Llegaste a las ${COMMITMENT_GOAL} postulaciones. Esto lo hiciste tú, no yo. Ahora viene lo que casi nadie hace: tu seguimiento a los 7, 14 y 21 días.`}
           </p>
         ) : notices.dia !== null && notices.dia >= COMMITMENT_DAYS ? (
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-            {`Llevas ${notices.postulaciones} de ${COMMITMENT_GOAL}. No pasa nada: cuéntame qué te frenó respondiendo cualquier correo mío y lo vemos juntos.`}
+            {`Llevas ${notices.postulaciones} de ${COMMITMENT_GOAL}, y no pasa nada. Casi siempre hay una razón concreta: no encontrar ofertas, el miedo al inglés o dudar de si una oferta es real. Respóndeme cualquier correo, cuéntame cuál es la tuya y lo vemos juntos.`}
           </p>
         ) : null}
       </div>
