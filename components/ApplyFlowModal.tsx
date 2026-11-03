@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
 import { aiFetch } from '@/lib/aiFetch';
 import { errorMessage } from '@/lib/errors';
+import { mailtoHref } from '@/lib/mailto';
 
 // Flujo único de postulación: genera el correo con el CV real del candidato,
 // lo abre listo para enviar al contacto real de la oferta, y al confirmar que
@@ -195,7 +196,7 @@ export default function ApplyFlowModal({
     if (!subject || !body) return;
     setSent(true);
     if (provider === 'mailto') {
-      window.location.href = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = mailtoHref(contactEmail, { subject, body });
       return;
     }
     const url =

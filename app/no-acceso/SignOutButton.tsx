@@ -1,11 +1,13 @@
 "use client";
 
 import { supabase } from "@/lib/supabaseClient";
+import { clearSessionData } from "@/lib/clearSessionData";
 
 // Cierra la sesión (si la hay) y vuelve al login para elegir otra cuenta de Google
 export default function SignOutButton() {
   const handleClick = async () => {
     await supabase.auth.signOut();
+    clearSessionData();
     window.location.href = "/login";
   };
 

@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 
   if (error) {
     console.error("Error calculando matches:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "No se pudieron calcular las coincidencias." }, { status: 500 });
   }
 
   return NextResponse.json(data || []);

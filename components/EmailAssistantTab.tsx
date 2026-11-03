@@ -5,6 +5,7 @@ import { Mail, Copy, ExternalLink, Sparkles, Check, Loader2, FileText } from 'lu
 import { supabase } from '@/lib/supabaseClient';
 import { aiFetch } from '@/lib/aiFetch';
 import { errorMessage } from '@/lib/errors';
+import { mailtoHref } from '@/lib/mailto';
 
 interface SavedOffer {
   company: string;
@@ -191,7 +192,7 @@ export function EmailAssistantTab({
 
   const handleMailto = () => {
     if (!subject || !body) return;
-    window.location.href = `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoHref(contactEmail, { subject, body });
   };
 
   const handleOpenWebmail = (provider: 'gmail' | 'outlook') => {

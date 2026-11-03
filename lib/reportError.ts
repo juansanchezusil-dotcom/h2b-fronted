@@ -35,7 +35,7 @@ export function reportError(kind: ErrorKind, err: unknown) {
         method: 'POST',
         keepalive: true,
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ kind, message: message.slice(0, 500), stack: stack?.slice(0, 4000), url: location.pathname + location.search }),
+        body: JSON.stringify({ kind, message: message.slice(0, 500), stack: stack?.slice(0, 4000), url: location.pathname }),
       })
     })().catch(() => {})
   } catch {

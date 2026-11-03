@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasActiveMembership } from "@/lib/membership";
 
+const APP_ORIGIN = "https://h2b-fronted.vercel.app";
+
 export async function proxy(request: NextRequest) {
   // mapa.juanteavisa.com muestra directo el Mapa H2B público (abierto, sin cuenta)
   const host = request.headers.get("host") || "";
@@ -11,7 +13,11 @@ export async function proxy(request: NextRequest) {
     // Solo el Mapa y lo que necesita (política, imágenes de compartir) viven en este dominio. El login y la
     // app están en el dominio de la app: el inicio de sesión de Google solo está autorizado allí.
     const own = p === "/mapa" || p === "/privacidad" || /^\/(opengraph-image|twitter-image|icon|apple-icon)/.test(p);
-    if (!own) return NextResponse.redirect(new URL(p + request.nextUrl.search, "https://h2b-fronted.vercel.app"));
+    if (!own) {
+      // Una ruta como "//otro-sitio.com" cambiaría el dominio de destino: solo se redirige dentro de la app
+      const target = new URL(p + request.nextUrl.search, APP_ORIGIN);
+      return NextResponse.redirect(target.origin === APP_ORIGIN ? target : new URL("/", APP_ORIGIN));
+    }
   }
 
   let response = NextResponse.next({

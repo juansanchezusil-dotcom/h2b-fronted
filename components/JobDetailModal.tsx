@@ -3,6 +3,7 @@
 import { Plus, X, Check } from 'lucide-react'
 import SponsorHistory from '@/components/SponsorHistory'
 import { labelForStatus, crmKey, type Job, type CRMItem, type ApplyFlowJob } from '@/lib/h2b'
+import { mailtoHref } from '@/lib/mailto'
 
 interface JobDetailModalProps {
   selectedJob: Job
@@ -85,7 +86,7 @@ export default function JobDetailModal({
             <strong>Email address to Apply:</strong>{" "}
             {(selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email) ? (
               <a
-                href={`mailto:${selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email}`}
+                href={mailtoHref(String(selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email))}
                 className="text-blue-600 dark:text-blue-400 underline font-medium"
               >
                 {selectedJob.email || selectedJob.recruitment_email || selectedJob.email_to_apply || selectedJob.emp_email}

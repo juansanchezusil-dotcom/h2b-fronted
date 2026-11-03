@@ -7,6 +7,7 @@ import { aiFetch } from "@/lib/aiFetch";
 import { useInstallState } from "@/components/InstallAppBanner";
 import { promptInstall } from "@/lib/pwa";
 import { PushMenuItem } from "@/components/PushNotifications";
+import { clearSessionData } from "@/lib/clearSessionData";
 
 interface UserMenuProps {
   onEditProfile?: () => void;
@@ -51,6 +52,7 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    clearSessionData();
     window.location.href = "/";
   };
 
@@ -66,6 +68,7 @@ export default function UserMenu({ onEditProfile }: UserMenuProps) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "No pudimos borrar tu cuenta. Intenta de nuevo.");
       await supabase.auth.signOut();
+      clearSessionData();
       window.location.href = "/login";
     } catch (err) {
       setDeleteError((err instanceof Error && err.message) || "No pudimos borrar tu cuenta. Intenta de nuevo.");
