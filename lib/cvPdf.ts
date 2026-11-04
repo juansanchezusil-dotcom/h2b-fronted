@@ -3,10 +3,19 @@
 // Certifications, Languages y Availability. El texto del PDF es seleccionable (lo leen los sistemas ATS).
 // La librería se carga solo al descargar, para no pesar en la carga inicial de la app.
 
-import type { BuiltCv } from './cvDocx'
+import { splitLetter, type BuiltCv, type LetterContact } from './cvDocx'
 
 const PAGE_W = 612 // carta de EE. UU., en puntos
 const PAGE_H = 792
+
+// Colores de los modelos de Juan Te Avisa
+type Rgb = [number, number, number]
+const NAVY: Rgb = [11, 23, 48]
+const BLUE: Rgb = [31, 78, 156]
+const GREY: Rgb = [107, 111, 122]
+const GOLD: Rgb = [200, 155, 60]
+const BEIGE: Rgb = [239, 231, 216]
+const RULE: Rgb = [185, 190, 201]
 
 // "Ana_Perez_CV.docx" -> "Ana_Perez_CV.pdf"
 export function pdfFileName(docxName: string): string {
@@ -60,10 +69,12 @@ function cursor(doc: Doc, margin: { left: number; right: number; top: number; bo
       y += n
     },
     // Texto en una o varias líneas; devuelve nada, avanza y
-    paragraph(text: string, opts: { size?: number; style?: 'normal' | 'bold' | 'italic'; align?: 'left' | 'center'; indent?: number; leading?: number; after?: number; bullet?: boolean } = {}) {
+    paragraph(text: string, opts: { size?: number; style?: 'normal' | 'bold' | 'italic'; align?: 'left' | 'center'; indent?: number; leading?: number; after?: number; bullet?: boolean; color?: Rgb } = {}) {
       const size = opts.size ?? 10
       const leading = size * (opts.leading ?? 1.32)
       font(opts.style ?? 'normal', size)
+      doc.setTextColor(...(opts.color ?? NAVY))
+      doc.setFillColor(...(opts.color ?? NAVY))
       const indent = opts.indent ?? 0
       const lines: string[] = doc.splitTextToSize(clean(text), width - indent)
       let first = true
@@ -89,21 +100,22 @@ export async function buildCvPdf(cv: BuiltCv): Promise<Blob> {
   const section = (title: string, keepWith = 0) => {
     c.ensure(44 + keepWith)
     c.gap(14)
-    c.font('bold', 10.5)
-    c.paragraph(title, { size: 10.5, style: 'bold' })
-    doc.setLineWidth(0.6)
+    c.font('bold', 11)
+    c.paragraph(title, { size: 11, style: 'bold', color: BLUE })
+    doc.setLineWidth(0.8)
+    doc.setDrawColor(...BLUE)
     doc.line(c.margin.left, c.y + 1, c.margin.left + c.width, c.y + 1)
     c.gap(7)
   }
 
   // Encabezado
-  c.paragraph((cv.header.fullName || 'YOUR NAME').toUpperCase(), { size: 17, style: 'bold', align: 'center', after: 1 })
-  if (cv.headline) c.paragraph(cv.headline, { size: 10.5, style: 'bold', align: 'center', after: 1 })
-  const contact = [cv.header.city, cv.header.phone, cv.header.email].filter(Boolean).join('  |  ')
-  if (contact) c.paragraph(contact, { size: 10, align: 'center', after: 1 })
+  c.paragraph((cv.header.fullName || 'YOUR NAME').toUpperCase(), { size: 22, style: 'bold', align: 'center', after: 1 })
+  if (cv.headline) c.paragraph(cv.headline, { size: 11.5, style: 'bold', align: 'center', after: 1, color: BLUE })
+  const contact = [cv.header.city, cv.header.phone, cv.header.email].filter(Boolean).join('  \u2022  ')
+  if (contact) c.paragraph(contact, { size: 10, align: 'center', after: 1, color: GREY })
 
   if (cv.summary) {
-    section('PROFESSIONAL SUMMARY')
+    section('PROFILE')
     c.paragraph(cv.summary)
   }
 
@@ -145,27 +157,34 @@ export async function buildCvPdf(cv: BuiltCv): Promise<Blob> {
       const dates = clean(e.dates || '')
       const datesWidth = dates ? doc.getTextWidth(dates) + 8 : 0
       const leftLines: string[] = doc.splitTextToSize(left, c.width - datesWidth)
+      doc.setTextColor(...NAVY)
       doc.text(leftLines[0] || '', c.margin.left, c.y - 2.5)
-      if (dates) doc.text(dates, c.margin.left + c.width, c.y - 2.5, { align: 'right' })
+      if (dates) {
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(...GREY)
+        doc.text(dates, c.margin.left + c.width, c.y - 2.5, { align: 'right' })
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(...NAVY)
+      }
       for (const extra of leftLines.slice(1)) {
         c.ensure(leading)
         c.gap(leading)
         doc.text(extra, c.margin.left, c.y - 2.5)
       }
-      if (e.subtitle) c.paragraph(e.subtitle, { style: 'italic', after: 1.5 })
+      if (e.subtitle) c.paragraph(e.subtitle, { style: 'italic', after: 1.5, color: BLUE })
       for (const b of e.bullets) c.paragraph(b.text, { indent: 14, after: 1.5, bullet: true })
     })
   }
 
   const education = [...cv.education, ...cv.certifications]
   if (education.length) {
-    section('EDUCATION & CERTIFICATIONS')
+    section(cv.certifications.length ? 'EDUCATION & CERTIFICATIONS' : 'EDUCATION')
     education.forEach((t) => c.paragraph(t, { after: 0.5 }))
   }
 
   if (cv.languages.length) {
     section('LANGUAGES')
-    c.paragraph(cv.languages.join('   |   '))
+    c.paragraph(cv.languages.join('   \u2022   '))
   }
 
   if (cv.availability) {
@@ -176,17 +195,70 @@ export async function buildCvPdf(cv: BuiltCv): Promise<Blob> {
   return doc.output('blob')
 }
 
-export async function buildLetterPdf(letter: string, fullName: string): Promise<Blob> {
+export async function buildLetterPdf(letter: string, fullName: string, contact: LetterContact = {}): Promise<Blob> {
   const { jsPDF } = await import('jspdf')
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
-  doc.setProperties({ title: `${fullName || 'Candidate'} - Cover Letter`, creator: 'Juan Te Avisa' })
-  const c = cursor(doc, { left: 72, right: 72, top: 60, bottom: 60 })
+  const name = fullName || 'Your Name'
+  doc.setProperties({ title: `${name} - Cover Letter`, creator: 'Juan Te Avisa' })
 
-  for (const block of letter.split(/\n{2,}/).map((b) => b.trim()).filter(Boolean)) {
-    // Los saltos de línea simples (como en "Sincerely,\nNombre") se respetan
-    const lines = block.split('\n')
-    lines.forEach((line, i) => c.paragraph(line, { size: 11, leading: 1.4, after: i === lines.length - 1 ? 10 : 0 }))
+  // Banda superior beige con filete dorado: nombre, puesto y contacto
+  const info = [contact.phone, contact.email, contact.city].filter((v): v is string => !!v)
+  const bandH = 40 + 26 + (contact.targetRole ? 22 : 0) + info.length * 13 + 22
+  doc.setFillColor(...BEIGE)
+  doc.rect(0, 0, PAGE_W, bandH, 'F')
+  doc.setFillColor(...GOLD)
+  doc.rect(0, bandH, PAGE_W, 2, 'F')
+  const left = 62
+  let y = 40 + 22
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(22)
+  doc.setTextColor(...NAVY)
+  doc.text(clean(name.toUpperCase()), left, y, { charSpace: 2 })
+  if (contact.targetRole) {
+    y += 22
+    doc.setFontSize(12)
+    doc.setTextColor(...BLUE)
+    doc.text(clean(contact.targetRole.toUpperCase()), left, y, { charSpace: 1 })
   }
+  doc.setFontSize(10)
+  doc.setTextColor(...NAVY)
+  for (const v of info) {
+    y += 13
+    doc.text(clean(v), left, y)
+  }
+
+  // Columna izquierda: fecha, filete y referencia al puesto
+  const top = bandH + 38
+  const colW = 165
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+  doc.setFontSize(10.5)
+  doc.text(today, left, top)
+  doc.setDrawColor(...RULE)
+  doc.setLineWidth(0.6)
+  doc.line(left, top + 14, left + colW - 15, top + 14)
+  if (contact.targetRole) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9.5)
+    doc.setTextColor(...GREY)
+    doc.text('Re:', left, top + 36)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.setTextColor(...NAVY)
+    const re: string[] = doc.splitTextToSize(clean(contact.targetRole), colW - 20)
+    re.forEach((l, i) => doc.text(l, left, top + 49 + i * 13))
+  }
+
+  // Columna derecha: saludo, cuerpo, despedida y firma
+  const c = cursor(doc, { left: left + colW + 10, right: left, top, bottom: 50 })
+  const { greeting, paragraphs, closing, signature } = splitLetter(letter, name)
+  c.gap(-14)
+  if (greeting) c.paragraph(greeting, { size: 10.5, leading: 1.45, after: 8 })
+  for (const p of paragraphs) {
+    const lines = p.split('\n')
+    lines.forEach((l, i) => c.paragraph(l, { size: 10.5, leading: 1.5, after: i === lines.length - 1 ? 9 : 0 }))
+  }
+  if (closing) c.paragraph(closing, { size: 10.5, leading: 1.45, after: 10 })
+  if (signature) c.paragraph(signature, { size: 22, style: 'italic', leading: 1.2 })
 
   return doc.output('blob')
 }

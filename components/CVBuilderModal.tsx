@@ -330,12 +330,14 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     }
   };
 
+  const letterContact = { targetRole: profile.targetRole, phone: profile.phone, email: profile.email, city: profile.city };
+
   const handleDownloadLetterPdf = async () => {
     if (!letter) return;
     setDownloading('letter-pdf');
     setError(null);
     try {
-      downloadBlob(await buildLetterPdf(letter.letter, profile.fullName), pdfFileName(docxFileName(profile.fullName, 'Cover_Letter')));
+      downloadBlob(await buildLetterPdf(letter.letter, profile.fullName, letterContact), pdfFileName(docxFileName(profile.fullName, 'Cover_Letter')));
     } catch (err) {
       console.error('No se pudo crear el PDF de la carta:', err);
       setError('No se pudo crear el PDF. Usa Copiar o descarga el Word.');
@@ -349,7 +351,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     setDownloading('letter');
     setError(null);
     try {
-      downloadBlob(await buildLetterDocx(letter.letter, profile.fullName), docxFileName(profile.fullName, 'Cover_Letter'));
+      downloadBlob(await buildLetterDocx(letter.letter, profile.fullName, letterContact), docxFileName(profile.fullName, 'Cover_Letter'));
     } catch (err) {
       console.error('No se pudo crear el Word de la carta:', err);
       setError('No se pudo crear el archivo Word. Usa Copiar y pégala en Word.');
