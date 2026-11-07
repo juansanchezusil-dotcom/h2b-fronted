@@ -104,7 +104,7 @@ interface Letter {
   notes_es: string;
 }
 
-type Stage = 'start' | 'chat' | 'result';
+type Stage = 'start' | 'chat' | 'result' | 'letter';
 
 const ROUTE_LABELS: Record<string, string> = {
   A: 'Experiencia directa',
@@ -285,8 +285,16 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     }
   };
 
+  // La carta se arma con el perfil guardado: no hace falta generar ni descargar el CV antes
+  const openLetterOnly = (p: CandidateProfile) => {
+    setProfile(p);
+    setError(null);
+    setStage('letter');
+  };
+
   const resumeDraft = () => {
     if (!savedDraft) return;
+    setError(null);
     setProfile(savedDraft.profile);
     setTurns(savedDraft.turns);
     setGaps(savedDraft.gaps || []);
@@ -517,6 +525,103 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     setStage('start');
   };
 
+  // Sección de la carta: se usa debajo del CV y también sola, sin depender de haber generado el CV
+  const letterSection = (withBorder: boolean) => (
+        <div className={`space-y-2 ${withBorder ? 'border-t border-slate-100 dark:border-slate-800 pt-4' : ''}`}>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Carta de presentación</h3>
+          {!letter ? (
+            <>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Opcional: con el nombre de la empresa y del contacto, la carta sale personalizada. Si no los tienes, déjalos vacíos.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: 'Empresa', value: letterCompany, set: setLetterCompany, ph: 'Ej. Sugar Bowl Resort', max: 120 },
+                { label: 'Puesto', value: letterRole, set: setLetterRole, ph: profile.targetRole || 'Ej. Line Cook', max: 120 },
+              ].map((f) => (
+                <label key={f.label} className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                  {f.label}
+                  <input
+                    value={f.value}
+                    onChange={(e) => f.set(e.target.value)}
+                    maxLength={f.max}
+                    placeholder={f.ph}
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-normal text-slate-800 dark:text-slate-100"
+                  />
+                </label>
+              ))}
+            </div>
+            <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+              Nombre del contacto o HR (si lo tienes)
+              <input
+                value={letterContactName}
+                onChange={(e) => setLetterContactName(e.target.value)}
+                maxLength={80}
+                placeholder="Ej. Ms. Smith o Alex Smith"
+                className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-normal text-slate-800 dark:text-slate-100"
+              />
+            </label>
+            <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+              Funciones de la oferta (opcional, pega el texto)
+              <textarea
+                value={letterDuties}
+                onChange={(e) => setLetterDuties(e.target.value)}
+                maxLength={1500}
+                rows={3}
+                className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-normal text-slate-800 dark:text-slate-100"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={handleLetter}
+              disabled={letterLoading}
+              className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+            >
+              {letterLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+              {letterLoading ? 'Escribiendo tu carta...' : 'Crear mi carta de presentación'}
+            </button>
+            </>
+          ) : (
+            <>
+              <pre className="whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 max-h-64 overflow-y-auto font-sans">
+                {letter.letter}
+              </pre>
+              {letter.notes_es && (
+                <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
+                  💡 {letter.notes_es}
+                </p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopyLetter}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  {copiedLetter ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedLetter ? 'Copiada' : 'Copiar carta'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadLetter}
+                  disabled={downloading === 'letter'}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  {downloading === 'letter' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar Word
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadLetterPdf}
+                  disabled={downloading === 'letter-pdf'}
+                  className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  {downloading === 'letter-pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar PDF
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#08131F]/80 backdrop-blur-md p-4">
       {/* Shell fijo (no scrollea): así el botón cerrar no se va con el contenido */}
@@ -532,7 +637,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
 
         <div className="px-6 pt-6 pb-3 pr-14 border-b border-slate-100 dark:border-slate-800">
           <h2 className="text-2xl font-extrabold text-[#08131F] dark:text-white">
-            {stage === 'result' ? 'Tu currículum en inglés' : job ? 'Adapta tu CV a esta oferta' : 'Arma tu CV'}
+            {stage === 'letter' ? 'Tu carta de presentación' : stage === 'result' ? 'Tu currículum en inglés' : job ? 'Adapta tu CV a esta oferta' : 'Arma tu CV'}
           </h2>
           {stage === 'chat' && (
             <div className="mt-2 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
@@ -568,6 +673,19 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                     {loading ? 'Adaptando...' : 'Usar mi perfil guardado y adaptar el CV'}
                   </button>
                 )}
+              </div>
+            )}
+
+            {savedDraft && (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 flex items-center justify-between gap-3">
+                <p className="text-xs text-slate-700 dark:text-slate-300">¿Solo necesitas una carta de presentación? Usa tu perfil guardado.</p>
+                <button
+                  type="button"
+                  onClick={() => openLetterOnly(savedDraft.profile)}
+                  className="shrink-0 flex items-center gap-1.5 text-xs font-bold border border-slate-300 dark:border-slate-600 dark:text-slate-100 rounded-lg px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  <FileText className="w-3.5 h-3.5" /> Crear carta
+                </button>
               </div>
             )}
 
@@ -724,6 +842,14 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                   >
                     <Sparkles className="w-3.5 h-3.5" /> Generar mi CV
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => openLetterOnly(profile)}
+                    disabled={loading}
+                    className="shrink-0 flex items-center gap-1.5 text-xs font-bold border border-emerald-600 text-emerald-700 dark:text-emerald-300 disabled:opacity-50 rounded-lg px-3 py-1.5"
+                  >
+                    <FileText className="w-3.5 h-3.5" /> Solo la carta
+                  </button>
                 </div>
               )}
               {!ready && criticalGaps.length > 0 && turns.length > 0 && (
@@ -797,6 +923,33 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
               </button>
             </div>
           </>
+        )}
+
+        {/* ---------- SOLO CARTA ---------- */}
+        {stage === 'letter' && (
+          <div className="p-6 space-y-4 overflow-y-auto">
+            {letterSection(false)}
+            {error && <p className={errorClass}>{error}</p>}
+            <div className="flex gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setStage(ready || !savedDraft ? 'chat' : 'start');
+                }}
+                className="w-1/3 flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 dark:border-slate-700 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+              >
+                <ArrowLeft className="w-4 h-4" /> Volver
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-2/3 rounded-xl bg-[#C89B3C] py-3 text-sm font-bold text-[#08131F] shadow-md hover:bg-[#b08833] transition"
+              >
+                Listo
+              </button>
+            </div>
+          </div>
         )}
 
         {/* ---------- RESULTADO ---------- */}
@@ -880,99 +1033,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
               </button>
             </div>
 
-            <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">Carta de presentación</h3>
-              {!letter ? (
-                <>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Opcional: con el nombre de la empresa y del contacto, la carta sale personalizada. Si no los tienes, déjalos vacíos.
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { label: 'Empresa', value: letterCompany, set: setLetterCompany, ph: 'Ej. Sugar Bowl Resort', max: 120 },
-                    { label: 'Puesto', value: letterRole, set: setLetterRole, ph: profile.targetRole || 'Ej. Line Cook', max: 120 },
-                  ].map((f) => (
-                    <label key={f.label} className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                      {f.label}
-                      <input
-                        value={f.value}
-                        onChange={(e) => f.set(e.target.value)}
-                        maxLength={f.max}
-                        placeholder={f.ph}
-                        className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-normal text-slate-800 dark:text-slate-100"
-                      />
-                    </label>
-                  ))}
-                </div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                  Nombre del contacto o HR (si lo tienes)
-                  <input
-                    value={letterContactName}
-                    onChange={(e) => setLetterContactName(e.target.value)}
-                    maxLength={80}
-                    placeholder="Ej. Ms. Smith o Alex Smith"
-                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-normal text-slate-800 dark:text-slate-100"
-                  />
-                </label>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                  Funciones de la oferta (opcional, pega el texto)
-                  <textarea
-                    value={letterDuties}
-                    onChange={(e) => setLetterDuties(e.target.value)}
-                    maxLength={1500}
-                    rows={3}
-                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-normal text-slate-800 dark:text-slate-100"
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={handleLetter}
-                  disabled={letterLoading}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
-                >
-                  {letterLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                  {letterLoading ? 'Escribiendo tu carta...' : 'Crear mi carta de presentación'}
-                </button>
-                </>
-              ) : (
-                <>
-                  <pre className="whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 max-h-64 overflow-y-auto font-sans">
-                    {letter.letter}
-                  </pre>
-                  {letter.notes_es && (
-                    <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
-                      💡 {letter.notes_es}
-                    </p>
-                  )}
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handleCopyLetter}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    >
-                      {copiedLetter ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copiedLetter ? 'Copiada' : 'Copiar carta'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDownloadLetter}
-                      disabled={downloading === 'letter'}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    >
-                      {downloading === 'letter' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar Word
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDownloadLetterPdf}
-                      disabled={downloading === 'letter-pdf'}
-                      className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold border border-slate-300 dark:border-slate-700 dark:text-slate-200 rounded-xl py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
-                    >
-                      {downloading === 'letter-pdf' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Descargar PDF
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            {letterSection(true)}
 
             {error && <p className={errorClass}>{error}</p>}
 
