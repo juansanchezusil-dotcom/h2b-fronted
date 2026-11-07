@@ -121,7 +121,28 @@ export async function buildCvPdf(cv: BuiltCv): Promise<Blob> {
 
   if (cv.skills.length) {
     section('KEY SKILLS')
-    c.paragraph(cv.skills.join('  ·  '))
+    // Tres columnas con viñeta, igual que el Word
+    const cols = 3
+    const colW = c.width / cols
+    c.font('normal', 10)
+    doc.setTextColor(...NAVY)
+    doc.setFillColor(...NAVY)
+    for (let i = 0; i < cv.skills.length; i += cols) {
+      const row = cv.skills.slice(i, i + cols).map((s) => doc.splitTextToSize(clean(s), colW - 18) as string[])
+      const lines = Math.max(...row.map((r) => r.length))
+      const leading = 13.2
+      c.ensure(lines * leading)
+      const top = c.y
+      row.forEach((r, k) => {
+        const x = c.margin.left + k * colW
+        r.forEach((line, j) => {
+          const baseline = top + (j + 1) * leading
+          if (j === 0) doc.circle(x + 5, baseline - 10 * 0.55 - 2.5, 1.3, 'F')
+          doc.text(line, x + 14, baseline - 2.5)
+        })
+      })
+      c.gap(lines * leading + 1.5)
+    }
   }
 
   const experiences = cv.experiences.filter((e) => e.heading && (e.bullets.length > 0 || e.dates))

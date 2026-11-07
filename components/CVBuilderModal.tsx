@@ -162,6 +162,11 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
   const [letter, setLetter] = useState<Letter | null>(null);
   const [letterLoading, setLetterLoading] = useState(false);
   const [copiedLetter, setCopiedLetter] = useState(false);
+  // Datos opcionales para personalizar la carta; si abrió el CV desde una oferta, parten de ella
+  const [letterCompany, setLetterCompany] = useState(job?.employerName || '');
+  const [letterRole, setLetterRole] = useState(job?.title || '');
+  const [letterContactName, setLetterContactName] = useState('');
+  const [letterDuties, setLetterDuties] = useState(job?.duties || '');
   const [downloading, setDownloading] = useState<'cv' | 'letter' | 'cv-pdf' | 'letter-pdf' | null>(null);
 
   // Cada vez que se abre: vuelve al inicio y precarga lo que ya haya guardado
@@ -307,7 +312,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
       const res = await aiFetch('/api/cv/cover-letter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profile, job: jobPayload }),
+        body: JSON.stringify({ profile, job: letterJob, contact_name: letterContactName.trim() || undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'No se pudo generar la carta.');
@@ -330,7 +335,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     }
   };
 
-  const letterContact = { targetRole: profile.targetRole, phone: profile.phone, email: profile.email, city: profile.city };
+  const letterContact = { targetRole: letterRole.trim() || profile.targetRole, phone: profile.phone, email: profile.email, city: profile.city };
 
   const handleDownloadLetterPdf = async () => {
     if (!letter) return;
@@ -393,6 +398,11 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
   };
 
   const jobPayload = job ? { title: job.title, employer_name: job.employerName, job_duties: job.duties } : undefined;
+  // Solo se manda la oferta de la carta si la persona llenó algo; sin datos, sale genérica como antes
+  const letterJob =
+    letterCompany.trim() || letterRole.trim() || letterDuties.trim()
+      ? { title: letterRole.trim() || profile.targetRole, employer_name: letterCompany.trim(), job_duties: letterDuties.trim() }
+      : jobPayload;
 
   const handleGenerate = async (profileArg?: CandidateProfile) => {
     setError(null);
@@ -873,6 +883,47 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
             <div className="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-4">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white">Carta de presentación</h3>
               {!letter ? (
+                <>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Opcional: con el nombre de la empresa y del contacto, la carta sale personalizada. Si no los tienes, déjalos vacíos.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'Empresa', value: letterCompany, set: setLetterCompany, ph: 'Ej. Sugar Bowl Resort', max: 120 },
+                    { label: 'Puesto', value: letterRole, set: setLetterRole, ph: profile.targetRole || 'Ej. Line Cook', max: 120 },
+                  ].map((f) => (
+                    <label key={f.label} className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                      {f.label}
+                      <input
+                        value={f.value}
+                        onChange={(e) => f.set(e.target.value)}
+                        maxLength={f.max}
+                        placeholder={f.ph}
+                        className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-normal text-slate-800 dark:text-slate-100"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                  Nombre del contacto o HR (si lo tienes)
+                  <input
+                    value={letterContactName}
+                    onChange={(e) => setLetterContactName(e.target.value)}
+                    maxLength={80}
+                    placeholder="Ej. Ms. Smith o Alex Smith"
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-normal text-slate-800 dark:text-slate-100"
+                  />
+                </label>
+                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                  Funciones de la oferta (opcional, pega el texto)
+                  <textarea
+                    value={letterDuties}
+                    onChange={(e) => setLetterDuties(e.target.value)}
+                    maxLength={1500}
+                    rows={3}
+                    className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2.5 py-1.5 text-xs font-normal text-slate-800 dark:text-slate-100"
+                  />
+                </label>
                 <button
                   type="button"
                   onClick={handleLetter}
@@ -882,6 +933,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                   {letterLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                   {letterLoading ? 'Escribiendo tu carta...' : 'Crear mi carta de presentación'}
                 </button>
+                </>
               ) : (
                 <>
                   <pre className="whitespace-pre-wrap text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 max-h-64 overflow-y-auto font-sans">
