@@ -10,6 +10,8 @@ import MapLeadsPanel from '@/components/MapLeadsPanel'
 import ResultadosPanel from '@/components/ResultadosPanel'
 import ErrorsPanel from '@/components/ErrorsPanel'
 import PushStatsPanel from '@/components/PushStatsPanel'
+import OverviewPanel from '@/components/OverviewPanel'
+import IaCostsPanel from '@/components/IaCostsPanel'
 
 interface Acceso {
   email: string
@@ -21,6 +23,18 @@ interface Acceso {
 const fmt = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Sin vencimiento'
 
+const NAV = [
+  { id: 'membresias', label: 'Membresías' },
+  { id: 'ofertas', label: 'Ofertas' },
+  { id: 'resultados', label: 'Resultados' },
+  { id: 'mapa', label: 'Mapa' },
+  { id: 'radar', label: 'Radar' },
+  { id: 'push', label: 'Push' },
+  { id: 'errores', label: 'Errores' },
+  { id: 'correos', label: 'Correos' },
+  { id: 'ia', label: 'Costos de IA' },
+]
+
 function estado(a: Acceso): { label: string; style: string } {
   if (!a.activo) return { label: 'Revocado', style: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' }
   if (a.vence_el && new Date(a.vence_el).getTime() < Date.now())
@@ -29,10 +43,33 @@ function estado(a: Acceso): { label: string; style: string } {
 }
 
 // Bloque desplegable: el contenido solo se monta (y carga datos) al abrirlo
-function Section({ title, hint, defaultOpen = false, children }: { title: string; hint: string; defaultOpen?: boolean; children: React.ReactNode }) {
+function Section({
+  id,
+  title,
+  hint,
+  defaultOpen = false,
+  goTo,
+  children,
+}: {
+  id: string
+  title: string
+  hint: string
+  defaultOpen?: boolean
+  goTo: { id: string; n: number } | null
+  children: React.ReactNode
+}) {
   const [open, setOpen] = useState(defaultOpen)
+  const [seen, setSeen] = useState(0)
+  // Un clic en el resumen o en la barra de atajos abre esta sección y baja hasta ella
+  if (goTo && goTo.id === id && goTo.n !== seen) {
+    setSeen(goTo.n)
+    setOpen(true)
+  }
+  useEffect(() => {
+    if (goTo && goTo.id === id) document.getElementById(`sec-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [goTo, id])
   return (
-    <section className="rounded-2xl border border-slate-200 dark:border-slate-800">
+    <section id={`sec-${id}`} className="rounded-2xl border border-slate-200 dark:border-slate-800 scroll-mt-16">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -58,6 +95,9 @@ export default function AdminPage() {
   const [busy, setBusy] = useState(false)
   // Correo cuya revocación espera confirmación (segundo clic), en vez de un cuadro del navegador
   const [confirmingRevoke, setConfirmingRevoke] = useState<string | null>(null)
+  // Sección que el resumen o los atajos piden abrir; n cambia en cada clic para poder repetir la misma
+  const [goTo, setGoTo] = useState<{ id: string; n: number } | null>(null)
+  const go = (id: string) => setGoTo((g) => ({ id, n: (g?.n ?? 0) + 1 }))
 
   const load = useCallback(async () => {
     setError(null)
@@ -101,7 +141,22 @@ export default function AdminPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-8">
-      <Section title="Membresías" hint="Dar acceso cuando alguien paga en Skool, y ver vencimientos." defaultOpen>
+      <OverviewPanel onGo={go} />
+
+      <nav aria-label="Secciones del panel" className="sticky top-0 z-10 -mx-2 px-2 py-2 bg-white/90 dark:bg-slate-950/90 backdrop-blur flex gap-2 overflow-x-auto">
+        {NAV.map((n) => (
+          <button
+            key={n.id}
+            type="button"
+            onClick={() => go(n.id)}
+            className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-[#C89B3C] hover:text-[#0B4079] dark:hover:text-[#C89B3C]"
+          >
+            {n.label}
+          </button>
+        ))}
+      </nav>
+
+      <Section id="membresias" goTo={goTo} title="Membresías" hint="Dar acceso cuando alguien paga en Skool, y ver vencimientos." defaultOpen>
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Cuando alguien pague en Skool, agrega su correo aquí. El acceso se corta solo al llegar la fecha de vencimiento.
         </p>
@@ -212,32 +267,36 @@ export default function AdminPage() {
         )}
       </Section>
 
-      <Section title="Ofertas de la clase" hint="Las que encuentras en vivo: aparecen en Mi Mapa de todos los miembros.">
+      <Section id="ofertas" goTo={goTo} title="Ofertas de la clase" hint="Las que encuentras en vivo: aparecen en Mi Mapa de todos los miembros.">
         <ClassOffersPanel />
       </Section>
 
-      <Section title="Resultados" hint="El camino de tus miembros: perfil, CV, postulaciones, respuestas y entrevistas.">
+      <Section id="resultados" goTo={goTo} title="Resultados" hint="El camino de tus miembros: perfil, CV, postulaciones, respuestas y entrevistas.">
         <ResultadosPanel />
       </Section>
 
-      <Section title="Contactos del Mapa público" hint="Personas que dejaron su correo en mapa.juanteavisa.com.">
+      <Section id="mapa" goTo={goTo} title="Contactos del Mapa público" hint="Personas que dejaron su correo en mapa.juanteavisa.com.">
         <MapLeadsPanel />
       </Section>
 
-      <Section title="Radar de actividad" hint="Quién está activo, en riesgo o por vencer, y a quién contactar.">
+      <Section id="radar" goTo={goTo} title="Radar de actividad" hint="Quién está activo, en riesgo o por vencer, y a quién contactar.">
         <RadarPanel />
       </Section>
 
-      <Section title="Avisos push" hint="Últimos 30 días: cuántos se enviaron y cuántos abrieron la app desde el aviso.">
+      <Section id="push" goTo={goTo} title="Avisos push" hint="Últimos 30 días: cuántos se enviaron y cuántos abrieron la app desde el aviso.">
         <PushStatsPanel />
       </Section>
 
-      <Section title="Errores de la app"hint="Fallas en los celulares de los miembros (últimos 7 días). Te llega un resumen diario por correo si hay.">
+      <Section id="errores" goTo={goTo} title="Errores de la app" hint="Fallas en los celulares de los miembros (últimos 7 días). Te llega un resumen diario por correo si hay.">
         <ErrorsPanel />
       </Section>
 
-      <Section title="Correos automáticos"hint="Renovación y reenganche: estado, pruebas y a quién se escribiría.">
+      <Section id="correos" goTo={goTo} title="Correos automáticos" hint="Renovación y reenganche: estado, pruebas y a quién se escribiría.">
         <EngagementPanel />
+      </Section>
+
+      <Section id="ia" goTo={goTo} title="Costos de IA" hint="Cuánto gastan los asistentes (CV, carta, correo, entrevista) por día y por modelo.">
+        <IaCostsPanel />
       </Section>
     </div>
   )
