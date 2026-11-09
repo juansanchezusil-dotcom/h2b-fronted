@@ -11,7 +11,7 @@ import { errorMessage } from '@/lib/errors'
 const BACKEND = 'https://h2b-backend-three.vercel.app'
 // El dashboard de la masterclass vive en el dominio de la app (este dominio solo sirve el Mapa)
 const DASHBOARD_URL = 'https://h2b-fronted.vercel.app/masterclass.html'
-const VIDEO_URL = 'https://www.youtube.com/live/y4xJkCegXjE?si=Knvp2RD7scLmCzSB'
+const VIDEO_URL = 'https://www.youtube.com/watch?v=NQ0ql7zN87w'
 const SEASONAL_URL = 'https://seasonaljobs.dol.gov'
 const PLAN_KEY = 'jta-mapa-plan-v1'
 // El Mapa se activa el día de la masterclass. Antes, la página solo invita a reservar el lugar.
