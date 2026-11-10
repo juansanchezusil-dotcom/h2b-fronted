@@ -29,7 +29,7 @@ const PERIODOS = [
   { dias: '30', label: '30 días' },
   { dias: '90', label: '90 días' },
 ]
-const LABEL: Record<string, string> = { plan: 'Plan', estado: 'Estado', etapa: 'Etapa', puesto: 'Puesto', pais: 'País', cohorte: 'Cohorte' }
+const LABEL: Record<string, string> = { plan: 'Plan', estado: 'Estado', etapa: 'Etapa', puesto: 'Puesto', pais: 'País', cohorte: 'Cohorte', cuentas: 'Cuentas' }
 
 function cohortesRecientes() {
   const out: string[] = []
@@ -179,6 +179,10 @@ export default function AdminShell({ render }: { render: (vista: Vista, data: un
                 <option value="en_riesgo">En riesgo</option>
                 <option value="inactivo">Inactivo</option>
                 <option value="nunca_entro">Nunca entró</option>
+              </select>
+              <select aria-label="Filtrar por tipo de cuenta" className={selectCls} value={filters.cuentas || ''} onChange={(e) => setFilter('cuentas', e.target.value || null)}>
+                <option value="">Cuentas: solo miembros reales</option>
+                <option value="todas">Incluir pruebas y la mía</option>
               </select>
               <select aria-label="Filtrar por plan" className={selectCls} value={filters.plan || ''} onChange={(e) => setFilter('plan', e.target.value || null)}>
                 <option value="">Plan: todos</option>

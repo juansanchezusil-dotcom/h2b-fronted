@@ -2,7 +2,6 @@
 
 import { Radio } from 'lucide-react'
 import type { Insight, ResumenData } from '@/lib/adminPanel'
-import { usd } from '@/lib/adminPanel'
 import { useAdmin } from './AdminShell'
 import { DayBars, Empty, HBars, HowTo, KpiCard, Pill, Ring, SectionTitle, Skeleton, SmallSample, STATUS_LABEL, ago, card, subtle } from './ui'
 
@@ -107,7 +106,7 @@ export function ResumenView({ data }: { data: ResumenData | null }) {
             <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">Ingreso mensual estimado</p>
             <HowTo text={data.definiciones.ingreso} />
           </div>
-          <p className="mt-1 text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{usd(data.ingreso.total)}</p>
+          <p className="mt-1 text-3xl font-extrabold text-slate-900 dark:text-white tabular-nums">{`$${data.ingreso.total.toFixed(2)}`}</p>
           <p className={`text-xs ${subtle} mt-1`}>
             Estimado, no es cobro real. {data.ingreso.porPlan.mensual.n} mensual · {data.ingreso.porPlan.anual.n} anual (prorrateado)
           </p>

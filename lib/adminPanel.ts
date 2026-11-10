@@ -94,7 +94,7 @@ export const VISTAS: { id: Vista; label: string }[] = [
   { id: 'radar', label: 'Radar' },
   { id: 'operacion', label: 'Operación' },
 ]
-export const FILTER_KEYS = ['dias', 'plan', 'estado', 'etapa', 'puesto', 'pais', 'cohorte'] as const
+export const FILTER_KEYS = ['dias', 'plan', 'estado', 'etapa', 'puesto', 'pais', 'cohorte', 'cuentas'] as const
 
 const POLL_MS = 30_000
 
