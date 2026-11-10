@@ -8,6 +8,7 @@ import MapLeadsPanel from '@/components/MapLeadsPanel'
 import { useAdmin } from './AdminShell'
 import { InsightList } from './ResumenView'
 import Collapsible from './Collapsible'
+import CorreosMiembros from './CorreosMiembros'
 import { Avatar, Empty, ESTADO_LABEL, ESTADO_TONE, HBars, Pill, SectionTitle, Skeleton, SmallSample, card, subtle } from './ui'
 
 export function RadarView({ data }: { data: RadarData | null }) {
@@ -101,6 +102,9 @@ export function RadarView({ data }: { data: RadarData | null }) {
 
       <Collapsible title="Detalle completo del radar" hint="Lista completa con contacto, notas y mensajes (muestra correos).">
         <RadarPanel />
+      </Collapsible>
+      <Collapsible title="Correos por miembro" hint="Qué correos automáticos recibió cada persona y si volvió a entrar después.">
+        <CorreosMiembros />
       </Collapsible>
       <Collapsible title="Correos automáticos" hint="Renovación y reenganche: estado, pruebas y a quién se escribiría.">
         <EngagementPanel />
