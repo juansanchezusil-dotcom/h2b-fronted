@@ -154,6 +154,9 @@ export default function AsistenteCard() {
             Preguntar
           </button>
         </form>
+        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+          Guardamos tus preguntas, sin tu nombre, para mejorar el asistente, y las borramos a los 90 días. No escribas pasaporte, números de caso ni datos personales.
+        </p>
       </div>
 
       <AssistantModal isOpen={fuentes} label="De dónde salen los datos" onClose={() => setFuentes(false)}>

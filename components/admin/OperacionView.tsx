@@ -5,6 +5,7 @@ import { usd } from '@/lib/adminPanel'
 import ErrorsPanel from '@/components/ErrorsPanel'
 import IaCostsPanel from '@/components/IaCostsPanel'
 import Collapsible from './Collapsible'
+import DudasAsistente from './DudasAsistente'
 import { DayBars, Empty, HBars, HowTo, KpiCard, Pill, SectionTitle, Skeleton, card, subtle } from './ui'
 
 const FEATURE_LABEL: Record<string, string> = {
@@ -117,6 +118,9 @@ export function OperacionView({ data }: { data: OperacionData | null }) {
         )}
       </div>
 
+      <Collapsible title="Dudas del asistente" hint="Lo que los miembros preguntaron a Pregúntale a Juan, sin su nombre. Se borran a los 90 días.">
+        <DudasAsistente />
+      </Collapsible>
       <Collapsible title="Errores de la app" hint="Detalle de las fallas de los últimos 7 días, agrupadas.">
         <ErrorsPanel />
       </Collapsible>

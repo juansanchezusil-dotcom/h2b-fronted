@@ -56,7 +56,7 @@ export default function PrivacidadPage() {
           ]}
         />
         <p className="mt-2">
-          Los textos que pegas o escribes en los asistentes (por ejemplo un mensaje de una empresa o tus respuestas en el simulador de entrevistas) se envían al proveedor de inteligencia artificial para generar la respuesta y no se guardan en nuestra base de datos. No guardamos audio.
+          Los textos que pegas o escribes en los asistentes (por ejemplo un mensaje de una empresa o tus respuestas en el simulador de entrevistas) se envían al proveedor de inteligencia artificial para generar la respuesta y no se guardan en nuestra base de datos. La excepción es «Pregúntale a Juan»: guardamos tu pregunta y la respuesta, sin tu nombre, correo ni identificador, para mejorar el asistente y ver qué dudas se repiten. Las borramos automáticamente a los 90 días. No escribas ahí tu pasaporte, números de caso ni datos personales. No guardamos audio.
         </p>
         <p className="mt-2">No guardamos datos de tarjeta. El pago se hace en Skool y lo procesa esa plataforma.</p>
 
