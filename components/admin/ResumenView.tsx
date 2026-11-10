@@ -92,7 +92,7 @@ export function ResumenView({ data }: { data: ResumenData | null }) {
             <ul className="mt-1 space-y-0.5">
               {data.salud.desglose.map((d) => (
                 <li key={d.clave} className="text-xs text-slate-700 dark:text-slate-300 tabular-nums">
-                  {d.clave}: <span className="font-bold">{d.puntos}</span>/{d.max}
+                  {d.clave}: <span className="font-bold">{d.puntos}</span> de {d.max} puntos
                 </li>
               ))}
             </ul>

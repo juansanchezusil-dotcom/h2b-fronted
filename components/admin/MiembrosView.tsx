@@ -41,7 +41,7 @@ export function MiembrosView({ data }: { data: MiembrosData | null }) {
 
       <div className="grid md:grid-cols-2 gap-3">
         <div className={card}>
-          <SectionTitle help="Cuántos miembros llegaron a cada etapa del camino (Búscalas, Postula, Follow-up, Entrevista). Se cuenta la etapa más avanzada de cada miembro, según el estado de sus empresas.">
+          <SectionTitle help="Cuántos miembros llegaron a cada etapa del camino (Búscalas, Postula, Follow-up, Entrevista). Se cuenta la etapa más avanzada de cada miembro, según el estado de sus empresas. «Entrevista» incluye a quien ya fue aceptado, por eso puede ser mayor que la tarjeta Entrevistas, que cuenta solo los pasos a entrevista dentro del periodo.">
             Embudo Búscalas → Entrevista
           </SectionTitle>
           <HBars
