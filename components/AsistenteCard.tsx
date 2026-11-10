@@ -13,7 +13,13 @@ interface Turn {
 }
 
 const EJEMPLOS = ['¿Cómo sé si una oferta es real?', '¿Qué es el DS-160?', '¿Cuándo hago el seguimiento a una empresa?']
-const SKOOL_URL = process.env.NEXT_PUBLIC_MEMBERSHIP_URL
+const FUENTES = [
+  { nombre: 'SeasonalJobs (DOL)', uso: 'ofertas H-2B del Departamento de Trabajo', url: 'https://seasonaljobs.dol.gov' },
+  { nombre: 'CareerOneStop (DOL)', uso: 'ofertas y portal de empleo del Departamento de Trabajo', url: 'https://www.careeronestop.org' },
+  { nombre: 'H-2B Employer Data Hub (USCIS)', uso: 'empresas con peticiones H-2B anteriores', url: 'https://www.uscis.gov/tools/reports-and-studies/h-2b-employer-data-hub' },
+  { nombre: 'Listado de reclutadores (DOL)', uso: 'agencias de reclutamiento registradas', url: 'https://www.dol.gov/agencies/eta/foreign-labor/recruiter-list' },
+]
+const SKOOL_URL =process.env.NEXT_PUBLIC_MEMBERSHIP_URL
 
 // "Pregúntale a Juan": asistente de dudas del Inicio, y el aviso de dónde salen los datos de la app.
 export default function AsistenteCard() {
@@ -158,9 +164,17 @@ export default function AsistenteCard() {
               <X className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
-          <p className="text-sm text-slate-700 dark:text-slate-300">
-            La información de ofertas, empresas y agencias viene de fuentes públicas oficiales, entre ellas el Departamento de Trabajo (DOL), USCIS y CareerOneStop.
-          </p>
+          <p className="text-sm text-slate-700 dark:text-slate-300">La información viene de fuentes públicas oficiales del gobierno de EE. UU.:</p>
+          <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
+            {FUENTES.map((f) => (
+              <li key={f.url}>
+                <a href={f.url} target="_blank" rel="noopener noreferrer" className="font-semibold underline">
+                  {f.nombre}
+                </a>
+                {` · ${f.uso}`}
+              </li>
+            ))}
+          </ul>
           <p className="text-sm text-slate-700 dark:text-slate-300">
             Juan Te Avisa PRO las organiza, las traduce, las filtra y las conecta con tu plan: tu CRM, tu CV, tu carta, el detector de estafas y tu Mapa. Esas son las partes que cuesta armar por tu cuenta.
           </p>
