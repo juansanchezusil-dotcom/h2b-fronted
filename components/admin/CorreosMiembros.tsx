@@ -16,6 +16,7 @@ interface Fila {
   sinRespuesta: number
   baja: boolean
   contactadoEl: string | null
+  canalContacto: string | null
   veredicto: { tono: 'ok' | 'aviso' | 'alto'; texto: string }
 }
 
@@ -27,6 +28,7 @@ const KIND_LABEL: Record<string, string> = {
   reto_30: 'Reto de 30 días',
   ofertas: 'Ofertas nuevas',
 }
+const CANAL: Record<string, string> = { skool: 'Skool', correo: 'correo', telefono: 'teléfono', otro: 'otro canal' }
 const TONO = { ok: 'good', aviso: 'warn', alto: 'bad' } as const
 const TONO_TEXTO = { ok: 'Al día', aviso: 'Atención', alto: 'Escríbele tú' } as const
 
@@ -95,7 +97,7 @@ export default function CorreosMiembros() {
                 <p className="mt-0.5 text-xs text-slate-700 dark:text-slate-300">{f.veredicto.texto}</p>
                 <p className={`text-xs ${subtle}`}>
                   {f.diasSinEntrar === null ? 'Nunca ha entrado' : `${f.diasSinEntrar} días sin entrar`}
-                  {f.contactadoEl ? ` · contactado por ti el ${fecha(f.contactadoEl)}` : ''}
+                  {f.contactadoEl ? ` · contactado por ti el ${fecha(f.contactadoEl)}${f.canalContacto ? ` por ${CANAL[f.canalContacto] || f.canalContacto}` : ''}` : ''}
                 </p>
                 {f.enviados.length > 0 && (
                   <ul className="mt-1.5 space-y-0.5">

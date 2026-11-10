@@ -25,6 +25,7 @@ interface Miembro {
   acelerador: { candidato: boolean; motivos: string[] }
   casoExito: boolean
   contactadoEl: string | null
+  canalContacto?: string | null
   diasDesdeContacto: number | null
   nota: string | null
   porContactar: boolean
@@ -83,10 +84,18 @@ function compromiso(m: Miembro, commitmentDays: number) {
   return c.califica ? 'Completó el reto' : `Aún le falta: ${c.faltan.join(', ')}`
 }
 
+const CANALES: { id: string; label: string }[] = [
+  { id: 'skool', label: 'Skool (recomendado)' },
+  { id: 'correo', label: 'Correo' },
+  { id: 'telefono', label: 'Teléfono o WhatsApp' },
+  { id: 'otro', label: 'Otro' },
+]
+const canalCorto = (id?: string | null) => (id === 'skool' ? 'Skool' : id === 'correo' ? 'correo' : id === 'telefono' ? 'teléfono' : id === 'otro' ? 'otro canal' : '')
+
 function contacto(m: Miembro) {
   if (m.diasDesdeContacto === null) return 'Sin contactar'
   const cuando = m.diasDesdeContacto === 0 ? 'hoy' : m.diasDesdeContacto === 1 ? 'ayer' : `hace ${pluralDias(m.diasDesdeContacto)}`
-  return `Contactado ${cuando}`
+  return `Contactado ${cuando}${m.canalContacto ? ` por ${canalCorto(m.canalContacto)}` : ''}`
 }
 
 function pasaFiltro(m: Miembro, f: Filtro) {
@@ -120,6 +129,7 @@ export default function RadarPanel() {
   // Correo al que se le está escribiendo la nota de contacto, y la nota
   const [editando, setEditando] = useState<string | null>(null)
   const [nota, setNota] = useState('')
+  const [canal, setCanal] = useState('skool')
   const [guardando, setGuardando] = useState(false)
 
   const load = useCallback(async () => {
@@ -150,12 +160,13 @@ export default function RadarPanel() {
       const res = await aiFetch('/api/admin/contacto', {
         method: deshacer ? 'DELETE' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(deshacer ? { email } : { email, nota }),
+        body: JSON.stringify(deshacer ? { email } : { email, nota, canal }),
       })
       const body = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(body.error || 'No se pudo guardar.')
       setEditando(null)
       setNota('')
+      setCanal('skool')
       await load()
     } catch (err) {
       setError(errorMessage(err, 'No se pudo guardar.'))
@@ -306,6 +317,21 @@ export default function RadarPanel() {
                         guardarContacto(m.email)
                       }}
                     >
+                      <label className="sr-only" htmlFor={`canal-${m.email}`}>
+                        Canal del contacto
+                      </label>
+                      <select
+                        id={`canal-${m.email}`}
+                        value={canal}
+                        onChange={(e) => setCanal(e.target.value)}
+                        className="rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/30"
+                      >
+                        {CANALES.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </select>
                       <label className="sr-only" htmlFor={`nota-${m.email}`}>
                         Nota del contacto
                       </label>
