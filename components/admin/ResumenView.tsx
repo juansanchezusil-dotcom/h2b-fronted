@@ -78,7 +78,12 @@ export function ResumenView({ data }: { data: ResumenData | null }) {
         </p>
       </div>
 
-      {sinDatos && <Empty>Ningún miembro cumple estos filtros. Quita alguno para ver datos.</Empty>}
+      {sinDatos &&
+        (filters.cuentas !== 'todas' && !filters.estado && !filters.plan && !filters.etapa && !filters.cohorte && !filters.puesto && !filters.pais ? (
+          <Empty>Aún no hay miembros reales: las cuentas de prueba y la tuya no se cuentan. Elige «Incluir pruebas y la mía» en Cuentas para verlas.</Empty>
+        ) : (
+          <Empty>Ningún miembro cumple estos filtros. Quita alguno para ver datos.</Empty>
+        ))}
 
       <div className="grid md:grid-cols-3 gap-3">
         <div className={`${card} flex items-center gap-4`}>
