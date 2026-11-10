@@ -15,9 +15,10 @@ const FEATURE_LABEL: Record<string, string> = {
   cv_entrevista: 'Entrevista del CV',
   detector_estafa: 'Detector de estafas (imagen)',
   detector_web: 'Detector de estafas (web)',
+  asistente: 'Pregúntale a Juan',
   sin_dato: 'Sin clasificar',
 }
-const LIMIT_LABEL: Record<string, string> = { ai: 'Asistentes (general)', cv_turn: 'Entrevista del CV', interview_turn: 'Simulador' }
+const LIMIT_LABEL: Record<string, string> = { ai: 'Asistentes (general)', cv_turn: 'Entrevista del CV', interview_turn: 'Simulador', asistente: 'Pregúntale a Juan' }
 
 export function OperacionView({ data }: { data: OperacionData | null }) {
   if (!data) {

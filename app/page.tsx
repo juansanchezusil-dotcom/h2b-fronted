@@ -25,7 +25,6 @@ import {
 } from 'lucide-react'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
 import H2BMap from '@/components/H2BMap';
-import { loadSteps, CHECKLIST_TOTAL_TASKS } from '@/lib/checklistSteps';
 import CVBuilderModal from '@/components/CVBuilderModal';
 import LogoMark from '@/components/LogoMark';
 import MobileTabBar from '@/components/MobileTabBar';
@@ -34,6 +33,7 @@ import { PushPromptCard } from '@/components/PushNotifications';
 import PullToRefresh from '@/components/PullToRefresh';
 import { aiFetch } from '@/lib/aiFetch';
 import AssistantModal from '@/components/AssistantModal';
+import AsistenteCard from '@/components/AsistenteCard';
 import MembershipNotices from '@/components/MembershipNotices';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
 import { useBackToClose } from '@/hooks/useBackToClose';
@@ -197,7 +197,7 @@ export default function Home() {
   const [totalAgenciesCount, setTotalAgenciesCount] = useState<number>(0)
   // Totales del catálogo completo (sin filtros): no cambian al buscar
   const [catalogTotals, setCatalogTotals] = useState({ jobs: 0, employers: 0, agencies: 0 })
-  const [catalogLoaded, setCatalogLoaded] = useState(false)
+  const [, setCatalogLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   useBackToClose(!!selectedJob, () => setSelectedJob(null))
@@ -470,21 +470,6 @@ if (!isComplete) {
   }
   checkUserProfile()
 }, [])
-
-// ===== MI MAPA =====
-// Los pasos manuales (pasaporte y DS-160) viven en la base (con copia en el navegador); aquí solo se leen
-// para el recuadro del dashboard, cada vez que se vuelve a una pestaña.
-const [manualSteps, setManualSteps] = useState({ passport: false, ds160: false })
-useEffect(() => {
-  if (!onboardingUserId) return
-  let cancelled = false
-  loadSteps(supabase, onboardingUserId).then((s) => {
-    if (!cancelled) setManualSteps(s)
-  })
-  return () => {
-    cancelled = true
-  }
-}, [activeTab, onboardingUserId])
 
 const [matchScores, setMatchScores] = useState<Record<string, { score: number; breakdown: unknown }>>({})
 
@@ -1039,8 +1024,6 @@ const totalJobPages = Math.ceil(totalJobsCount / JOBS_PER_PAGE) || 1
 const totalCompanyPages = Math.ceil(totalEmployersCount / ITEMS_PER_PAGE) || 1
 const totalAgencyPages = Math.ceil(totalAgenciesCount / ITEMS_PER_PAGE) || 1
 // Mismos 5 elementos que el Mapa: perfil, CV, pasaporte, 5 ofertas guardadas y DS-160
-const checklistDone = [profileCompleted, hasCv, manualSteps.passport, crmItems.length >= 5, manualSteps.ds160].filter(Boolean).length
-const checklistPercentage = Math.round((checklistDone / CHECKLIST_TOTAL_TASKS) * 100)
 const weeklyTarget = goalFor(profileIndustry, profileRole).perWeek
 // Postulaciones movidas fuera de "guardadas" en los últimos 7 días (no el total histórico)
 const applicationsThisWeek = crmItems.filter(i => i.status !== 'guardadas' && now - i.lastUpdated < 7 * 24 * 60 * 60 * 1000).length
@@ -1384,37 +1367,6 @@ return (
           {/* Avance del Compromiso de PRO y, si falta poco, aviso de vencimiento */}
           <MembershipNotices userId={onboardingUserId} />
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {([
-              { tab: 'jobs', label: 'Ofertas (DOL)', value: catalogTotals.jobs, loading: !catalogLoaded, note: 'Ofertas publicadas', noteClass: 'text-emerald-600 dark:text-emerald-400', icon: Briefcase, iconClass: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400' },
-              { tab: 'employers', label: 'Empresas USCIS', value: catalogTotals.employers, loading: !catalogLoaded, note: '● En el catálogo', noteClass: 'text-emerald-600 dark:text-emerald-400', icon: Building2, iconClass: 'bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400' },
-              { tab: 'agencies', label: 'Agencias reguladas', value: catalogTotals.agencies, loading: !catalogLoaded, note: '● En el catálogo', noteClass: 'text-emerald-600 dark:text-emerald-400', icon: ShieldCheck, iconClass: 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
-              { tab: 'checklist', label: 'Tu Mapa H2B', value: `${checklistPercentage}%`, loading: false, note: checklistDone > 0 ? `${checklistDone} de ${CHECKLIST_TOTAL_TASKS} completados` : 'Sin iniciar', noteClass: 'text-indigo-600 dark:text-indigo-400', icon: Compass, iconClass: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' },
-            ] as const).map(({ tab, label, value, loading, note, noteClass, icon: Icon, iconClass }) => (
-              <button
-                key={tab}
-                onClick={() => { setActiveTab(tab); window.scrollTo({ top: 0 }) }}
-                className="text-left bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl p-3.5 sm:p-4 flex justify-between items-center gap-2 shadow-sm"
-              >
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider leading-tight">{label}</p>
-                  {loading ? (
-                    <span className="block h-7 w-16 mt-1.5 rounded bg-slate-200 dark:bg-slate-800 motion-safe:animate-pulse" aria-label="Cargando" />
-                  ) : (
-                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{value}</p>
-                  )}
-                  <p className={`text-xs sm:text-[10px] font-semibold mt-0.5 flex items-center gap-1 ${noteClass}`}>
-                    {tab === 'jobs' && <TrendingUp className="w-3 h-3 shrink-0" />}
-                    <span className="truncate">{note}</span>
-                  </p>
-                </div>
-                <div className={`hidden sm:flex w-11 h-11 rounded-xl items-center justify-center shrink-0 ${iconClass}`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-              </button>
-            ))}
-          </div>
-
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
             <div className="flex justify-between items-center">
               <h2 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
@@ -1443,6 +1395,8 @@ return (
               </button>
             </div>
           </div>
+
+          <AsistenteCard />
         </div>
       )}
 
