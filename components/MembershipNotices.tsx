@@ -69,7 +69,7 @@ export function NoticesView({ notices, renewUrl }: { notices: Notices; renewUrl?
         </p>
         {notices.postulaciones >= COMMITMENT_GOAL ? (
           <p role="status" className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-            {`Llegaste a las ${COMMITMENT_GOAL} postulaciones. Esto lo hiciste tú, no yo. Ahora viene lo que casi nadie hace: tu seguimiento a los 7, 14 y 21 días.`}
+            {`Llegaste a las ${COMMITMENT_GOAL} postulaciones. Esto lo hiciste tú, no yo. Te corresponde la insignia del Reto en la comunidad de Skool, y si quieres que te felicite en un post, avísame (es opcional). Ahora viene lo que casi nadie hace: tu seguimiento a los 7, 14 y 21 días.`}
           </p>
         ) : notices.dia !== null && notices.dia >= COMMITMENT_DAYS ? (
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
