@@ -24,6 +24,8 @@ interface Miembro {
   compromiso: { dia: number | null; llegoAlDia30: boolean; califica: boolean | null; faltan: string[] }
   acelerador: { candidato: boolean; motivos: string[] }
   casoExito: boolean
+  insigniaPendiente?: boolean
+  insigniaEl?: string | null
   contactadoEl: string | null
   canalContacto?: string | null
   diasDesdeContacto: number | null
@@ -45,12 +47,13 @@ interface RadarData {
     porContactar: number
     candidatosAcelerador: number
     casosExito: number
+    insigniasPendientes?: number
   }
   miembros: Miembro[]
   generado: string
 }
 
-type Filtro = 'todos' | Estado | 'por_contactar' | 'acelerador' | 'exito' | 'por_vencer' | 'renovacion' | 'sin_arrancar' | 'estancado'
+type Filtro = 'todos' | Estado | 'por_contactar' | 'acelerador' | 'exito' | 'insignia' | 'por_vencer' | 'renovacion' | 'sin_arrancar' | 'estancado'
 
 const ESTADOS: Record<Estado, { label: string; badge: string }> = {
   activo: { label: 'Activo', badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' },
@@ -108,6 +111,8 @@ function pasaFiltro(m: Miembro, f: Filtro) {
       return m.acelerador.candidato
     case 'exito':
       return m.casoExito
+    case 'insignia':
+      return !!m.insigniaPendiente
     case 'por_vencer':
       return m.porVencer
     case 'renovacion':
@@ -175,6 +180,25 @@ export default function RadarPanel() {
     }
   }
 
+  const guardarInsignia = async (email: string, deshacer = false) => {
+    setGuardando(true)
+    setError(null)
+    try {
+      const res = await aiFetch('/api/admin/insignia', {
+        method: deshacer ? 'DELETE' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(body.error || 'No se pudo guardar.')
+      await load()
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo guardar.'))
+    } finally {
+      setGuardando(false)
+    }
+  }
+
   const chips: { id: Filtro; label: string; n: number }[] = data
     ? [
         { id: 'todos', label: 'Todos', n: data.resumen.total },
@@ -189,6 +213,7 @@ export default function RadarPanel() {
         { id: 'enfriandose', label: 'Enfriándose', n: data.resumen.porEstado.enfriandose },
         { id: 'estancado', label: 'Estancados', n: data.resumen.estancados },
         { id: 'activo', label: 'Activos', n: data.resumen.porEstado.activo },
+        { id: 'insignia', label: 'Falta la insignia', n: data.resumen.insigniasPendientes ?? 0 },
         { id: 'exito', label: 'Casos de éxito', n: data.resumen.casosExito },
       ]
     : []
@@ -263,6 +288,7 @@ export default function RadarPanel() {
                     <p className="text-xs text-slate-500 dark:text-slate-400 break-all">{m.email}</p>
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
+                    {m.insigniaPendiente && <span className={`${tag} bg-amber-500 text-white`}>Falta darle la insignia</span>}
                     {m.casoExito && <span className={`${tag} bg-emerald-600 text-white`}>Caso de éxito</span>}
                     {m.acelerador.candidato && <span className={`${tag} bg-[#0B4079] text-white`}>Candidato Accelerator</span>}
                     {m.prioridadRenovacion && <span className={`${tag} bg-[#C89B3C] text-[#08131F]`}>Renovación urgente</span>}
@@ -306,6 +332,24 @@ export default function RadarPanel() {
                       <li key={motivo}>{motivo}</li>
                     ))}
                   </ul>
+                )}
+
+                {(m.insigniaPendiente || m.insigniaEl) && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-3 py-2">
+                    <p className="text-amber-900 dark:text-amber-200">
+                      {m.insigniaEl
+                        ? `Insignia del Reto dada el ${new Date(m.insigniaEl).toLocaleDateString('es')}.`
+                        : 'Completó el Reto de 30 días: dale la insignia en Skool y márcala aquí.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => guardarInsignia(m.email, !!m.insigniaEl)}
+                      disabled={guardando}
+                      className="font-semibold text-[#0B4079] dark:text-[#C89B3C] hover:underline disabled:opacity-50"
+                    >
+                      {m.insigniaEl ? 'Deshacer' : 'Ya le di la insignia'}
+                    </button>
+                  </div>
                 )}
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
