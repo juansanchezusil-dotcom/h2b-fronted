@@ -14,6 +14,12 @@ interface Acceso {
 const fmt = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Sin vencimiento'
 
+type Tab = 'activos' | 'vencidos' | 'revocados'
+
+const vencido = (a: Acceso) => a.activo && !!a.vence_el && new Date(a.vence_el).getTime() < Date.now()
+const enTab = (a: Acceso, k: Tab) => (k === 'revocados' ? !a.activo : k === 'vencidos' ? vencido(a) : a.activo && !vencido(a))
+const TAB_LABEL: Record<Tab, string> = { activos: 'Activos', vencidos: 'Vencidos', revocados: 'Revocados' }
+
 function estado(a: Acceso): { label: string; style: string } {
   if (!a.activo) return { label: 'Revocado', style: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' }
   if (a.vence_el && new Date(a.vence_el).getTime() < Date.now())
@@ -28,7 +34,7 @@ export default function MembershipsPanel() {
   const [email, setEmail] = useState('')
   const [dias, setDias] = useState(30)
   const [busy, setBusy] = useState(false)
-  const [tab, setTab] = useState<'activos' | 'revocados'>('activos')
+  const [tab, setTab] = useState<Tab>('activos')
   const [extra, setExtra] = useState<Record<string, string>>({})
   // Correo cuya revocación espera confirmación (segundo clic), en vez de un cuadro del navegador
   const [confirmingRevoke, setConfirmingRevoke] = useState<string | null>(null)
@@ -73,7 +79,7 @@ export default function MembershipsPanel() {
     if (await send('POST', { email, dias })) setEmail('')
   }
 
-  const visibles = (accesos ?? []).filter((a) => (tab === 'activos' ? a.activo : !a.activo))
+  const visibles = (accesos ?? []).filter((a) => enTab(a, tab))
 
   return (
     <div className="space-y-6">
@@ -129,8 +135,8 @@ export default function MembershipsPanel() {
 
         {accesos && (
           <div className="flex gap-2" role="tablist">
-            {(['activos', 'revocados'] as const).map((k) => {
-              const count = accesos.filter((a) => (k === 'activos' ? a.activo : !a.activo)).length
+            {(['activos', 'vencidos', 'revocados'] as const).map((k) => {
+              const count = accesos.filter((a) => enTab(a, k)).length
               return (
                 <button
                   key={k}
@@ -143,7 +149,7 @@ export default function MembershipsPanel() {
                       : 'text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                 >
-                  {k === 'activos' ? 'Activos' : 'Revocados'} ({count})
+                  {TAB_LABEL[k]} ({count})
                 </button>
               )
             })}
@@ -154,7 +160,7 @@ export default function MembershipsPanel() {
           <ul className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
             {visibles.length === 0 && (
               <li className="p-4 text-sm text-slate-500 dark:text-slate-400">
-                {tab === 'activos' ? 'Aún no hay miembros activos.' : 'No hay accesos revocados.'}
+                {tab === 'activos' ? 'Aún no hay miembros activos.' : tab === 'vencidos' ? 'No hay accesos vencidos.' : 'No hay accesos revocados.'}
               </li>
             )}
             {visibles.map((a) => {
