@@ -28,6 +28,7 @@ export default function MembershipsPanel() {
   const [email, setEmail] = useState('')
   const [dias, setDias] = useState(30)
   const [busy, setBusy] = useState(false)
+  const [tab, setTab] = useState<'activos' | 'revocados'>('activos')
   const [extra, setExtra] = useState<Record<string, string>>({})
   // Correo cuya revocación espera confirmación (segundo clic), en vez de un cuadro del navegador
   const [confirmingRevoke, setConfirmingRevoke] = useState<string | null>(null)
@@ -71,6 +72,8 @@ export default function MembershipsPanel() {
     e.preventDefault()
     if (await send('POST', { email, dias })) setEmail('')
   }
+
+  const visibles = (accesos ?? []).filter((a) => (tab === 'activos' ? a.activo : !a.activo))
 
   return (
     <div className="space-y-6">
@@ -125,9 +128,36 @@ export default function MembershipsPanel() {
         )}
 
         {accesos && (
+          <div className="flex gap-2" role="tablist">
+            {(['activos', 'revocados'] as const).map((k) => {
+              const count = accesos.filter((a) => (k === 'activos' ? a.activo : !a.activo)).length
+              return (
+                <button
+                  key={k}
+                  role="tab"
+                  aria-selected={tab === k}
+                  onClick={() => setTab(k)}
+                  className={`text-sm font-semibold px-3 py-1.5 rounded-full border ${
+                    tab === k
+                      ? 'bg-[#0B4079] text-white border-[#0B4079]'
+                      : 'text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {k === 'activos' ? 'Activos' : 'Revocados'} ({count})
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {accesos && (
           <ul className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
-            {accesos.length === 0 && <li className="p-4 text-sm text-slate-500 dark:text-slate-400">Aún no hay miembros.</li>}
-            {accesos.map((a) => {
+            {visibles.length === 0 && (
+              <li className="p-4 text-sm text-slate-500 dark:text-slate-400">
+                {tab === 'activos' ? 'Aún no hay miembros activos.' : 'No hay accesos revocados.'}
+              </li>
+            )}
+            {visibles.map((a) => {
               const st = estado(a)
               return (
                 <li key={a.email} className="p-4 flex flex-wrap items-center gap-3">
