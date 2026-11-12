@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasActiveMembership } from "@/lib/membership";
 
-const APP_ORIGIN = "https://h2b-fronted.vercel.app";
+const APP_ORIGIN = "https://app.juanteavisa.com";
 
 export async function proxy(request: NextRequest) {
   // mapa.juanteavisa.com muestra directo el Mapa H2B público (abierto, sin cuenta)

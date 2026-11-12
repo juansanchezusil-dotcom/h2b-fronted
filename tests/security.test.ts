@@ -11,13 +11,13 @@ const onMapa = (path: string) => proxy(new NextRequest(`https://mapa.juanteavisa
 describe('redirección del dominio del Mapa', () => {
   it('manda las rutas ajenas a la app, conservando ruta y parámetros', async () => {
     const res = await onMapa('/login?x=1')
-    expect(res.headers.get('location')).toBe('https://h2b-fronted.vercel.app/login?x=1')
+    expect(res.headers.get('location')).toBe('https://app.juanteavisa.com/login?x=1')
   })
 
   it('nunca sale del dominio de la app', async () => {
     for (const path of ['//evil.example/x', '/%2F/evil.example', '//evil.example:443/x']) {
       const location = (await onMapa(path)).headers.get('location') || ''
-      expect(new URL(location).origin).toBe('https://h2b-fronted.vercel.app')
+      expect(new URL(location).origin).toBe('https://app.juanteavisa.com')
     }
   })
 })
