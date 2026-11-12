@@ -277,6 +277,18 @@ export async function buildLetterDocx(letter: string, fullName: string, contact:
   const name = fullName || 'Your Name';
   const { greeting, paragraphs, closing, signature } = splitLetter(letter, name);
 
+  // Firma manuscrita: se incrusta la fuente (OFL) para que se vea igual en cualquier equipo; si no carga, Segoe Script
+  const SIGN_FONT = 'Mrs Saint Delafield';
+  let signFontData: Uint8Array | null = null;
+  if (signature) {
+    try {
+      const res = await fetch('/fonts/MrsSaintDelafield-Regular.ttf');
+      if (res.ok) signFontData = new Uint8Array(await res.arrayBuffer());
+    } catch {
+      signFontData = null;
+    }
+  }
+
   // Banda superior: nombre, puesto y contacto sobre fondo beige con filete dorado
   const bandLines = [
     line([run(name.toUpperCase(), { size: 44, spacing: 140 })], 80),
@@ -336,7 +348,7 @@ export async function buildLetterDocx(letter: string, fullName: string, contact:
       )
     ),
     ...(closing ? [line([run(closing, { size: 22 })], 360)] : []),
-    ...(signature ? [line([run(signature, { font: 'Segoe Script', size: 32 })], 0, 240)] : []),
+    ...(signature ? [line([run(signature, signFontData ? { font: SIGN_FONT, size: 60 } : { font: 'Segoe Script', size: 32 })], 0, 240)] : []),
   ];
 
   const leftWidth = 3300;
@@ -375,6 +387,7 @@ export async function buildLetterDocx(letter: string, fullName: string, contact:
   const doc = new Document({
     creator: 'Juan Te Avisa',
     title: `${name} - Cover Letter`,
+    ...(signFontData ? { fonts: [{ name: SIGN_FONT, data: signFontData as unknown as Buffer }] } : {}),
     styles: { default: { document: { run: { font: FONT, size: 21, color: NAVY } } } },
     sections: [
       // La banda ocupa todo el ancho de la página, por eso va en su propia sección sin márgenes laterales
