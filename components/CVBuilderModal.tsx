@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { X, Sparkles, Copy, Download, Loader2, Check, Send, Upload, FileText, RotateCcw, ArrowLeft, Paperclip } from 'lucide-react';
+import { X, Sparkles, Copy, Download, Loader2, Check, Send, Upload, FileText, RotateCcw, ArrowLeft, Paperclip, Mic, Square } from 'lucide-react';
 import { buildCvPdf, buildLetterPdf, pdfFileName } from '@/lib/cvPdf';
 import { prepareAttachment, ATTACH_ACCEPT, type Attachment } from '@/lib/readAttachment';
 import { supabase } from '@/lib/supabaseClient';
@@ -9,6 +9,7 @@ import { useBackToClose } from '@/hooks/useBackToClose';
 import { aiFetch } from '@/lib/aiFetch';
 import { buildCvDocx, buildLetterDocx, docxFileName, downloadBlob, type BuiltCv } from '@/lib/cvDocx';
 import { errorMessage } from '@/lib/errors';
+import { useDictation } from '@/hooks/useDictation';
 
 interface CVBuilderModalProps {
   isOpen: boolean;
@@ -155,6 +156,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
   const [ready, setReady] = useState(false);
   const [input, setInput] = useState('');
   const [attached, setAttached] = useState<Attachment | null>(null);
+  const dictation = useDictation((text) => setInput((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text)));
   const [attaching, setAttaching] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -207,6 +209,11 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [turns, loading]);
+
+  const stopDictation = dictation.stop;
+  useEffect(() => {
+    if (!isOpen) stopDictation();
+  }, [isOpen, stopDictation]);
 
   useBackToClose(isOpen, onClose);
   if (!isOpen) return null;
@@ -376,6 +383,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
   const handleSend = async () => {
     const typed = input.trim();
     if ((!typed && !attached) || loading || attaching) return;
+    dictation.stop();
     setError(null);
     const file = attached;
     const text = file ? `${typed || 'Te adjunto un archivo con mi información.'}\n📎 ${file.name}` : typed;
@@ -893,6 +901,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                 <p className="text-[11px] text-slate-400 dark:text-slate-500">Todavía falta: {criticalGaps.map((g) => g.label.toLowerCase()).join(' · ')}</p>
               )}
               {error && <p className={errorClass}>{error}</p>}
+              {dictation.error && <p className={errorClass}>{dictation.error}</p>}
               {attached && (
                 <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200">
                   <span className="flex items-center gap-1.5 min-w-0">
@@ -931,6 +940,22 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                     }}
                   />
                 </label>
+                {dictation.supported && (
+                  <button
+                    type="button"
+                    onClick={dictation.listening ? dictation.stop : dictation.start}
+                    disabled={loading}
+                    aria-label={dictation.listening ? 'Detener dictado' : 'Dictar con la voz'}
+                    title={dictation.listening ? 'Detener dictado' : 'Dictar con la voz'}
+                    className={`shrink-0 rounded-xl border p-3 transition disabled:opacity-50 ${
+                      dictation.listening
+                        ? 'border-rose-500 bg-rose-50 text-rose-600 dark:bg-rose-500/10 animate-pulse'
+                        : 'border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {dictation.listening ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  </button>
+                )}
                 <textarea
                   rows={2}
                   aria-label="Tu respuesta"

@@ -63,13 +63,31 @@ export function docxFileName(fullName: string, kind: 'CV' | 'Cover_Letter'): str
   return `${base || 'Candidate'}_${kind}.docx`;
 }
 
-export function downloadBlob(blob: Blob, fileName: string) {
+const isIos = () =>
+  typeof navigator !== 'undefined' &&
+  (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+// En iPhone y iPad el enlace de descarga solo abre una vista previa y el archivo no se guarda. Ahí se usa la hoja
+// de compartir del sistema ("Guardar en Archivos"). En el resto, y si la hoja no está disponible, descarga directa.
+export async function downloadBlob(blob: Blob, fileName: string) {
+  if (isIos() && typeof navigator.canShare === 'function' && typeof navigator.share === 'function') {
+    try {
+      const file = new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file] });
+        return;
+      }
+    } catch (err) {
+      // La persona cerró la hoja sin guardar: no se hace nada más
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+    }
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = fileName;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 export async function buildCvDocx(cv: BuiltCv): Promise<Blob> {
