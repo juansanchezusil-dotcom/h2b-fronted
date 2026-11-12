@@ -17,6 +17,7 @@ const PLAN_KEY = 'jta-mapa-plan-v1'
 // El Mapa se activa el día de la masterclass. Antes, la página solo invita a reservar el lugar.
 const ACTIVATION = Date.parse('2026-11-25T19:00:00-05:00')
 const MASTERCLASS_URL = 'https://juanteavisa.com/masterclass-h2b/'
+const SKOOL_URL = 'https://www.skool.com/busca-tu-patrocinador-h2b-2085/about'
 const DONE_KEY = 'jta-mapa-respuestas-v1'
 
 type Experience = 'directa' | 'parecida' | 'informal' | 'ninguna' | ''
@@ -563,6 +564,16 @@ export default function MapaPublico() {
               </div>
             </section>
 )}
+
+            <section className={`${card} space-y-3`}>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Lleva tu búsqueda a la app completa</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                En la comunidad de Juan Te Avisa en Skool tienes la app completa: las empresas con historial, las ofertas actualizadas, tu Mapa personal, el Reto de 30 días y un CRM para llevar tus postulaciones con el seguimiento a los 7, 14 y 21 días.
+              </p>
+              <a href={SKOOL_URL} target="_blank" rel="noopener noreferrer" className={primaryBtn}>
+                Unirme a la comunidad <ArrowRight className="w-4 h-4" />
+              </a>
+            </section>
 
             <p className="text-[11px] text-slate-400 dark:text-slate-500">
               Este mapa organiza tu búsqueda con lo que respondiste. No garantiza visa, patrocinio, entrevistas ni contratación: eso depende de cada empresa. Juan Te Avisa no es agencia ni despacho de abogados.
