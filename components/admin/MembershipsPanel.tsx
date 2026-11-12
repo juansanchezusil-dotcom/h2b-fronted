@@ -28,6 +28,7 @@ export default function MembershipsPanel() {
   const [email, setEmail] = useState('')
   const [dias, setDias] = useState(30)
   const [busy, setBusy] = useState(false)
+  const [extra, setExtra] = useState<Record<string, string>>({})
   // Correo cuya revocación espera confirmación (segundo clic), en vez de un cuadro del navegador
   const [confirmingRevoke, setConfirmingRevoke] = useState<string | null>(null)
 
@@ -149,6 +150,37 @@ export default function MembershipsPanel() {
                   >
                     <RefreshCw className="w-3.5 h-3.5" /> +1 año
                   </button>
+                  <span className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={1}
+                      max={3650}
+                      placeholder="días"
+                      value={extra[a.email] ?? ''}
+                      onChange={(e) => setExtra((x) => ({ ...x, [a.email]: e.target.value }))}
+                      aria-label={`Días a sumar a ${a.email}`}
+                      className="w-16 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-2 py-1 text-xs"
+                    />
+                    <button
+                      onClick={async () => {
+                        const n = Number(extra[a.email])
+                        if (n >= 1 && (await send('POST', { email: a.email, dias: n }))) setExtra((x) => ({ ...x, [a.email]: '' }))
+                      }}
+                      disabled={busy || !(Number(extra[a.email]) >= 1)}
+                      className="text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] hover:underline disabled:opacity-50"
+                    >
+                      Sumar
+                    </button>
+                  </span>
+                  {a.vence_el && (
+                    <button
+                      onClick={() => send('POST', { email: a.email, indefinido: true })}
+                      disabled={busy}
+                      className="text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] hover:underline disabled:opacity-50"
+                    >
+                      Indefinido
+                    </button>
+                  )}
                   {a.activo && (
                     confirmingRevoke === a.email ? (
                       <span className="flex items-center gap-2 text-xs">
