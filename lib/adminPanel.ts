@@ -40,7 +40,7 @@ interface Base {
 export interface ResumenData extends Base {
   kpis: Kpi[]
   salud: { valor: number | null; n: number; desglose: { clave: string; puntos: number; max: number }[] }
-  ingreso: { total: number; porPlan: { mensual: { n: number; usd: number }; anual: { n: number; usd: number } }; sinPlan: number; excluidos: number }
+  ingreso: { total: number; porPlan: { mensual: { n: number; usd: number }; anual: { n: number; usd: number } }; sinPlan: number; excluidos: number; cortesias: number }
   acciones: Insight[]
   insights: Insight[]
   embudo: EmbudoPaso[]

@@ -35,6 +35,7 @@ export default function MembershipsPanel() {
   const [dias, setDias] = useState(30)
   const [busy, setBusy] = useState(false)
   const [tab, setTab] = useState<Tab>('activos')
+  const [cortesia, setCortesia] = useState(false)
   const [extra, setExtra] = useState<Record<string, string>>({})
   // Correo cuya revocación espera confirmación (segundo clic), en vez de un cuadro del navegador
   const [confirmingRevoke, setConfirmingRevoke] = useState<string | null>(null)
@@ -56,7 +57,7 @@ export default function MembershipsPanel() {
     load()
   }, [load])
 
-  const send = async (method: 'POST' | 'DELETE', body: object) => {
+  const send = async (method: 'POST' | 'DELETE' | 'PATCH', body: object) => {
     setBusy(true)
     setError(null)
     const res = await aiFetch('/api/admin/accesos', {
@@ -76,7 +77,7 @@ export default function MembershipsPanel() {
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (await send('POST', { email, dias })) setEmail('')
+    if (await send('POST', { email, dias, ...(cortesia ? { cortesia: true } : {}) })) setEmail('')
   }
 
   const visibles = (accesos ?? []).filter((a) => enTab(a, tab))
@@ -110,6 +111,10 @@ export default function MembershipsPanel() {
               className="w-20 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm"
             />
             días
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <input type="checkbox" checked={cortesia} onChange={(e) => setCortesia(e.target.checked)} />
+            Cortesía (gratis)
           </label>
           <button
             type="submit"
@@ -171,7 +176,21 @@ export default function MembershipsPanel() {
                     <p className="text-sm font-semibold text-slate-800 dark:text-white break-all">{a.email}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">Vence: {fmt(a.vence_el)}</p>
                   </div>
+                  {a.origen === 'cortesia' && (
+                    <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
+                      Cortesía
+                    </span>
+                  )}
                   <span className={`text-[11px] font-bold px-2 py-1 rounded-full ${st.style}`}>{st.label}</span>
+                  {a.origen !== 'prueba' && (
+                    <button
+                      onClick={() => send('PATCH', { email: a.email, cortesia: a.origen !== 'cortesia' })}
+                      disabled={busy}
+                      className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:underline disabled:opacity-50"
+                    >
+                      {a.origen === 'cortesia' ? 'Marcar de pago' : 'Marcar cortesía'}
+                    </button>
+                  )}
                   <button
                     onClick={() => send('POST', { email: a.email, dias: 30 })}
                     disabled={busy}

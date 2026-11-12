@@ -115,9 +115,10 @@ export function ResumenView({ data }: { data: ResumenData | null }) {
           <p className={`text-xs ${subtle} mt-1`}>
             Estimado, no es cobro real. {data.ingreso.porPlan.mensual.n} mensual · {data.ingreso.porPlan.anual.n} anual (prorrateado)
           </p>
-          {(data.ingreso.sinPlan > 0 || data.ingreso.excluidos > 0) && (
+          {(data.ingreso.sinPlan > 0 || data.ingreso.excluidos > 0 || data.ingreso.cortesias > 0) && (
             <p className={`text-[11px] ${subtle} mt-1`}>
               {data.ingreso.sinPlan > 0 && `${data.ingreso.sinPlan} sin vencimiento (no cuenta). `}
+              {data.ingreso.cortesias > 0 && `${data.ingreso.cortesias} de cortesía (gratis, no cuenta). `}
               {data.ingreso.excluidos > 0 && `${data.ingreso.excluidos} de prueba o tuyo (no cuenta).`}
             </p>
           )}
