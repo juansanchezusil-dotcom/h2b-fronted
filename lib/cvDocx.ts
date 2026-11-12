@@ -32,6 +32,7 @@ export interface BuiltCv {
 // Datos de contacto que la carta muestra en su banda superior
 export interface LetterContact {
   targetRole?: string;
+  company?: string;
   phone?: string;
   email?: string;
   city?: string;
@@ -319,23 +320,23 @@ export async function buildLetterDocx(letter: string, fullName: string, contact:
       spacing: { before: 0, after: 200, line: 269 },
       children: [],
     }),
-    ...(contact.targetRole
-      ? [line([run('Re:', { bold: true, size: 19, color: GREY })], 0), line([run(contact.targetRole, { size: 20 })], 0)]
+    ...(contact.company || contact.targetRole
+      ? [line([run('Re:', { bold: true, size: 19, color: GREY })], 0), line([run(contact.company || contact.targetRole || '', { size: 20 })], 0)]
       : []),
   ];
 
   // Columna derecha: saludo, cuerpo, despedida y firma manuscrita
   const rightChildren = [
-    ...(greeting ? [line([run(greeting)], 160, 288)] : []),
+    ...(greeting ? [line([run(greeting, { size: 22 })], 240, 300)] : []),
     ...paragraphs.map((p) =>
       line(
-        p.split('\n').map((l, i) => new TextRun({ text: l, font: FONT, size: 21, color: NAVY, break: i === 0 ? 0 : 1 })),
-        180,
-        300
+        p.split('\n').map((l, i) => new TextRun({ text: l, font: FONT, size: 22, color: NAVY, break: i === 0 ? 0 : 1 })),
+        260,
+        340
       )
     ),
-    ...(closing ? [line([run(closing)], 200)] : []),
-    ...(signature ? [line([run(signature, { font: 'Segoe Script', size: 48 })], 0, 240)] : []),
+    ...(closing ? [line([run(closing, { size: 22 })], 360)] : []),
+    ...(signature ? [line([run(signature, { font: 'Segoe Script', size: 32 })], 0, 240)] : []),
   ];
 
   const leftWidth = 3300;
@@ -379,7 +380,7 @@ export async function buildLetterDocx(letter: string, fullName: string, contact:
       // La banda ocupa todo el ancho de la página, por eso va en su propia sección sin márgenes laterales
       {
         properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 340, bottom: 794, left: 0, right: 0 } } },
-        children: [band, new Paragraph({ spacing: { after: 160 }, children: [] })],
+        children: [band, new Paragraph({ spacing: { after: 480 }, children: [] })],
       },
       {
         properties: {

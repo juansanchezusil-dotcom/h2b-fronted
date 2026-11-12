@@ -249,7 +249,7 @@ export async function buildLetterPdf(letter: string, fullName: string, contact: 
   }
 
   // Columna izquierda: fecha, filete y referencia al puesto
-  const top = bandH + 38
+  const top = bandH + 70
   const colW = 165
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
   doc.setFontSize(10.5)
@@ -257,7 +257,8 @@ export async function buildLetterPdf(letter: string, fullName: string, contact: 
   doc.setDrawColor(...RULE)
   doc.setLineWidth(0.6)
   doc.line(left, top + 14, left + colW - 15, top + 14)
-  if (contact.targetRole) {
+  const reText = contact.company || contact.targetRole
+  if (reText) {
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(9.5)
     doc.setTextColor(...GREY)
@@ -265,7 +266,7 @@ export async function buildLetterPdf(letter: string, fullName: string, contact: 
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
     doc.setTextColor(...NAVY)
-    const re: string[] = doc.splitTextToSize(clean(contact.targetRole), colW - 20)
+    const re: string[] = doc.splitTextToSize(clean(reText), colW - 20)
     re.forEach((l, i) => doc.text(l, left, top + 49 + i * 13))
   }
 
@@ -273,13 +274,39 @@ export async function buildLetterPdf(letter: string, fullName: string, contact: 
   const c = cursor(doc, { left: left + colW + 10, right: left, top, bottom: 50 })
   const { greeting, paragraphs, closing, signature } = splitLetter(letter, name)
   c.gap(-14)
-  if (greeting) c.paragraph(greeting, { size: 10.5, leading: 1.45, after: 8 })
+  if (greeting) c.paragraph(greeting, { size: 11, leading: 1.5, after: 12 })
   for (const p of paragraphs) {
     const lines = p.split('\n')
-    lines.forEach((l, i) => c.paragraph(l, { size: 10.5, leading: 1.5, after: i === lines.length - 1 ? 9 : 0 }))
+    lines.forEach((l, i) => c.paragraph(l, { size: 11, leading: 1.65, after: i === lines.length - 1 ? 14 : 0 }))
   }
-  if (closing) c.paragraph(closing, { size: 10.5, leading: 1.45, after: 10 })
-  if (signature) c.paragraph(signature, { size: 22, style: 'italic', leading: 1.2 })
+  if (closing) c.paragraph(closing, { size: 11, leading: 1.5, after: 16 })
+  if (signature) {
+    // Firma manuscrita: fuente libre (OFL) servida desde /fonts; si no carga, queda en cursiva
+    let signed = false
+    try {
+      const res = await fetch('/fonts/MrsSaintDelafield-Regular.ttf')
+      if (res.ok) {
+        const bytes = new Uint8Array(await res.arrayBuffer())
+        let bin = ''
+        for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+        doc.addFileToVFS('MrsSaintDelafield-Regular.ttf', btoa(bin))
+        doc.addFont('MrsSaintDelafield-Regular.ttf', 'MrsSaintDelafield', 'normal')
+        signed = true
+      }
+    } catch {
+      signed = false
+    }
+    if (signed) {
+      doc.setFont('MrsSaintDelafield', 'normal')
+      doc.setFontSize(34)
+      doc.setTextColor(...NAVY)
+      c.ensure(40)
+      c.gap(30)
+      doc.text(clean(signature), left + colW + 10, c.y)
+    } else {
+      c.paragraph(signature, { size: 16, style: 'italic', leading: 1.2 })
+    }
+  }
 
   return doc.output('blob')
 }

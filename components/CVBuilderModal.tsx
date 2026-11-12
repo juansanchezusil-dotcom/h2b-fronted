@@ -343,7 +343,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     }
   };
 
-  const letterContact = { targetRole: letterRole.trim() || profile.targetRole, phone: profile.phone, email: profile.email, city: profile.city };
+  const letterContact = { targetRole: letterRole.trim() || profile.targetRole, company: letterCompany.trim() || undefined, phone: profile.phone, email: profile.email, city: profile.city };
 
   const handleDownloadLetterPdf = async () => {
     if (!letter) return;
