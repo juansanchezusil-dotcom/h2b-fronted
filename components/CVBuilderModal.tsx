@@ -52,6 +52,7 @@ interface CandidateProfile {
   city: string;
   phone: string;
   email: string;
+  teams: string;
   targetRole: string;
   industry: string;
   englishLevel: string;
@@ -123,7 +124,7 @@ const REQUIREMENT_STYLES: Record<Requirement['status'], { label: string; style: 
 const CRITICAL_TOTAL = 4; // nombre, puesto, una experiencia completa y la ruta
 
 const emptyProfile = (): CandidateProfile => ({
-  fullName: '', city: '', phone: '', email: '', targetRole: '', industry: '', englishLevel: '',
+  fullName: '', city: '', phone: '', email: '', teams: '', targetRole: '', industry: '', englishLevel: '',
   route: '', experiences: [], education: [], certifications: [], languages: [], skills: [],
 });
 

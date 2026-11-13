@@ -111,7 +111,7 @@ export async function buildCvPdf(cv: BuiltCv): Promise<Blob> {
   // Encabezado
   c.paragraph((cv.header.fullName || 'YOUR NAME').toUpperCase(), { size: 22, style: 'bold', align: 'center', after: 1 })
   if (cv.headline) c.paragraph(cv.headline, { size: 11.5, style: 'bold', align: 'center', after: 1, color: BLUE })
-  const contact = [cv.header.city, cv.header.phone, cv.header.email].filter(Boolean).join('  \u2022  ')
+  const contact = [cv.header.city, cv.header.phone, cv.header.email, cv.header.teams && `Teams: ${cv.header.teams}`].filter(Boolean).join('  \u2022  ')
   if (contact) c.paragraph(contact, { size: 10, align: 'center', after: 1, color: GREY })
 
   if (cv.summary) {

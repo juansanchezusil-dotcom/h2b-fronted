@@ -17,7 +17,7 @@ export interface CvExperience {
 }
 
 export interface BuiltCv {
-  header: { fullName: string; city: string; phone: string; email: string };
+  header: { fullName: string; city: string; phone: string; email: string; teams?: string };
   headline: string;
   summary: string;
   experiences: CvExperience[];
@@ -128,7 +128,7 @@ export async function buildCvDocx(cv: BuiltCv): Promise<Blob> {
       })
     );
   }
-  const contact = [cv.header.city, cv.header.phone, cv.header.email].filter(Boolean).join('  •  ');
+  const contact = [cv.header.city, cv.header.phone, cv.header.email, cv.header.teams && `Teams: ${cv.header.teams}`].filter(Boolean).join('  •  ');
   if (contact) {
     children.push(
       new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 40, line: 259 }, children: [run(contact, { size: 20, color: GREY })] })
