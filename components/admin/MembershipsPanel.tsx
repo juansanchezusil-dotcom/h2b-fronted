@@ -9,16 +9,27 @@ interface Acceso {
   activo: boolean
   vence_el: string | null
   origen: string | null
+  created_at: string | null
+  ultima_visita: string | null
 }
 
 const fmt = (iso: string | null) =>
   iso ? new Date(iso).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Sin vencimiento'
 
-type Tab = 'activos' | 'vencidos' | 'revocados'
+type Tab = 'activos' | 'indefinidos' | 'vencidos' | 'revocados'
 
 const vencido = (a: Acceso) => a.activo && !!a.vence_el && new Date(a.vence_el).getTime() < Date.now()
-const enTab = (a: Acceso, k: Tab) => (k === 'revocados' ? !a.activo : k === 'vencidos' ? vencido(a) : a.activo && !vencido(a))
-const TAB_LABEL: Record<Tab, string> = { activos: 'Activos', vencidos: 'Vencidos', revocados: 'Revocados' }
+const indefinido = (a: Acceso) => a.activo && !a.vence_el
+const enTab = (a: Acceso, k: Tab) =>
+  k === 'revocados' ? !a.activo : k === 'vencidos' ? vencido(a) : k === 'indefinidos' ? indefinido(a) : a.activo && !!a.vence_el && !vencido(a)
+const TAB_LABEL: Record<Tab, string> = { activos: 'Activos', indefinidos: 'Indefinidos', vencidos: 'Vencidos', revocados: 'Revocados' }
+const EMPTY_TAB: Record<Tab, string> = {
+  activos: 'Aún no hay miembros activos.',
+  indefinidos: 'No hay accesos indefinidos.',
+  vencidos: 'No hay accesos vencidos.',
+  revocados: 'No hay accesos revocados.',
+}
+const fmtDia = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }) : 'sin fecha')
 
 function estado(a: Acceso): { label: string; style: string } {
   if (!a.activo) return { label: 'Revocado', style: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400' }
@@ -39,6 +50,8 @@ export default function MembershipsPanel() {
   const [extra, setExtra] = useState<Record<string, string>>({})
   // Correo cuya revocación espera confirmación (segundo clic), en vez de un cuadro del navegador
   const [confirmingRevoke, setConfirmingRevoke] = useState<string | null>(null)
+  // Resultado del correo de bienvenida tras dar acceso
+  const [aviso, setAviso] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
@@ -72,6 +85,13 @@ export default function MembershipsPanel() {
       return false
     }
     await load()
+    if (data.correoBienvenida) {
+      setAviso(
+        data.correoBienvenida.sent
+          ? 'Correo de bienvenida con el link enviado.'
+          : `Acceso creado, pero el correo de bienvenida NO se envió (${data.correoBienvenida.reason || 'error'}). Envía el link a mano.`
+      )
+    }
     return true
   }
 
@@ -80,7 +100,9 @@ export default function MembershipsPanel() {
     if (await send('POST', { email, dias, ...(cortesia ? { cortesia: true } : {}) })) setEmail('')
   }
 
-  const visibles = (accesos ?? []).filter((a) => enTab(a, tab))
+  const visibles = (accesos ?? [])
+    .filter((a) => enTab(a, tab))
+    .sort((a, b) => (b.created_at ?? '').localeCompare(a.created_at ?? ''))
 
   return (
     <div className="space-y-6">
@@ -126,6 +148,12 @@ export default function MembershipsPanel() {
           </button>
         </form>
 
+        {aviso && !error && (
+          <p className="text-sm text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2">
+            {aviso}
+          </p>
+        )}
+
         {error && (
           <p className="text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg px-3 py-2">
             {error}
@@ -140,7 +168,7 @@ export default function MembershipsPanel() {
 
         {accesos && (
           <div className="flex gap-2" role="tablist">
-            {(['activos', 'vencidos', 'revocados'] as const).map((k) => {
+            {(['activos', 'indefinidos', 'vencidos', 'revocados'] as const).map((k) => {
               const count = accesos.filter((a) => enTab(a, k)).length
               return (
                 <button
@@ -165,7 +193,7 @@ export default function MembershipsPanel() {
           <ul className="divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl">
             {visibles.length === 0 && (
               <li className="p-4 text-sm text-slate-500 dark:text-slate-400">
-                {tab === 'activos' ? 'Aún no hay miembros activos.' : tab === 'vencidos' ? 'No hay accesos vencidos.' : 'No hay accesos revocados.'}
+                {EMPTY_TAB[tab]}
               </li>
             )}
             {visibles.map((a) => {
@@ -174,8 +202,22 @@ export default function MembershipsPanel() {
                 <li key={a.email} className="p-4 flex flex-wrap items-center gap-3">
                   <div className="flex-1 min-w-[12rem]">
                     <p className="text-sm font-semibold text-slate-800 dark:text-white break-all">{a.email}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Vence: {fmt(a.vence_el)}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Ingresó: {fmtDia(a.created_at)} · Vence: {fmt(a.vence_el)}
+                    </p>
                   </div>
+                  {a.activo && (
+                    <span
+                      title={a.ultima_visita ? `Última visita: ${fmtDia(a.ultima_visita)}` : 'Todavía no ha iniciado sesión'}
+                      className={`text-[11px] font-bold px-2 py-1 rounded-full ${
+                        a.ultima_visita
+                          ? 'bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400'
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400'
+                      }`}
+                    >
+                      {a.ultima_visita ? `Entró · ${fmtDia(a.ultima_visita)}` : 'Aún no entra'}
+                    </span>
+                  )}
                   {a.origen === 'cortesia' && (
                     <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-500/10 dark:text-amber-400">
                       Cortesía
