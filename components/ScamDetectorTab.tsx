@@ -12,6 +12,7 @@ interface ScamImage {
   file: File;
   previewUrl: string;
   base64: string;
+  mediaType: string;
 }
 
 interface ScamResult {
@@ -39,13 +40,38 @@ const NIVEL_STYLES: Record<ScamResult['nivel'], { badge: string; icon: typeof Al
   },
 };
 
+// Phone photos weigh 3-8 MB and the server accepts ~3 MB in total, so each image is shrunk here
+// to a JPEG of at most 1600 px per side. Text in a document or chat stays readable at that size.
+const MAX_SIDE = 1600;
+const JPEG_QUALITY = 0.82;
+// Base64 characters across all images; the server limit is 4,400,000
+const MAX_TOTAL_BASE64 = 4_200_000;
+
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error('No se pudo leer la imagen.'));
     reader.readAsDataURL(file);
   });
+}
+
+async function shrinkImage(file: File): Promise<{ base64: string; mediaType: string }> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('no canvas');
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    return { base64: canvas.toDataURL('image/jpeg', JPEG_QUALITY), mediaType: 'image/jpeg' };
+  } catch {
+    // The browser cannot decode this format (for example HEIC on Windows): send it as it is
+    return { base64: await fileToBase64(file), mediaType: file.type };
+  }
 }
 
 export default function ScamDetectorTab() {
@@ -58,15 +84,32 @@ export default function ScamDetectorTab() {
   const handleFiles = async (fileList: FileList | null) => {
     if (!fileList) return;
     setError(null);
-    const files = Array.from(fileList).slice(0, MAX_IMAGES - images.length);
-    if (files.length === 0) return;
-    const next: ScamImage[] = [];
-    for (const file of files) {
-      const base64 = await fileToBase64(file);
-      next.push({ file, previewUrl: URL.createObjectURL(file), base64 });
+    const files = Array.from(fileList)
+      .filter((f) => f.type.startsWith('image/'))
+      .slice(0, MAX_IMAGES - images.length);
+    if (files.length === 0) {
+      setError('Sube solo imágenes o capturas de pantalla.');
+      return;
     }
-    setImages((prev) => [...prev, ...next].slice(0, MAX_IMAGES));
-    setResult(null);
+    try {
+      let total = images.reduce((sum, img) => sum + img.base64.length, 0);
+      const next: ScamImage[] = [];
+      for (const file of files) {
+        const { base64, mediaType } = await shrinkImage(file);
+        if (total + base64.length > MAX_TOTAL_BASE64) {
+          setError('Las imágenes pesan demasiado juntas. Analiza menos imágenes a la vez.');
+          break;
+        }
+        total += base64.length;
+        next.push({ file, previewUrl: URL.createObjectURL(file), base64, mediaType });
+      }
+      if (next.length > 0) {
+        setImages((prev) => [...prev, ...next].slice(0, MAX_IMAGES));
+        setResult(null);
+      }
+    } catch (err) {
+      setError(errorMessage(err, 'No se pudo leer la imagen.'));
+    }
   };
 
   const removeImage = (idx: number) => {
@@ -84,7 +127,7 @@ export default function ScamDetectorTab() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          images: images.map((img) => ({ base64: img.base64, mediaType: img.file.type })),
+          images: images.map((img) => ({ base64: img.base64, mediaType: img.mediaType })),
         }),
       });
       const data = await res.json();
