@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Mail, Copy, ExternalLink, Sparkles, Check, Loader2, FileText } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { aiFetch } from '@/lib/aiFetch';
@@ -77,17 +77,37 @@ export function EmailAssistantTab({
   const [jobTitle, setJobTitle] = useState(initialJobTitle);
   const [location, setLocation] = useState(initialLocation);
   const [contactEmail, setContactEmail] = useState(initialContactEmail);
+  // Nombre de la persona que recibe el correo (opcional). Con nombre, el saludo es "Dear Nombre,"; sin él, "Dear Hiring Manager,"
+  const [contactName, setContactName] = useState('');
+  // Para ignorar la respuesta de una búsqueda vieja si la persona elige otra oferta antes de que llegue
+  const pickSeq = useRef(0);
   const [selectedOfferIdx, setSelectedOfferIdx] = useState<string>('-1');
 
-  const handlePickOffer = (value: string) => {
+  const handlePickOffer = async (value: string) => {
     setSelectedOfferIdx(value);
     const idx = Number(value);
     if (idx < 0) return;
     const offer = savedOffers[idx];
     if (!offer) return;
+    const seq = ++pickSeq.current;
     setCompanyName(offer.company);
     setJobTitle(offer.role);
     setLocation(offer.state || '');
+    // Datos de la oferta anterior no deben quedar: el correo y el nombre se llenan de nuevo
+    setContactEmail('');
+    setContactName('');
+    // Los correos ya generados eran de la oferta anterior: se descartan para que se redacten con la nueva
+    setEmails({});
+    // El CRM no guarda el correo del reclutador; se busca en el catálogo por empresa y puesto
+    const { data } = await supabase
+      .from('jobs')
+      .select('email_to_apply')
+      .eq('employer_name', offer.company)
+      .eq('title', offer.role)
+      .not('email_to_apply', 'is', null)
+      .limit(1)
+      .maybeSingle();
+    if (seq === pickSeq.current && data?.email_to_apply) setContactEmail(String(data.email_to_apply).trim());
   };
   const [copied, setCopied] = useState(false);
   const [lang, setLang] = useState<Lang>('en');
@@ -133,6 +153,7 @@ export function EmailAssistantTab({
           jobTitle: jobTitle || 'the H-2B position',
           companyName: companyName || 'your company',
           location,
+          contactName: contactName.trim(),
           candidateName: candidate.fullName || '[Tu nombre]',
           baseCvText: candidate.baseCvText,
           skills: candidate.skills,
@@ -363,6 +384,18 @@ export function EmailAssistantTab({
                 type="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
+                className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+            <div>
+              <label htmlFor="email-contact-name" className="text-xs text-slate-500 dark:text-slate-400 font-medium">Nombre del contacto (opcional)</label>
+              <input
+                id="email-contact-name"
+                type="text"
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                maxLength={80}
+                placeholder="Ej.: Ms. Smith. Si lo dejas vacío: Hiring Manager"
                 className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
