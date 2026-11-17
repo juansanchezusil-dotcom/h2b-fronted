@@ -43,7 +43,7 @@ export default function MembershipsPanel() {
   const [accesos, setAccesos] = useState<Acceso[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
-  const [dias, setDias] = useState(30)
+  const [dias, setDias] = useState(35)
   const [busy, setBusy] = useState(false)
   const [tab, setTab] = useState<Tab>('activos')
   const [cortesia, setCortesia] = useState(false)
@@ -234,11 +234,11 @@ export default function MembershipsPanel() {
                     </button>
                   )}
                   <button
-                    onClick={() => send('POST', { email: a.email, dias: 30 })}
+                    onClick={() => send('POST', { email: a.email, dias: 35 })}
                     disabled={busy}
                     className="flex items-center gap-1 text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] hover:underline disabled:opacity-50"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" /> +30 días
+                    <RefreshCw className="w-3.5 h-3.5" /> +35 días
                   </button>
                   <button
                     onClick={() => send('POST', { email: a.email, dias: 365 })}
