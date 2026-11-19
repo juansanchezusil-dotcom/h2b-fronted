@@ -43,7 +43,7 @@ export default function MembershipsPanel() {
   const [accesos, setAccesos] = useState<Acceso[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
-  // Vacío = el servidor decide: 30 días, o 35 si es persona nueva del lanzamiento (25-nov al 24-dic)
+  // Vacío = el servidor decide: 30 días, o 35 si es persona nueva del lanzamiento (25-nov al 30-nov)
   const [dias, setDias] = useState('')
   const [busy, setBusy] = useState(false)
   const [tab, setTab] = useState<Tab>('activos')
