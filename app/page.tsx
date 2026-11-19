@@ -948,17 +948,41 @@ const markFollowupSent = async (item: CRMItem, n: 1 | 2): Promise<boolean> => {
 // La persona registra (o quita) la respuesta del empleador
 const setEmployerReply = async (item: CRMItem, type: CRMItem['replyType']) => {
   const when = type ? new Date() : null
+  // La respuesta también mueve la tarjeta: entrevista → Entrevista, "no por ahora" → Rechazado.
+  // Una oferta ya aceptada no se toca, y quitar la respuesta no devuelve la tarjeta a su columna anterior.
+  let newStatus: CRMItem['status'] | null = null
+  if (type === 'entrevista' && item.status !== 'entrevista' && item.status !== 'aceptado') newStatus = 'entrevista'
+  if (type === 'rechazo' && item.status !== 'rechazada' && item.status !== 'aceptado') newStatus = 'rechazada'
   const { error } = await supabase
     .from('applications')
-    .update({ reply_type: type, reply_at: when ? when.toISOString() : null })
+    .update({
+      reply_type: type,
+      reply_at: when ? when.toISOString() : null,
+      ...(newStatus ? { status: newStatus, last_updated: new Date().toISOString() } : {}),
+    })
     .eq('id', item.id)
   if (error) {
     console.error('No se pudo registrar la respuesta del empleador:', error)
     showToast('❌ No se pudo guardar. Intenta de nuevo.')
     return
   }
-  setCrmItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, replyType: type, replyAt: when ? when.getTime() : null } : i)))
-  showToast(type ? '✅ Respuesta registrada' : 'Respuesta quitada')
+  setCrmItems((prev) =>
+    prev.map((i) =>
+      i.id === item.id
+        ? {
+            ...i,
+            replyType: type,
+            replyAt: when ? when.getTime() : null,
+            ...(newStatus ? { status: newStatus, dateLabel: labelForStatus(newStatus), lastUpdated: Date.now() } : {}),
+          }
+        : i
+    )
+  )
+  showToast(
+    newStatus === 'entrevista' ? '✅ Respuesta registrada y movida a Entrevista'
+    : newStatus === 'rechazada' ? '✅ Respuesta registrada y movida a Rechazado'
+    : type ? '✅ Respuesta registrada' : 'Respuesta quitada'
+  )
 }
 
 const renderReplyControl = (item: CRMItem) =>

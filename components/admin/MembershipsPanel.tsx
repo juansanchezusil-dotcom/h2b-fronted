@@ -43,7 +43,8 @@ export default function MembershipsPanel() {
   const [accesos, setAccesos] = useState<Acceso[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [email, setEmail] = useState('')
-  const [dias, setDias] = useState(35)
+  // Vacío = el servidor decide: 30 días, o 35 si es persona nueva del lanzamiento (25-nov al 24-dic)
+  const [dias, setDias] = useState('')
   const [busy, setBusy] = useState(false)
   const [tab, setTab] = useState<Tab>('activos')
   const [cortesia, setCortesia] = useState(false)
@@ -97,7 +98,7 @@ export default function MembershipsPanel() {
 
   const add = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (await send('POST', { email, dias, ...(cortesia ? { cortesia: true } : {}) })) setEmail('')
+    if (await send('POST', { email, ...(dias ? { dias: Number(dias) } : {}), ...(cortesia ? { cortesia: true } : {}) })) setEmail('')
   }
 
   const visibles = (accesos ?? [])
@@ -128,9 +129,10 @@ export default function MembershipsPanel() {
               min={1}
               max={3650}
               value={dias}
-              onChange={(e) => setDias(Number(e.target.value))}
-              aria-label="Días de acceso"
-              className="w-20 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm"
+              onChange={(e) => setDias(e.target.value)}
+              placeholder="auto"
+              aria-label="Días de acceso (vacío = automático)"
+              className="w-20rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2 text-sm"
             />
             días
           </label>
@@ -234,11 +236,11 @@ export default function MembershipsPanel() {
                     </button>
                   )}
                   <button
-                    onClick={() => send('POST', { email: a.email, dias: 35 })}
+                    onClick={() => send('POST', { email: a.email, dias: 30 })}
                     disabled={busy}
                     className="flex items-center gap-1 text-xs font-semibold text-[#0B4079] dark:text-[#C89B3C] hover:underline disabled:opacity-50"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" /> +35 días
+                    <RefreshCw className="w-3.5 h-3.5" /> +30 días
                   </button>
                   <button
                     onClick={() => send('POST', { email: a.email, dias: 365 })}
