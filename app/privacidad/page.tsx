@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Qué datos guardamos, para qué los usamos, con quién los compartimos y cómo pedir que los borremos.',
 }
 
-const UPDATED = '14 de octubre de 2026'
+const UPDATED = '21 de noviembre de 2026'
 
 function H({ children }: { children: React.ReactNode }) {
   return <h2 className="mt-8 mb-2 text-lg font-bold text-slate-900 dark:text-white">{children}</h2>
@@ -86,6 +86,16 @@ export default function PrivacidadPage() {
         />
         <p className="mt-2">
           Por eso te recomendamos no incluir en tu CV ni en el detector datos que no necesites compartir, como números de documento, de seguro social o de cuentas bancarias.
+        </p>
+
+        <H>Cookies</H>
+        <p>
+          En la app (app.juanteavisa.com) y en el Mapa H2B solo usamos las cookies de sesión necesarias para mantenerte conectado después de iniciar sesión. Sin ellas la app no funciona, y se borran al cerrar sesión.
+          No usamos cookies de publicidad ni de seguimiento, ni píxeles de Meta, TikTok o similares.
+        </p>
+        <p className="mt-2">
+          Nuestro sitio informativo (juanteavisa.com) y la página de la masterclass usan Google Analytics 4, que pone cookies para medir visitas, páginas vistas y clics de forma agregada. Puedes bloquearlas desde la configuración de tu navegador o con el{' '}
+          <a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="underline">complemento de inhabilitación de Google Analytics</a>.
         </p>
 
         <H>Cuánto tiempo los guardamos</H>
