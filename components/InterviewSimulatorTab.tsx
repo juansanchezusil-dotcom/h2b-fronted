@@ -1,26 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Mic, MicOff, Loader2, FileText, ChevronRight, RotateCcw, Sparkles, HelpCircle, Briefcase, Landmark } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { aiFetch } from '@/lib/aiFetch';
 import { errorMessage } from '@/lib/errors';
-
-// Lo que usamos del dictado por voz del navegador (Web Speech API; TypeScript no trae sus tipos)
-interface SpeechRecognitionLike {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  onresult: ((e: { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-}
-const speechRecognitionCtor = (): (new () => SpeechRecognitionLike) | undefined => {
-  const w = window as unknown as Record<string, (new () => SpeechRecognitionLike) | undefined>;
-  return w.SpeechRecognition || w.webkitSpeechRecognition;
-};
+import { useDictation } from '@/hooks/useDictation';
 
 // Simulador de entrevistas H-2B: entrevista adaptativa, una pregunta por turno, sin correcciones durante la
 // práctica (solo si se pausa para pedir ayuda) y un informe final con puntuación y plan de mejora.
@@ -123,9 +108,12 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
   const [duties, setDuties] = useState('');
 
   // Dictado por voz (transcripción en el navegador; no se guarda audio)
-  const [listening, setListening] = useState(false);
-  const [canDictate, setCanDictate] = useState(false);
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const dictation = useDictation((text) => {
+    if (text) setAnswer((prev) => (prev ? `${prev} ${text}` : text));
+  }, 'en-US');
+  const listening = dictation.listening;
+  const canDictate = dictation.supported;
+  const stopDictation = dictation.stop;
 
   const storageKey = `jta-sim-v2-${userId}`;
 
@@ -147,15 +135,13 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
   }, [userId]);
 
   useEffect(() => {
-    // Solo se puede leer en el navegador, después de hidratar (en el servidor no existe)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setCanDictate(typeof window !== 'undefined' && !!speechRecognitionCtor());
     // Retoma una práctica a medias de esta misma persona
     try {
       const raw = window.localStorage.getItem(storageKey);
       if (raw) {
         const s = JSON.parse(raw);
         if (s?.question && Array.isArray(s.turns)) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setModule(s.module === 'consular' ? 'consular' : 'employer');
           setTurns(s.turns);
           setQuestion(s.question);
@@ -172,7 +158,6 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
     } catch {
       // Sin almacenamiento: la práctica dura solo esta visita
     }
-    return () => recognitionRef.current?.stop?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -251,7 +236,7 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
 
   const submit = async () => {
     if (!question || answer.trim().length < 2 || busy) return;
-    recognitionRef.current?.stop?.();
+    stopDictation();
     const next = [...turns, { q: question.question_en, a: answer.trim() }];
     setBusy(true);
     setError(null);
@@ -290,33 +275,12 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
   };
 
   const toggleDictation = () => {
-    if (listening) {
-      recognitionRef.current?.stop?.();
-      return;
-    }
-    const Ctor = speechRecognitionCtor();
-    if (!Ctor) return;
-    const rec = new Ctor();
-    rec.lang = 'en-US';
-    rec.interimResults = false;
-    rec.continuous = true;
-    rec.onresult = (e) => {
-      const text = Array.from(e.results)
-        .slice(e.resultIndex)
-        .map((r) => r[0]?.transcript || '')
-        .join(' ')
-        .trim();
-      if (text) setAnswer((prev) => (prev ? `${prev} ${text}` : text));
-    };
-    rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
-    recognitionRef.current = rec;
-    setListening(true);
-    rec.start();
+    if (listening) dictation.stop();
+    else dictation.start();
   };
 
   const restart = () => {
-    recognitionRef.current?.stop?.();
+    stopDictation();
     persist(null);
     setStage('intro');
     setTurns([]);
@@ -681,6 +645,7 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
               className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white p-3 text-sm focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20"
             />
             {error && <p className={errBox}>{error}</p>}
+            {dictation.error && <p className={errBox}>{dictation.error}</p>}
 
             <div className="flex flex-wrap items-center gap-2">
               <button
