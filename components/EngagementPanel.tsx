@@ -144,14 +144,14 @@ export default function EngagementPanel() {
           <div>
             <h3 className="text-sm font-bold text-slate-800 dark:text-white">Antes de encenderlos</h3>
             <ul className="mt-2 space-y-1.5">
-              <Item ok={null}>{'Política de privacidad en /privacidad (ya publicada): que tu abogado la revise antes de encender.'}</Item>
+              <Item ok={true}>{'Política de privacidad en /privacidad (publicada y revisada).'}</Item>
               <Item ok={data.replyToConfigured}>
                 {`Dirección donde lees las respuestas${data.replyToConfigured ? '' : ': falta la variable ENGAGEMENT_REPLY_TO en Vercel. Sin ella no se envía a miembros'}.`}
               </Item>
               <Item ok={data.renewalLinkConfigured}>
                 {`Enlace de renovación${data.renewalLinkConfigured ? '' : ': falta NEXT_PUBLIC_MEMBERSHIP_URL. Mientras tanto los correos piden responder para renovar'}.`}
               </Item>
-              <Item ok={null}>Aprobaste los textos: pulsa el botón de abajo y revisa los ejemplos en tu correo.</Item>
+              <Item ok={true}>Textos aprobados. Puedes pedir correos de ejemplo con el botón de abajo.</Item>
             </ul>
             <button
               type="button"
