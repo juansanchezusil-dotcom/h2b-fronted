@@ -303,7 +303,7 @@ export default function H2BMap({
           </h2>
           {map.route && (
             <div className="space-y-1">
-              <p className="inline-block rounded-full bg-[#0B4079] text-white text-[11px] font-bold px-2.5 py-0.5">{`Ruta ${map.route.code}: ${map.route.label}`}</p>
+              <p className="inline-block rounded-full bg-[#0B4079] text-white text-[11px] font-bold px-2.5 py-0.5">{`Tipo de experiencia: ${map.route.label}`}</p>
               <p className="text-sm text-slate-600 dark:text-slate-300">{map.route.explanation}</p>
             </div>
           )}

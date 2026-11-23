@@ -862,7 +862,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                 <details className="rounded-xl border border-slate-200 dark:border-slate-800 px-3 py-2 text-xs text-slate-700 dark:text-slate-300">
                   <summary className="cursor-pointer font-semibold text-slate-800 dark:text-slate-100">Esto entendí de ti</summary>
                   <div className="mt-2 space-y-1.5">
-                    {profile.targetRole && <p>{`Puesto: ${profile.targetRole}${profile.route ? ` · Ruta ${profile.route}` : ''}`}</p>}
+                    {profile.targetRole && <p>{`Puesto: ${profile.targetRole}${profile.route && ROUTE_LABELS[profile.route] ? ` · ${ROUTE_LABELS[profile.route]}` : ''}`}</p>}
                     <ul className="list-disc pl-4 space-y-0.5">
                       {profile.experiences.map((x) => (
                         <li key={x.id}>{[x.title, x.company, x.duration].filter(Boolean).join(' · ') || 'Experiencia'}</li>
@@ -1022,7 +1022,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
               <div className="rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3.5 space-y-1.5">
                 {result.ruta && (
                   <span className="inline-block text-[11px] font-bold bg-[#0B4079] text-white rounded-full px-2.5 py-0.5">
-                    Ruta {result.ruta}: {ROUTE_LABELS[result.ruta]}
+                    Tipo de experiencia: {ROUTE_LABELS[result.ruta]}
                   </span>
                 )}
                 {result.diagnostico_es && <p className="text-xs text-slate-700 dark:text-slate-300">{result.diagnostico_es}</p>}

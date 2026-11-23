@@ -12,6 +12,63 @@ interface OnboardingModalProps {
   onClose?: () => void;
 }
 
+// Rutas por PUESTO (no por industria): dentro de hotelería también hay cocina, mesero, etc.
+// Los textos guardados ("value") de los cinco primeros son los de siempre, para que los perfiles ya llenos y las
+// coincidencias de ofertas (que buscan "limpieza", "cocina", "constru", "jardin", "mantenimiento") sigan igual.
+const PUESTOS: { group: string; options: [string, string][] }[] = [
+  {
+    group: 'Hotelería',
+    options: [
+      ['Hotelería / Limpieza', 'Housekeeping / Limpieza de hotel'],
+      ['Recepción / Front desk', 'Recepción / Front desk'],
+      ['Botones / Bellhop', 'Botones / Bellhop'],
+    ],
+  },
+  {
+    group: 'Cocina y restaurante',
+    options: [
+      ['Cocina / Restaurantes', 'Cocinero / Cook (Line Cook)'],
+      ['Cocina / Lavaplatos (Dishwasher)', 'Lavaplatos / Dishwasher'],
+      ['Mesero / Server', 'Mesero / Server'],
+      ['Bartender / Barman', 'Bartender / Barman'],
+      ['Procesador de alimentos / Planta / Empaque', 'Procesador de alimentos / Planta / Empaque'],
+    ],
+  },
+  {
+    group: 'Exteriores, construcción y mantenimiento',
+    options: [
+      ['Paisajismo / Jardinería', 'Paisajismo / Jardinería (Landscaping)'],
+      ['Construcción', 'Construcción (Laborer)'],
+      ['Carpintero / Carpenter', 'Carpintero / Carpenter'],
+      ['Electricista / Electrician', 'Electricista / Electrician'],
+      ['Mantenimiento / General', 'Mantenimiento general (Maintenance)'],
+    ],
+  },
+  {
+    group: 'Otros',
+    options: [['Conductor / Driver', 'Conductor / Driver']],
+  },
+];
+
+function PuestoOptions({ current, exclude, withNone }: { current: string; exclude?: string; withNone?: boolean }) {
+  const known = PUESTOS.some((g) => g.options.some(([v]) => v === current)) || current === 'Sin Experiencia';
+  return (
+    <>
+      <option value="">{withNone ? 'Ninguna por ahora' : 'Selecciona una opción'}</option>
+      {PUESTOS.map((g) => (
+        <optgroup key={g.group} label={g.group}>
+          {g.options.filter(([v]) => v !== exclude).map(([v, label]) => (
+            <option key={v} value={v}>{label}</option>
+          ))}
+        </optgroup>
+      ))}
+      {!withNone && <option value="Sin Experiencia">Sin experiencia previa</option>}
+      {/* Un puesto guardado antes de esta lista se sigue mostrando */}
+      {!known && current && <option value={current}>{current}</option>}
+    </>
+  );
+}
+
 export default function OnboardingModal({ isOpen, userId, onComplete, onClose }: OnboardingModalProps) {
   // Todos los Hooks van PRIMERO, antes de cualquier "return" condicional.
   const [step, setStep] = useState(1);
@@ -20,6 +77,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
   const [mode, setMode] = useState<'loading' | 'summary' | 'form'>('loading');
   const [formData, setFormData] = useState({  
   experiencia_industria: '',
+  experiencia_industria_b: '',
   anos_experiencia: 0,
   nivel_ingles: '',
   pais_origen: '',
@@ -43,6 +101,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
       if (data) {
         setFormData({
           experiencia_industria: data.experiencia_industria || '',
+          experiencia_industria_b: data.experiencia_industria_b || '',
           anos_experiencia: data.anos_experiencia || 0,
           nivel_ingles: data.nivel_ingles || '',
           pais_origen: data.pais_origen || '',
@@ -66,6 +125,11 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
   .upsert({
     id: userId,
     experiencia_industria: formData.experiencia_industria,
+    // La Ruta B solo existe si hay una Ruta A con experiencia; máximo 2 rutas
+    experiencia_industria_b:
+      formData.experiencia_industria && formData.experiencia_industria !== 'Sin Experiencia' && formData.experiencia_industria_b !== formData.experiencia_industria
+        ? formData.experiencia_industria_b || null
+        : null,
     anos_experiencia: Number(formData.anos_experiencia),
     nivel_ingles: formData.nivel_ingles,
     pais_origen: formData.pais_origen,
@@ -118,7 +182,8 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
             </div>
             <dl className="divide-y divide-slate-100 dark:divide-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-sm">
               {[
-                ['Industria con más experiencia', formData.experiencia_industria || 'Sin responder'],
+                ['Ruta A (mayor experiencia)', formData.experiencia_industria || 'Sin responder'],
+                ['Ruta B (secundaria)', formData.experiencia_industria_b || 'Ninguna'],
                 ['Años de experiencia', ANOS_LABEL[formData.anos_experiencia] ?? `${formData.anos_experiencia} años`],
                 ['Nivel de inglés', formData.nivel_ingles || 'Sin responder'],
                 ['País de ciudadanía', formData.pais_origen || 'Sin responder'],
@@ -174,7 +239,7 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
           <div className="space-y-4">
             <div>
               <label htmlFor="onboarding-industria" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
-                ¿En qué industria tienes mayor experiencia?
+                Ruta A: ¿en qué puesto tienes mayor experiencia?
               </label>
               <select
                 id="onboarding-industria"
@@ -182,15 +247,28 @@ export default function OnboardingModal({ isOpen, userId, onComplete, onClose }:
                 value={formData.experiencia_industria}
                 onChange={(e) => setFormData({ ...formData, experiencia_industria: e.target.value })}
               >
-                <option value="">Selecciona una opción</option>
-                <option value="Hotelería / Limpieza">Hotelería / Limpieza (Housekeeping)</option>
-                <option value="Cocina / Restaurantes">Cocina / Restaurantes (Cook / Line Cook)</option>
-                <option value="Paisajismo / Jardinería">Paisajismo / Jardinería (Landscaping)</option>
-                <option value="Construcción">Construcción</option>
-                <option value="Mantenimiento / General">Mantenimiento / General</option>
-                <option value="Sin Experiencia">Sin experiencia previa</option>
+                <PuestoOptions current={formData.experiencia_industria} />
               </select>
             </div>
+
+            {formData.experiencia_industria && formData.experiencia_industria !== 'Sin Experiencia' && (
+              <div>
+                <label htmlFor="onboarding-industria-b" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
+                  Ruta B (opcional): ¿en qué otro puesto tienes experiencia?
+                </label>
+                <select
+                  id="onboarding-industria-b"
+                  className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-sm text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:border-[#C89B3C] focus:outline-none focus:ring-2 focus:ring-[#C89B3C]/20 transition"
+                  value={formData.experiencia_industria_b}
+                  onChange={(e) => setFormData({ ...formData, experiencia_industria_b: e.target.value })}
+                >
+                  <PuestoOptions current={formData.experiencia_industria_b} exclude={formData.experiencia_industria} withNone />
+                </select>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
+                  Puedes tener máximo 2 rutas. La Ruta A es la de mayor experiencia y la Ruta B es la secundaria.
+                </p>
+              </div>
+            )}
 
             <div>
               <label htmlFor="onboarding-anos" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
