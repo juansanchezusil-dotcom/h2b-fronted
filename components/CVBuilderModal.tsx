@@ -10,6 +10,7 @@ import { aiFetch } from '@/lib/aiFetch';
 import { buildCvDocx, buildLetterDocx, docxFileName, downloadBlob, type BuiltCv } from '@/lib/cvDocx';
 import { errorMessage } from '@/lib/errors';
 import { useDictation } from '@/hooks/useDictation';
+import { puestoOf, type Puesto } from '@/lib/puestos';
 
 interface CVBuilderModalProps {
   isOpen: boolean;
@@ -143,6 +144,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
 
   // Pantalla de inicio
   const [targetRole, setTargetRole] = useState('');
+  const [rutas, setRutas] = useState<{ a: Puesto | null; b: Puesto | null }>({ a: null, b: null });
   const [englishLevel, setEnglishLevel] = useState('');
   const [startMode, setStartMode] = useState<'scratch' | 'existing'>('existing');
   const [file, setFile] = useState<File | null>(null);
@@ -187,7 +189,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
       const [{ data }, { data: auth }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('full_name, target_role, industry, english_level, nivel_ingles, experiencia_industria, skills, cv_draft')
+          .select('full_name, target_role, industry, english_level, nivel_ingles, experiencia_industria, experiencia_industria_b, skills, cv_draft')
           .eq('id', userId)
           .maybeSingle(),
         supabase.auth.getUser(),
@@ -195,7 +197,12 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
       const seed = emptyProfile();
       seed.fullName = data?.full_name || '';
       seed.email = auth.user?.email || '';
-      seed.targetRole = data?.target_role || '';
+      // Rutas del Mapa: la A (mayor experiencia) y la B (secundaria) se ofrecen como puesto del CV
+      const rutaA = puestoOf(data?.experiencia_industria);
+      const rutaB = puestoOf(data?.experiencia_industria_b);
+      setRutas({ a: rutaA, b: rutaB });
+      // Sin puesto guardado, el CV parte de la Ruta A
+      seed.targetRole = data?.target_role || rutaA?.role || '';
       seed.industry = data?.industry || data?.experiencia_industria || '';
       seed.englishLevel = data?.english_level || data?.nivel_ingles || '';
       seed.skills = Array.isArray(data?.skills) ? data.skills : [];
@@ -752,6 +759,34 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
               <div>
                 <label htmlFor="cv-target-role" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Puesto al que apuntas</label>
                 <input id="cv-target-role" type="text" placeholder="Ej: Housekeeper" value={targetRole} onChange={(e) => setTargetRole(e.target.value)} className={inputClass} />
+                {(rutas.a || rutas.b) && (
+                  <div className="mt-2 space-y-1.5">
+                    <div className="flex flex-wrap gap-1.5">
+                      {([['Ruta A', rutas.a], ['Ruta B', rutas.b]] as const).map(([name, r]) =>
+                        r ? (
+                          <button
+                            key={name}
+                            type="button"
+                            onClick={() => setTargetRole(r.role)}
+                            aria-pressed={targetRole.trim() === r.role}
+                            className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                              targetRole.trim() === r.role
+                                ? 'border-[#C89B3C] bg-[#C89B3C]/15 text-[#08131F] dark:text-white'
+                                : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            {name}: {r.role}
+                          </button>
+                        ) : null
+                      )}
+                    </div>
+                    {rutas.b && (
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        La Ruta A es tu mayor experiencia y la B tu secundaria. Tu CV guardado es uno solo: al guardar uno nuevo reemplaza al anterior.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <label htmlFor="cv-english-level" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Nivel de inglés</label>

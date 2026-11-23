@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
+import { PUESTOS } from '@/lib/puestos';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -12,53 +13,16 @@ interface OnboardingModalProps {
   onClose?: () => void;
 }
 
-// Rutas por PUESTO (no por industria): dentro de hotelería también hay cocina, mesero, etc.
-// Los textos guardados ("value") de los cinco primeros son los de siempre, para que los perfiles ya llenos y las
-// coincidencias de ofertas (que buscan "limpieza", "cocina", "constru", "jardin", "mantenimiento") sigan igual.
-const PUESTOS: { group: string; options: [string, string][] }[] = [
-  {
-    group: 'Hotelería',
-    options: [
-      ['Hotelería / Limpieza', 'Housekeeping / Limpieza de hotel'],
-      ['Recepción / Front desk', 'Recepción / Front desk'],
-      ['Botones / Bellhop', 'Botones / Bellhop'],
-    ],
-  },
-  {
-    group: 'Cocina y restaurante',
-    options: [
-      ['Cocina / Restaurantes', 'Cocinero / Cook (Line Cook)'],
-      ['Cocina / Lavaplatos (Dishwasher)', 'Lavaplatos / Dishwasher'],
-      ['Mesero / Server', 'Mesero / Server'],
-      ['Bartender / Barman', 'Bartender / Barman'],
-      ['Procesador de alimentos / Planta / Empaque', 'Procesador de alimentos / Planta / Empaque'],
-    ],
-  },
-  {
-    group: 'Exteriores, construcción y mantenimiento',
-    options: [
-      ['Paisajismo / Jardinería', 'Paisajismo / Jardinería (Landscaping)'],
-      ['Construcción', 'Construcción (Laborer)'],
-      ['Carpintero / Carpenter', 'Carpintero / Carpenter'],
-      ['Electricista / Electrician', 'Electricista / Electrician'],
-      ['Mantenimiento / General', 'Mantenimiento general (Maintenance)'],
-    ],
-  },
-  {
-    group: 'Otros',
-    options: [['Conductor / Driver', 'Conductor / Driver']],
-  },
-];
 
 function PuestoOptions({ current, exclude, withNone }: { current: string; exclude?: string; withNone?: boolean }) {
-  const known = PUESTOS.some((g) => g.options.some(([v]) => v === current)) || current === 'Sin Experiencia';
+  const known = PUESTOS.some((g) => g.options.some((o) => o.value === current)) || current === 'Sin Experiencia';
   return (
     <>
       <option value="">{withNone ? 'Ninguna por ahora' : 'Selecciona una opción'}</option>
       {PUESTOS.map((g) => (
         <optgroup key={g.group} label={g.group}>
-          {g.options.filter(([v]) => v !== exclude).map(([v, label]) => (
-            <option key={v} value={v}>{label}</option>
+          {g.options.filter((o) => o.value !== exclude).map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
           ))}
         </optgroup>
       ))}
