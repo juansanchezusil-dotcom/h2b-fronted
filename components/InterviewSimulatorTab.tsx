@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Loader2, FileText, ChevronRight, RotateCcw, Sparkles, HelpCircle, Briefcase, Landmark } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { aiFetch } from '@/lib/aiFetch';
 import { errorMessage } from '@/lib/errors';
 import { useDictation } from '@/hooks/useDictation';
+import { fetchJobDuties } from '@/lib/jobDuties';
 
 // Simulador de entrevistas H-2B: entrevista adaptativa, una pregunta por turno, sin correcciones durante la
 // práctica (solo si se pausa para pedir ayuda) y un informe final con puntuación y plan de mejora.
@@ -135,6 +136,17 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
   }, [userId]);
 
   useEffect(() => {
+    // Abierto desde una oferta del CRM: se traen sus funciones (sin pisar las de una práctica retomada)
+    if (!initialJob) return;
+    let cancelled = false;
+    fetchJobDuties(initialJob.company, initialJob.role).then((d) => {
+      if (d && !cancelled) setDuties((prev) => prev || d.slice(0, 1800));
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     // Retoma una práctica a medias de esta misma persona
     try {
       const raw = window.localStorage.getItem(storageKey);
@@ -174,6 +186,18 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
 
   // Ofertas en entrevista primero: son las más probables
   const offerOptions = [...savedOffers].sort((a, b) => Number(b.status === 'entrevista') - Number(a.status === 'entrevista')).slice(0, 40);
+  // Al elegir una oferta del CRM se traen sus funciones del catálogo para no tener que pegarlas
+  const dutiesSeq = useRef(0);
+  const pickJob = (value: string) => {
+    setJobChoice(value);
+    const seq = ++dutiesSeq.current;
+    const o = /^\d+$/.test(value) ? offerOptions[Number(value)] : null;
+    if (!o) return;
+    setDuties(''); // las de la oferta anterior no deben quedar
+    fetchJobDuties(o.company, o.role).then((d) => {
+      if (d && seq === dutiesSeq.current) setDuties(d.slice(0, 1800));
+    });
+  };
   const jobPayload = () => {
     if (jobChoice === 'main') return profile?.targetRole ? { title: profile.targetRole, company: '', duties } : null;
     if (jobChoice === 'manual') return manualTitle.trim() ? { title: manualTitle.trim(), company: manualCompany.trim(), duties } : null;
@@ -354,7 +378,7 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
             <select
               id="sim-job"
               value={jobChoice}
-              onChange={(e) => setJobChoice(e.target.value)}
+              onChange={(e) => pickJob(e.target.value)}
               className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 dark:text-white px-3 py-2.5 text-sm"
             >
               <option value="main">{profile?.targetRole ? `Mi puesto principal (${profile.targetRole})` : 'Práctica general'}</option>

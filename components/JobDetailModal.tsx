@@ -4,6 +4,8 @@ import { Plus, X, Check } from 'lucide-react'
 import SponsorHistory from '@/components/SponsorHistory'
 import { labelForStatus, crmKey, type Job, type CRMItem, type ApplyFlowJob } from '@/lib/h2b'
 import { mailtoHref } from '@/lib/mailto'
+import CopyDutiesButton from '@/components/CopyDutiesButton'
+import { jobDutiesOf } from '@/lib/jobDuties'
 
 interface JobDetailModalProps {
   selectedJob: Job
@@ -108,7 +110,10 @@ export default function JobDetailModal({
           </p>
 
           <div className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50/80 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-700 mt-2">
-            <strong>Job Duties:</strong>
+            <div className="flex items-center justify-between gap-2">
+              <strong>Job Duties:</strong>
+              <CopyDutiesButton duties={jobDutiesOf(selectedJob)} label />
+            </div>
             {/*
                  - Se removió 'max-h-28' y se cambió a 'max-h-48'
                  - 'overflow-y-auto' muestra scroll SOLO si sobrepasa la altura

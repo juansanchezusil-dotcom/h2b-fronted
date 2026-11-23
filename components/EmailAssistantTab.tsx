@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { aiFetch } from '@/lib/aiFetch';
 import { errorMessage } from '@/lib/errors';
 import { mailtoHref } from '@/lib/mailto';
+import { fetchJobDuties } from '@/lib/jobDuties';
 
 interface SavedOffer {
   company: string;
@@ -77,6 +78,8 @@ export function EmailAssistantTab({
   const [jobTitle, setJobTitle] = useState(initialJobTitle);
   const [location, setLocation] = useState(initialLocation);
   const [contactEmail, setContactEmail] = useState(initialContactEmail);
+  // Funciones de la oferta elegida: el correo las usa para escoger qué parte real de la experiencia mencionar
+  const [jobDuties, setJobDuties] = useState('');
   // Nombre de la persona que recibe el correo (opcional). Con nombre, el saludo es "Dear Nombre,"; sin él, "Dear Hiring Manager,"
   const [contactName, setContactName] = useState('');
   // Para ignorar la respuesta de una búsqueda vieja si la persona elige otra oferta antes de que llegue
@@ -90,24 +93,29 @@ export function EmailAssistantTab({
     const offer = savedOffers[idx];
     if (!offer) return;
     const seq = ++pickSeq.current;
-    setCompanyName(offer.company);
-    setJobTitle(offer.role);
-    setLocation(offer.state || '');
-    // Datos de la oferta anterior no deben quedar: el correo y el nombre se llenan de nuevo
-    setContactEmail('');
+    // El CRM no guarda el correo del reclutador ni las funciones; se buscan en el catálogo por empresa y puesto.
+    // Se esperan ANTES de cambiar empresa y puesto: al cambiarlos el correo se genera solo y debe nacer con las funciones.
+    const [{ data }, duties] = await Promise.all([
+      supabase
+        .from('jobs')
+        .select('email_to_apply')
+        .eq('employer_name', offer.company)
+        .eq('title', offer.role)
+        .not('email_to_apply', 'is', null)
+        .limit(1)
+        .maybeSingle(),
+      fetchJobDuties(offer.company, offer.role),
+    ]);
+    if (seq !== pickSeq.current) return; // eligió otra oferta mientras tanto
+    // Datos de la oferta anterior no deben quedar
     setContactName('');
+    setContactEmail(data?.email_to_apply ? String(data.email_to_apply).trim() : '');
+    setJobDuties(duties);
+    setLocation(offer.state || '');
     // Los correos ya generados eran de la oferta anterior: se descartan para que se redacten con la nueva
     setEmails({});
-    // El CRM no guarda el correo del reclutador; se busca en el catálogo por empresa y puesto
-    const { data } = await supabase
-      .from('jobs')
-      .select('email_to_apply')
-      .eq('employer_name', offer.company)
-      .eq('title', offer.role)
-      .not('email_to_apply', 'is', null)
-      .limit(1)
-      .maybeSingle();
-    if (seq === pickSeq.current && data?.email_to_apply) setContactEmail(String(data.email_to_apply).trim());
+    setCompanyName(offer.company);
+    setJobTitle(offer.role);
   };
   const [copied, setCopied] = useState(false);
   const [lang, setLang] = useState<Lang>('en');
@@ -153,6 +161,7 @@ export function EmailAssistantTab({
           jobTitle: jobTitle || 'the H-2B position',
           companyName: companyName || 'your company',
           location,
+          jobDuties,
           contactName: contactName.trim(),
           candidateName: candidate.fullName || '[Tu nombre]',
           baseCvText: candidate.baseCvText,
@@ -363,7 +372,7 @@ export function EmailAssistantTab({
                 id="email-company"
                 type="text"
                 value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
+                onChange={(e) => { setCompanyName(e.target.value); setJobDuties('') }}
                 className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
@@ -373,7 +382,7 @@ export function EmailAssistantTab({
                 id="email-job-title"
                 type="text"
                 value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
+                onChange={(e) => { setJobTitle(e.target.value); setJobDuties('') }}
                 className="w-full mt-1 px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 dark:text-white rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>

@@ -5,6 +5,8 @@ import { Briefcase, Search, MapPin, Calendar, Users, SlidersHorizontal } from 'l
 import EmptyState from '@/components/EmptyState'
 import InfoTooltip from '@/components/InfoTooltip'
 import Pagination from '@/components/Pagination'
+import CopyDutiesButton from '@/components/CopyDutiesButton'
+import { jobDutiesOf } from '@/lib/jobDuties'
 import SponsorHistory from '@/components/SponsorHistory'
 import { US_STATES, sourceInfo, splitWage, crmKey, type Job, type CRMItem } from '@/lib/h2b'
 
@@ -320,7 +322,10 @@ export default function JobsTab({
                     )
                   })()}
                 </div>
-                <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">{job.title || 'Oferta de Trabajo'}</h3>
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">{job.title || 'Oferta de Trabajo'}</h3>
+                  <CopyDutiesButton duties={jobDutiesOf(job)} />
+                </div>
 
                 {(() => {
                   const wage = splitWage(job.wage)
