@@ -536,7 +536,7 @@ export function EmailAssistantTab({
 
           <div className="bg-slate-900 text-white p-4 rounded-2xl space-y-3">
             <span className="text-xs font-medium text-slate-300 block">Abrir el mensaje en tu correo (tú lo revisas y lo envías):</span>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 onClick={() => handleOpenWebmail('gmail')}
                 disabled={!body}
@@ -544,15 +544,6 @@ export function EmailAssistantTab({
               >
                 <Mail className="w-4 h-4" />
                 <span>Abrir Gmail</span>
-              </button>
-
-              <button
-                onClick={() => handleOpenWebmail('outlook')}
-                disabled={!body}
-                className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-3 rounded-xl text-xs font-semibold transition-colors disabled:opacity-40"
-              >
-                <Mail className="w-4 h-4" />
-                <span>Abrir Outlook</span>
               </button>
 
               <button

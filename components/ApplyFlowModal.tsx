@@ -385,12 +385,9 @@ export default function ApplyFlowModal({
               </div>
 
               <p className="text-[11px] text-slate-500 dark:text-slate-400">Estos botones abren tu correo con el mensaje listo. Tú lo revisas y lo envías.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <button onClick={() => openCompose('gmail')} disabled={!email} className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-2.5 px-3 rounded-xl text-xs font-semibold disabled:opacity-40">
                   <Mail className="w-4 h-4" /> Abrir Gmail
-                </button>
-                <button onClick={() => openCompose('outlook')} disabled={!email} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-3 rounded-xl text-xs font-semibold disabled:opacity-40">
-                  <Mail className="w-4 h-4" /> Abrir Outlook
                 </button>
                 <button onClick={() => openCompose('mailto')} disabled={!email} className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-white py-2.5 px-3 rounded-xl text-xs font-semibold disabled:opacity-40">
                   <ExternalLink className="w-4 h-4" /> App predeterminada
