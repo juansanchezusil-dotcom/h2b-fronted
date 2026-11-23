@@ -42,6 +42,7 @@ import { useLastSeen } from '@/hooks/useLastSeen';
 // Cliente Supabase (instancia única para evitar duplicación de cliente)
 import { supabase } from '@/lib/supabaseClient'
 import { goalFor } from '@/lib/goals'
+import { hasCvText, type CvSlot } from '@/lib/cvSlots'
 import {
   REPLY_LABELS, labelForStatus, crmKey,
   type Job, type SponsorCompany, type SponsorAgency, type CRMItem, type ApplyFlowJob,
@@ -262,7 +263,14 @@ export default function Home() {
   // Postulación con la que se abrió el simulador (botón "Practicar esta entrevista" de una tarjeta)
   const [simulatorJob, setSimulatorJob] = useState<{ company: string; role: string } | null>(null)
   const [hasCv, setHasCv] = useState(false)
+  // Hay dos CV, uno por ruta: el de la Ruta B (secundaria) se guarda aparte
+  const [hasCvB, setHasCvB] = useState(false)
+  const [cvSlot, setCvSlot] = useState<CvSlot>('A')
   const [showCvBuilder, setShowCvBuilder] = useState(false)
+  const openCvBuilder = (slot: CvSlot = 'A') => {
+    setCvSlot(slot)
+    setShowCvBuilder(true)
+  }
   // Oferta a la que se adapta el CV (null = CV general)
   const [cvJob, setCvJob] = useState<{ title: string; employerName: string; location?: string; duties?: string } | null>(null)
   // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
@@ -296,8 +304,9 @@ export default function Home() {
 
   const refreshHasCv = async (userId: string) => {
     if (!userId) return
-    const { data } = await supabase.from('profiles').select('base_cv_text').eq('id', userId).maybeSingle()
+    const { data } = await supabase.from('profiles').select('base_cv_text, cv_b').eq('id', userId).maybeSingle()
     setHasCv((data?.base_cv_text || '').trim().length >= 30)
+    setHasCvB(hasCvText(data?.cv_b?.base_cv_text))
   }
   const [toastMessage, setToastMessage] = useState<string | null>(null)
 
@@ -1541,10 +1550,11 @@ return (
   <H2BMap
     userId={onboardingUserId}
     hasCv={hasCv}
+    hasCvB={hasCvB}
     perfilCompletado={profileCompleted}
     crmItems={crmItems.map((i) => ({ status: i.status, createdAt: i.createdAt }))}
     onEditProfile={() => setShowOnboarding(true)}
-    onOpenCvBuilder={() => setShowCvBuilder(true)}
+    onOpenCvBuilder={openCvBuilder}
     onNavigateToTab={(tab) => {
       if ((TABS as string[]).includes(tab)) setActiveTab(tab as Tab)
     }}
@@ -1716,7 +1726,7 @@ return (
           return markFollowupSent(item, type === 'followup_7d' ? 1 : 2)
         }}
         savedOffers={crmItems.map(i => ({ company: i.company, role: i.role, state: i.state, status: i.status }))}
-        onOpenCvBuilder={() => setShowCvBuilder(true)}
+        onOpenCvBuilder={openCvBuilder}
       />
     </AssistantModal>
 
@@ -1732,16 +1742,18 @@ return (
         setSimulatorJob(null)
       }}
     >
-      <InterviewSimulatorTab key={`${simulatorJob?.company || ''}-${simulatorJob?.role || ''}`} initialJob={simulatorJob} userId={onboardingUserId} onOpenCvBuilder={() => setShowCvBuilder(true)} savedOffers={crmItems.map((i) => ({ company: i.company, role: i.role, status: i.status }))} />
+      <InterviewSimulatorTab key={`${simulatorJob?.company || ''}-${simulatorJob?.role || ''}`} initialJob={simulatorJob} userId={onboardingUserId} onOpenCvBuilder={openCvBuilder} savedOffers={crmItems.map((i) => ({ company: i.company, role: i.role, status: i.status }))} />
     </AssistantModal>
 
     <CVBuilderModal
       isOpen={showCvBuilder}
       userId={onboardingUserId}
       job={cvJob}
+      slot={cvSlot}
       onClose={() => {
         setShowCvBuilder(false)
         setCvJob(null)
+        setCvSlot('A')
       }}
       onSaved={() => refreshHasCv(onboardingUserId)}
     />
@@ -1759,8 +1771,8 @@ return (
           : null
       }
       onClose={() => setApplyFlowJob(null)}
-      onOpenCvBuilder={() => setShowCvBuilder(true)}
-      onAdaptCv={() => {
+      onOpenCvBuilder={openCvBuilder}
+      onAdaptCv={(slot) => {
         if (!applyFlowJob) return
         setCvJob({
           title: applyFlowJob.title,
@@ -1768,7 +1780,7 @@ return (
           location: applyFlowJob.location,
           duties: applyFlowJob.duties,
         })
-        setShowCvBuilder(true)
+        openCvBuilder(slot)
       }}
       onApplied={() => applyFlowJob && applyJobToCrm(applyFlowJob)}
     />

@@ -11,10 +11,13 @@ import { buildCvDocx, buildLetterDocx, docxFileName, downloadBlob, type BuiltCv 
 import { errorMessage } from '@/lib/errors';
 import { useDictation } from '@/hooks/useDictation';
 import { puestoOf, type Puesto } from '@/lib/puestos';
+import type { CvBData, CvSlot } from '@/lib/cvSlots';
 
 interface CVBuilderModalProps {
   isOpen: boolean;
   userId: string;
+  // Para qué ruta es el CV: A (la principal, por defecto) o B (la secundaria). Cada ruta guarda su propio CV.
+  slot?: CvSlot;
   onClose: () => void;
   // Se llama cuando el CV queda guardado con éxito, para refrescar el estado del checklist
   onSaved?: () => void;
@@ -135,7 +138,12 @@ const inputClass =
 const errorClass =
   'text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg px-3 py-2';
 
-export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }: CVBuilderModalProps) {
+export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job, slot: initialSlot = 'A' }: CVBuilderModalProps) {
+  // La ruta se puede cambiar con los botones Ruta A / Ruta B de la pantalla de inicio
+  const [chosenSlot, setChosenSlot] = useState<CvSlot | null>(null);
+  const slot: CvSlot = chosenSlot ?? initialSlot;
+  // Lo ya guardado del CV de la Ruta B, para no perder sus otros campos al guardar
+  const cvBRef = useRef<NonNullable<CvBData>>({});
   const [stage, setStage] = useState<Stage>('start');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -189,7 +197,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
       const [{ data }, { data: auth }] = await Promise.all([
         supabase
           .from('profiles')
-          .select('full_name, target_role, industry, english_level, nivel_ingles, experiencia_industria, experiencia_industria_b, skills, cv_draft')
+          .select('full_name, target_role, industry, english_level, nivel_ingles, experiencia_industria, experiencia_industria_b, skills, cv_draft, cv_b')
           .eq('id', userId)
           .maybeSingle(),
         supabase.auth.getUser(),
@@ -201,18 +209,27 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
       const rutaA = puestoOf(data?.experiencia_industria);
       const rutaB = puestoOf(data?.experiencia_industria_b);
       setRutas({ a: rutaA, b: rutaB });
-      // Sin puesto guardado, el CV parte de la Ruta A
-      seed.targetRole = data?.target_role || rutaA?.role || '';
-      seed.industry = data?.industry || data?.experiencia_industria || '';
+      const cvB: NonNullable<CvBData> = data?.cv_b && typeof data.cv_b === 'object' ? data.cv_b : {};
+      cvBRef.current = cvB;
+      // Sin puesto guardado, el CV parte del puesto de su ruta
+      seed.targetRole = slot === 'B' ? cvB.target_role || rutaB?.role || '' : data?.target_role || rutaA?.role || '';
+      seed.industry = slot === 'B' ? data?.experiencia_industria_b || '' : data?.industry || data?.experiencia_industria || '';
       seed.englishLevel = data?.english_level || data?.nivel_ingles || '';
-      seed.skills = Array.isArray(data?.skills) ? data.skills : [];
+      seed.skills = slot === 'B' ? (Array.isArray(cvB.skills) ? cvB.skills : []) : Array.isArray(data?.skills) ? data.skills : [];
       setSeedProfile(seed);
       setTargetRole(seed.targetRole);
       setEnglishLevel(seed.englishLevel);
-      const draft = data?.cv_draft;
+      const draft = slot === 'B' ? (cvB.cv_draft as Draft | undefined) : data?.cv_draft;
       setSavedDraft(draft?.profile && Array.isArray(draft?.turns) ? draft : null);
     })();
-  }, [isOpen, userId]);
+  }, [isOpen, userId, slot]);
+
+  // Al cerrar, la próxima vez vuelve a la ruta con la que se abrió
+  useEffect(() => {
+    // Reiniciar al cerrar es justo lo buscado
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!isOpen) setChosenSlot(null);
+  }, [isOpen]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -231,9 +248,11 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
 
   const saveDraft = (draft: Draft) => {
     // Sin await a propósito: si falla el guardado del borrador la entrevista sigue igual
+    const trimmed = { ...draft, turns: draft.turns.slice(-30) };
+    if (slot === 'B') cvBRef.current = { ...cvBRef.current, cv_draft: trimmed };
     supabase
       .from('profiles')
-      .upsert({ id: userId, cv_draft: { ...draft, turns: draft.turns.slice(-30) }, ...(draft.profile?.fullName?.trim() ? { full_name: draft.profile.fullName.trim() } : {}) })
+      .upsert({ id: userId, ...(slot === 'B' ? { cv_b: cvBRef.current } : { cv_draft: trimmed }), ...(draft.profile?.fullName?.trim() ? { full_name: draft.profile.fullName.trim() } : {}) })
       .then((r: { error: { message: string } | null }) => r.error && console.error('No se pudo guardar el borrador del CV:', r.error.message));
   };
 
@@ -453,19 +472,40 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
     if (!result) return;
     setSaving(true);
     setError(null);
-    const { error: dbError } = await supabase.from('profiles').upsert({
-      id: userId,
-      ...(profile.fullName?.trim() ? { full_name: profile.fullName.trim() } : {}),
-      target_role: profile.targetRole,
-      industry: profile.industry,
-      english_level: profile.englishLevel,
-      skills: result.cv.skills,
-      base_cv_text: result.base_cv_text,
-      cv_route: result.ruta || null,
-      cv_en: { cv: result.cv, full_text: result.full_text },
-      cv_draft: { profile, turns: turns.slice(-30), gaps, ready },
-      ...(letter ? { cover_letter_en: letter.letter } : {}),
-    });
+    const draft = { profile, turns: turns.slice(-30), gaps, ready };
+    // Cada ruta guarda su CV aparte: guardar el de la B nunca toca el de la A (y al revés)
+    const { error: dbError } = await supabase.from('profiles').upsert(
+      slot === 'B'
+        ? {
+            id: userId,
+            ...(profile.fullName?.trim() ? { full_name: profile.fullName.trim() } : {}),
+            english_level: profile.englishLevel,
+            cv_b: {
+              ...cvBRef.current,
+              target_role: profile.targetRole,
+              base_cv_text: result.base_cv_text,
+              skills: result.cv.skills,
+              route: result.ruta || undefined,
+              cv_en: { cv: result.cv, full_text: result.full_text },
+              cv_draft: draft,
+              ...(letter ? { cover_letter_en: letter.letter } : {}),
+              updated_at: new Date().toISOString(),
+            },
+          }
+        : {
+            id: userId,
+            ...(profile.fullName?.trim() ? { full_name: profile.fullName.trim() } : {}),
+            target_role: profile.targetRole,
+            industry: profile.industry,
+            english_level: profile.englishLevel,
+            skills: result.cv.skills,
+            base_cv_text: result.base_cv_text,
+            cv_route: result.ruta || null,
+            cv_en: { cv: result.cv, full_text: result.full_text },
+            cv_draft: draft,
+            ...(letter ? { cover_letter_en: letter.letter } : {}),
+          }
+    );
     setSaving(false);
     if (dbError) {
       setError('No se pudo guardar tu CV. Intenta de nuevo.');
@@ -767,10 +807,15 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                           <button
                             key={name}
                             type="button"
-                            onClick={() => setTargetRole(r.role)}
-                            aria-pressed={targetRole.trim() === r.role}
+                            onClick={() => {
+                              // Cada ruta tiene su propio CV: cambiar de ruta carga el de esa ruta
+                              const next: CvSlot = name === 'Ruta B' ? 'B' : 'A';
+                              if (next === slot) setTargetRole(r.role);
+                              else setChosenSlot(next);
+                            }}
+                            aria-pressed={(name === 'Ruta B' ? 'B' : 'A') === slot}
                             className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
-                              targetRole.trim() === r.role
+                              (name === 'Ruta B' ? 'B' : 'A') === slot
                                 ? 'border-[#C89B3C] bg-[#C89B3C]/15 text-[#08131F] dark:text-white'
                                 : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                             }`}
@@ -782,7 +827,7 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job }
                     </div>
                     {rutas.b && (
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        La Ruta A es tu mayor experiencia y la B tu secundaria. Tu CV guardado es uno solo: al guardar uno nuevo reemplaza al anterior.
+                        {`Estás armando el CV de tu Ruta ${slot}${slot === 'A' ? ' (tu postulación principal)' : ' (la secundaria)'}. Cada ruta guarda su propio CV: guardar este no cambia el de la otra.`}
                       </p>
                     )}
                   </div>

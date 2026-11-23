@@ -7,6 +7,7 @@ import { aiFetch } from '@/lib/aiFetch';
 import { errorMessage } from '@/lib/errors';
 import { mailtoHref } from '@/lib/mailto';
 import { fetchJobDuties } from '@/lib/jobDuties';
+import { cvTextOf, hasCvText, skillsOf, slotForJob, type CvSlot, type RouteProfileRow } from '@/lib/cvSlots';
 
 interface SavedOffer {
   company: string;
@@ -32,7 +33,7 @@ interface EmailAssistantProps {
   // Se llama cuando la persona confirma que ya envió un seguimiento, para que el CRM lo registre
   onFollowupSent?: (company: string, role: string, type: 'followup_7d' | 'followup_14d') => Promise<boolean> | boolean | void;
   // Se llama cuando falta el CV, para que quien lo use abra el constructor de CV
-  onOpenCvBuilder?: () => void;
+  onOpenCvBuilder?: (slot?: CvSlot) => void;
 }
 
 type EmailType = 'initial' | 'followup_7d' | 'followup_14d' | 'reply';
@@ -121,6 +122,8 @@ export function EmailAssistantTab({
   const [lang, setLang] = useState<Lang>('en');
 
   const [candidate, setCandidate] = useState<CandidateData | null>(null);
+  // Lo guardado de las dos rutas: el correo usa el CV de la ruta de la oferta
+  const [cvRow, setCvRow] = useState<RouteProfileRow | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
 
   const [loading, setLoading] = useState(false);
@@ -132,9 +135,10 @@ export function EmailAssistantTab({
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, base_cv_text, skills, english_level, nivel_ingles')
+        .select('full_name, base_cv_text, skills, english_level, nivel_ingles, target_role, industry, experiencia_industria, experiencia_industria_b, cv_b')
         .eq('id', userId)
         .maybeSingle();
+      setCvRow(data);
       setCandidate({
         fullName: data?.full_name || '',
         baseCvText: data?.base_cv_text || '',
@@ -145,7 +149,14 @@ export function EmailAssistantTab({
     })();
   }, [userId]);
 
-  const hasCv = (candidate?.baseCvText || '').trim().length >= 30;
+  // CV de la ruta de esta oferta. Si la oferta es de la Ruta B y aún no hay CV de esa ruta, se usa el de la A
+  // y se avisa (arriba del correo) que conviene hacer el de la B.
+  const jobSlot: CvSlot = slotForJob(jobTitle, cvRow);
+  const useB = jobSlot === 'B' && hasCvText(cvTextOf(cvRow, 'B'));
+  const missingB = jobSlot === 'B' && !useB && hasCvText(cvTextOf(cvRow, 'A'));
+  const cvText = useB ? cvTextOf(cvRow, 'B') : candidate?.baseCvText || '';
+  const cvSkills = useB ? skillsOf(cvRow, 'B') : candidate?.skills || [];
+  const hasCv = hasCvText(cvText);
   const current = emails[emailType];
 
   const generate = async (type: EmailType) => {
@@ -164,8 +175,8 @@ export function EmailAssistantTab({
           jobDuties,
           contactName: contactName.trim(),
           candidateName: candidate.fullName || '[Tu nombre]',
-          baseCvText: candidate.baseCvText,
-          skills: candidate.skills,
+          baseCvText: cvText,
+          skills: cvSkills,
           englishLevel: candidate.englishLevel,
           ...(type === 'reply' ? { employerMessage, availability } : {}),
         }),
@@ -265,7 +276,7 @@ export function EmailAssistantTab({
             de una plantilla genérica. Cuéntanos tu experiencia una vez y la usaremos aquí y en tu CV.
           </p>
           <button
-            onClick={onOpenCvBuilder}
+            onClick={() => onOpenCvBuilder?.()}
             className="bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-sm px-5 py-2.5 rounded-xl transition-all"
           >
             Completar mi CV
@@ -305,6 +316,19 @@ export function EmailAssistantTab({
               </button>
             ))}
           </div>
+
+          {missingB && (
+            <div className="rounded-lg border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-2.5 space-y-1.5">
+              <p className="text-xs text-amber-900 dark:text-amber-300">
+                Esta oferta es de tu Ruta B y todavía no tienes un CV para esa ruta. Este correo usa tu CV de la Ruta A; con el de la Ruta B quedaría más preciso.
+              </p>
+              {onOpenCvBuilder && (
+                <button type="button" onClick={() => onOpenCvBuilder('B')} className="text-xs font-bold text-amber-900 dark:text-amber-200 underline underline-offset-2">
+                  Hacer mi CV de la Ruta B
+                </button>
+              )}
+            </div>
+          )}
 
           {emailType === 'reply' && (
             <div className="space-y-2">

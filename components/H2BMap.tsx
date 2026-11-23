@@ -18,14 +18,18 @@ import { buildMap, type RouteCode, type StageId, type StepAction } from '@/lib/h
 import TopOffers from '@/components/TopOffers'
 import { loadSteps, saveStepsRemote, writeChecklistSteps, type ManualSteps } from '@/lib/checklistSteps'
 import { useMembershipNotices } from '@/hooks/useMembershipNotices'
+import { puestoOf } from '@/lib/puestos'
+import type { CvSlot } from '@/lib/cvSlots'
 
 interface H2BMapProps {
   userId: string
   hasCv: boolean
+  // CV de la Ruta B (secundaria): cada ruta tiene su propio CV
+  hasCvB: boolean
   perfilCompletado: boolean
   crmItems: { status: string; createdAt: number }[]
   onEditProfile: () => void
-  onOpenCvBuilder: () => void
+  onOpenCvBuilder: (slot?: CvSlot) => void
   onNavigateToTab: (tab: string) => void
   onOpenInterview: () => void
   onOpenScamDetector: () => void
@@ -56,6 +60,7 @@ const EMPTY_PROFILE: ProfileRow = { targetRole: '', industry: '', englishLevel: 
 export default function H2BMap({
   userId,
   hasCv,
+  hasCvB,
   perfilCompletado,
   crmItems,
   onEditProfile,
@@ -70,6 +75,8 @@ export default function H2BMap({
   // Hora de apertura para contar días (leer el reloj dentro del cálculo daría números distintos en cada dibujo)
   const [openedAt] = useState(() => Date.now())
   const [hasCover, setHasCover] = useState(false)
+  // Las dos rutas del cuestionario: A (mayor experiencia, la postulación principal) y B (secundaria)
+  const [rutas, setRutas] = useState({ a: '', b: '' })
   const [steps, setSteps] = useState<ManualSteps>({ passport: false, ds160: false })
   const notices = useMembershipNotices(userId)
 
@@ -90,10 +97,11 @@ export default function H2BMap({
     ;(async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('target_role, industry, experiencia_industria, english_level, nivel_ingles, pais_origen, cv_route, cover_letter_en')
+        .select('target_role, industry, experiencia_industria, experiencia_industria_b, english_level, nivel_ingles, pais_origen, cv_route, cover_letter_en')
         .eq('id', userId)
         .maybeSingle()
       if (cancelled || !data) return
+      setRutas({ a: data.experiencia_industria || '', b: data.experiencia_industria_b || '' })
       setHasCover(typeof data.cover_letter_en === 'string' && data.cover_letter_en.trim().length >= 30)
       setProfile({
         targetRole: data.target_role || '',
@@ -294,6 +302,47 @@ export default function H2BMap({
           </ol>
         )}
       </section>
+
+      {/* Tus rutas: cada una con su propio CV */}
+      {rutas.a && rutas.a !== 'Sin Experiencia' && (
+        <section aria-labelledby="mapa-rutas" className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 shadow-sm space-y-3">
+          <h2 id="mapa-rutas" className="text-base font-bold text-slate-900 dark:text-white">
+            Tus rutas
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Tienes un CV por ruta. La Ruta A es tu postulación principal: las ofertas nuevas que te enviamos por correo son de esa ruta.
+          </p>
+          {([
+            { slot: 'A' as CvSlot, value: rutas.a, ready: hasCv, tag: 'Principal · mayor experiencia' },
+            { slot: 'B' as CvSlot, value: rutas.b, ready: hasCvB, tag: 'Secundaria' },
+          ]).map((r) =>
+            r.value ? (
+              <div key={r.slot} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-slate-700 px-3.5 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {`Ruta ${r.slot}: ${puestoOf(r.value)?.label || r.value}`}
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {r.tag} · {r.ready ? '✓ CV listo' : 'Aún sin CV'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onOpenCvBuilder(r.slot)}
+                  className="shrink-0 rounded-lg bg-[#0B4079] hover:bg-[#08305c] text-white text-xs font-bold px-3.5 py-2 transition"
+                >
+                  {r.ready ? `Editar CV de la Ruta ${r.slot}` : `Hacer CV de la Ruta ${r.slot}`}
+                </button>
+              </div>
+            ) : null
+          )}
+          {!rutas.b && (
+            <button type="button" onClick={onEditProfile} className="text-xs font-semibold text-[#0B4079] dark:text-sky-300 underline underline-offset-2">
+              Agregar una Ruta B (opcional)
+            </button>
+          )}
+        </section>
+      )}
 
       {/* Ruta del CV */}
       {(map.route || map.englishNote) && (

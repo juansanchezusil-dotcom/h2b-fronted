@@ -7,6 +7,8 @@ import { useBackToClose } from '@/hooks/useBackToClose';
 import { aiFetch } from '@/lib/aiFetch';
 import { errorMessage } from '@/lib/errors';
 import { mailtoHref } from '@/lib/mailto';
+import { cvTextOf, hasCvText, skillsOf, slotForJob, type CvSlot } from '@/lib/cvSlots';
+import { puestoOf } from '@/lib/puestos';
 
 // Flujo único de postulación: genera el correo con el CV real del candidato,
 // lo abre listo para enviar al contacto real de la oferta, y al confirmar que
@@ -30,9 +32,10 @@ interface ApplyFlowModalProps {
   // true si ya hay una fila en el CRM para esta empresa+puesto en estado 'guardadas'
   alreadySavedStatus?: string | null;
   onClose: () => void;
-  onOpenCvBuilder: () => void;
+  // slot: de qué ruta es el CV que se abre (A principal, B secundaria)
+  onOpenCvBuilder: (slot?: CvSlot) => void;
   // Abre el constructor de CV para ver cómo encaja la persona con esta oferta antes de enviar
-  onAdaptCv?: () => void;
+  onAdaptCv?: (slot?: CvSlot) => void;
   onApplied: () => void;
 }
 
@@ -81,6 +84,8 @@ export default function ApplyFlowModal({
 
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [hasCv, setHasCv] = useState(false);
+  // Con qué CV se postula: el de la ruta a la que pertenece la oferta (A principal, B secundaria)
+  const [slot, setSlot] = useState<CvSlot>('A');
   const [candidate, setCandidate] = useState<{ fullName: string; baseCvText: string; skills: string[]; englishLevel: string; targetRole: string } | null>(null);
 
   // 'email': el redactor de correos (camino normal, usa tu CV y los datos de la empresa).
@@ -110,20 +115,23 @@ export default function ApplyFlowModal({
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, base_cv_text, skills, english_level, nivel_ingles, target_role')
+        .select('full_name, base_cv_text, skills, english_level, nivel_ingles, target_role, industry, experiencia_industria, experiencia_industria_b, cv_b')
         .eq('id', userId)
         .maybeSingle();
-      const cv = data?.base_cv_text || '';
+      const s = slotForJob(job?.title || '', data);
+      const cv = cvTextOf(data, s);
+      const role = s === 'B' ? data?.cv_b?.target_role || puestoOf(data?.experiencia_industria_b)?.role || '' : data?.target_role || '';
+      setSlot(s);
       setCandidate({
         fullName: data?.full_name || '',
         baseCvText: cv,
-        skills: data?.skills || [],
+        skills: skillsOf(data, s),
         englishLevel: data?.english_level || data?.nivel_ingles || '',
-        targetRole: data?.target_role || '',
+        targetRole: role,
       });
-      setHasCv(cv.trim().length >= 30);
-      // Mismo puesto que el principal: directo al correo. Otro puesto: se ofrece ver el encaje antes.
-      if (canAdaptCv && cv.trim().length >= 30 && !sameRole(data?.target_role || '', job?.title || '')) setStep('fit');
+      setHasCv(hasCvText(cv));
+      // Mismo puesto que el de su ruta: directo al correo. Otro puesto: se ofrece ver el encaje antes.
+      if (canAdaptCv && hasCvText(cv) && !sameRole(role, job?.title || '')) setStep('fit');
       setLoadingProfile(false);
     })();
   }, [isOpen, userId, job?.title, canAdaptCv]);
@@ -249,16 +257,19 @@ export default function ApplyFlowModal({
               <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
                 <FileText className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm">Completa tu CV primero</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+                {slot === 'B' ? 'Primero haz tu CV de la Ruta B' : 'Completa tu CV primero'}
+              </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                El correo se escribe con tu experiencia real, no con una plantilla genérica. Cuéntanos tu experiencia
-                una vez y la usamos aquí y en tu CV.
+                {slot === 'B'
+                  ? 'Esta oferta es de tu Ruta B (tu ruta secundaria) y todavía no tienes un CV para ella. Cada ruta tiene su propio CV: hazlo y guárdalo, y vuelves aquí a postular. Tu CV de la Ruta A no cambia.'
+                  : 'El correo se escribe con tu experiencia real, no con una plantilla genérica. Cuéntanos tu experiencia una vez y la usamos aquí y en tu CV.'}
               </p>
               <button
-                onClick={onOpenCvBuilder}
+                onClick={() => onOpenCvBuilder(slot)}
                 className="bg-[#0B4079] hover:bg-[#08305c] text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all"
               >
-                Completar mi CV
+                {slot === 'B' ? 'Hacer mi CV de la Ruta B' : 'Completar mi CV'}
               </button>
             </div>
           ) : step === 'fit' ? (
@@ -279,7 +290,7 @@ export default function ApplyFlowModal({
                   type="button"
                   onClick={() => {
                     setStep('afterFit');
-                    onAdaptCv?.();
+                    onAdaptCv?.(slot);
                   }}
                   className="w-full sm:w-auto bg-[#C89B3C] hover:bg-[#b08833] text-[#08131F] font-bold text-xs px-5 py-2.5 rounded-xl transition-all"
                 >
@@ -312,7 +323,7 @@ export default function ApplyFlowModal({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onAdaptCv?.()}
+                  onClick={() => onAdaptCv?.(slot)}
                   className="w-full sm:w-auto text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-4 py-2.5"
                 >
                   Ver mi encaje otra vez
@@ -328,7 +339,7 @@ export default function ApplyFlowModal({
                     type="button"
                     onClick={() => {
                       setStep('afterFit');
-                      onAdaptCv();
+                      onAdaptCv(slot);
                     }}
                     className="font-semibold text-[#0B4079] dark:text-[#C89B3C] underline"
                   >

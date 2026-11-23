@@ -7,6 +7,7 @@ import { aiFetch } from '@/lib/aiFetch';
 import { errorMessage } from '@/lib/errors';
 import { useDictation } from '@/hooks/useDictation';
 import { fetchJobDuties } from '@/lib/jobDuties';
+import { cvTextOf, hasCvText, slotForJob, type CvSlot, type RouteProfileRow } from '@/lib/cvSlots';
 
 // Simulador de entrevistas H-2B: entrevista adaptativa, una pregunta por turno, sin correcciones durante la
 // práctica (solo si se pausa para pedir ayuda) y un informe final con puntuación y plan de mejora.
@@ -19,7 +20,7 @@ interface SavedOffer {
 
 interface InterviewSimulatorProps {
   userId: string;
-  onOpenCvBuilder?: () => void;
+  onOpenCvBuilder?: (slot?: CvSlot) => void;
   // Postulaciones del CRM, para elegir la oferta de la que te van a entrevistar
   savedOffers?: SavedOffer[];
   // Entrevista que se quiere practicar ya cargada (desde una tarjeta en "Entrevista" del CRM)
@@ -92,6 +93,8 @@ function List({ items }: { items: string[] }) {
 export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOffers = [], initialJob = null }: InterviewSimulatorProps) {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<CandidateProfile | null>(null);
+  // Los dos CV (uno por ruta): la práctica usa el de la ruta del puesto que se va a entrevistar
+  const [cvRow, setCvRow] = useState<RouteProfileRow | null>(null);
 
   const [stage, setStage] = useState<Stage>('intro');
   const [module, setModule] = useState<Module>('employer');
@@ -122,9 +125,10 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('target_role, industry, english_level, nivel_ingles, base_cv_text, experiencia_industria')
+        .select('target_role, industry, english_level, nivel_ingles, base_cv_text, experiencia_industria, experiencia_industria_b, cv_b')
         .eq('id', userId)
         .maybeSingle();
+      setCvRow(data);
       setProfile({
         targetRole: data?.target_role || '',
         industry: data?.industry || data?.experiencia_industria || '',
@@ -204,12 +208,18 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
     const o = offerOptions[Number(jobChoice)];
     return o ? { title: o.role, company: o.company, duties } : null;
   };
-  const candidatePayload = () => ({
-    role: profile?.targetRole || '',
-    industry: profile?.industry || '',
-    englishLevel: profile?.englishLevel || '',
-    cvText: profile?.baseCvText || '',
-  });
+  const candidatePayload = () => {
+    // Si el puesto es de la Ruta B y ya hay CV de esa ruta, se practica con ese CV; si no, con el de la A
+    const jobTitle = jobPayload()?.title || '';
+    const bText = cvTextOf(cvRow, 'B');
+    const useB = slotForJob(jobTitle, cvRow) === 'B' && hasCvText(bText);
+    return {
+      role: profile?.targetRole || '',
+      industry: profile?.industry || '',
+      englishLevel: profile?.englishLevel || '',
+      cvText: useB ? bText : profile?.baseCvText || '',
+    };
+  };
 
   const call = async (payload: Record<string, unknown>) => {
     const res = await aiFetch('/api/interview', {
@@ -443,7 +453,7 @@ export default function InterviewSimulatorTab({ userId, onOpenCvBuilder, savedOf
                 Todavía no tienes un CV guardado. Puedes practicar igual, pero las preguntas serán menos personalizadas y la coherencia con tus documentos aparecerá como “No evaluable”.
               </p>
               {onOpenCvBuilder && (
-                <button type="button" onClick={onOpenCvBuilder} className="inline-flex items-center gap-1 font-semibold text-[#0B4079] dark:text-[#C89B3C] underline">
+                <button type="button" onClick={() => onOpenCvBuilder()} className="inline-flex items-center gap-1 font-semibold text-[#0B4079] dark:text-[#C89B3C] underline">
                   <FileText className="w-3.5 h-3.5" /> Completar mi CV
                 </button>
               )}
