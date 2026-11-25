@@ -3,7 +3,20 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { ShieldCheck, Search, MapPin } from 'lucide-react'
 import Pagination from '@/components/Pagination'
-import { US_STATES, type SponsorCompany } from '@/lib/h2b'
+import { US_STATES, crmKey, type SponsorCompany, type CRMItem } from '@/lib/h2b'
+
+// Rol con el que la empresa entra al CRM. Si tiene una sola vacante, se usa su
+// puesto: así coincide con la misma oferta guardada desde la pestaña Ofertas.
+const GENERIC_EMPLOYER_ROLE = 'Contacto directo con la empresa'
+function crmEntryFor(comp: SponsorCompany) {
+  const company = comp.employer_name || 'Empresa Generica'
+  const only = comp.jobs && comp.jobs.length === 1 ? comp.jobs[0] : null
+  return {
+    company,
+    role: only?.title || GENERIC_EMPLOYER_ROLE,
+    state: only?.location || comp.worksite_states || comp.state || 'US',
+  }
+}
 
 interface EmployersTabProps {
   employers: SponsorCompany[]
@@ -21,6 +34,9 @@ interface EmployersTabProps {
   selectedCapType: string
   setSelectedCapType: Dispatch<SetStateAction<string>>
   viewJobsFor: (sponsorId: number, employerName: string) => void
+  crmItems: CRMItem[]
+  savingCrmKey: string | null
+  addToCRM: (company?: string, role?: string, stateStr?: string) => Promise<boolean>
 }
 
 export default function EmployersTab({
@@ -39,7 +55,33 @@ export default function EmployersTab({
   selectedCapType,
   setSelectedCapType,
   viewJobsFor,
+  crmItems,
+  savingCrmKey,
+  addToCRM,
 }: EmployersTabProps) {
+  const isSaved = (comp: SponsorCompany) => {
+    const { company, role } = crmEntryFor(comp)
+    return crmItems.some(i => crmKey(i.company, i.role) === crmKey(company, role))
+  }
+  const saveButton = (comp: SponsorCompany, compact = false) => {
+    const saved = isSaved(comp)
+    return (
+      <button
+        onClick={() => {
+          const { company, role, state } = crmEntryFor(comp)
+          addToCRM(company, role, state)
+        }}
+        disabled={savingCrmKey !== null || saved}
+        className={`${compact ? 'text-[11px] px-3 py-1.5 rounded-lg' : 'w-full text-xs py-2 rounded-xl'} font-bold transition-all border ${
+          saved
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
+            : 'bg-white text-[#0B4079] border-[#0B4079] hover:bg-blue-50 dark:bg-slate-900 dark:text-blue-300 dark:border-blue-400 dark:hover:bg-slate-800 disabled:opacity-50'
+        }`}
+      >
+        {saved ? '✓ En tu CRM' : '+ Guardar en Mi CRM'}
+      </button>
+    )
+  }
   return (
     <div className="space-y-6">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
@@ -193,6 +235,7 @@ export default function EmployersTab({
                   ) : (
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 italic text-center py-1.5">Sin vacantes publicadas ahora</p>
                   )}
+                  {saveButton(comp)}
                 </div>
               )
             })}
@@ -229,6 +272,8 @@ export default function EmployersTab({
                       <td className="p-4 font-semibold">{comp.consular_processed ?? 0}</td>
                       <td className="p-4 font-semibold">{comp.total_approved || 0} visas</td>
                       <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                        {saveButton(comp, true)}
                         {comp.jobs && comp.jobs.length > 0 ? (
                           <button
                             onClick={() => viewJobsFor(Number(comp.id), comp.employer_name || '')}
@@ -239,6 +284,7 @@ export default function EmployersTab({
                         ) : (
                           <span className="text-[11px] text-slate-500 dark:text-slate-400 italic">Sin vacantes ahora</span>
                         )}
+                        </div>
                       </td>
                     </tr>
                   ))}

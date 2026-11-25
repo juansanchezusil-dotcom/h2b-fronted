@@ -1487,6 +1487,9 @@ return (
           selectedCapType={selectedCapType}
           setSelectedCapType={setSelectedCapType}
           viewJobsFor={viewJobsFor}
+          crmItems={crmItems}
+          savingCrmKey={savingCrmKey}
+          addToCRM={addToCRM}
         />
       )}
 
