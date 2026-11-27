@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import PwaInit from "@/components/PwaInit";
@@ -50,11 +51,15 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // El script en línea del tema (claro/oscuro) necesita el nonce de esta visita para correr (ver lib/csp.ts).
+  // Leer las cabeceras hace que cada página se arme en cada visita, que es lo que el nonce exige.
+  const csp = (await headers()).get("content-security-policy") || "";
+  const nonce = /'nonce-([^']+)'/.exec(csp)?.[1];
   return (
     <html
       lang="es"
@@ -64,7 +69,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <PwaInit />
         <ErrorReporter />
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem nonce={nonce}>
           {children}
         </ThemeProvider>
       </body>

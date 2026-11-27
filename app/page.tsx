@@ -35,6 +35,7 @@ import { aiFetch } from '@/lib/aiFetch';
 import AssistantModal from '@/components/AssistantModal';
 import AsistenteCard from '@/components/AsistenteCard';
 import MembershipNotices from '@/components/MembershipNotices';
+import MasterclassImportCard from '@/components/MasterclassImportCard';
 import ApplyFlowModal from '@/components/ApplyFlowModal';
 import { useBackToClose } from '@/hooks/useBackToClose';
 import { useLastSeen } from '@/hooks/useLastSeen';
@@ -137,6 +138,10 @@ export default function Home() {
     localStorage.setItem('jta:lastTab', activeTab)
   }, [activeTab])
 
+  // Cuando se llega a Ofertas desde "Ver sus vacantes" en Empresas: filtro exacto
+  // por sponsor_company_id, no por nombre de texto (ver nota en viewJobsFor)
+  const [sponsorFilter, setSponsorFilter] = useState<{ id: number; name: string } | null>(null)
+
   // Entrada corta del contenido al cambiar de pestaña, desde el lado hacia donde vas
   const mainRef = useRef<HTMLElement>(null)
   const prevTab = useRef(activeTab)
@@ -222,9 +227,6 @@ export default function Home() {
   const [selectedSeason, setSelectedSeason] = useState('ALL')
   const [onlyHiresAbroad, setOnlyHiresAbroad] = useState(false)
   const [jobSortBy, setJobSortBy] = useState<'recent' | 'match'>('recent')
-  // Cuando se llega a Ofertas desde "Ver sus vacantes" en Empresas: filtro exacto
-  // por sponsor_company_id, no por nombre de texto (ver nota en viewJobsFor)
-  const [sponsorFilter, setSponsorFilter] = useState<{ id: number; name: string } | null>(null)
 
   const [companySearch, setCompanySearch] = useState('')
   const [selectedCompanyState, setSelectedCompanyState] = useState('ALL')
@@ -1407,6 +1409,28 @@ return (
 
           {/* Avance del Compromiso de PRO y, si falta poco, aviso de vencimiento */}
           <MembershipNotices userId={onboardingUserId} />
+
+          {/* Ofertas que la persona guardó en el dashboard de la masterclass (solo en este navegador) */}
+          <MasterclassImportCard
+            userId={onboardingUserId}
+            crm={crmItems}
+            crmReady={!crmLoading && !crmError}
+            onToast={showToast}
+            onImported={(rows) => setCrmItems(prev => [
+              ...rows.map((row): CRMItem => ({
+                id: row.id,
+                company: row.company_name,
+                role: row.job_title,
+                state: row.state,
+                status: row.status as CRMItem['status'],
+                dateLabel: labelForStatus(row.status),
+                lastUpdated: new Date(row.created_at).getTime(),
+                createdAt: new Date(row.created_at).getTime(),
+                notes: row.notes || '',
+              })),
+              ...prev,
+            ])}
+          />
 
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
             <div className="flex justify-between items-center">

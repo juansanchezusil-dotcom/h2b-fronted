@@ -1,12 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasActiveMembership } from "@/lib/membership";
+import { appCsp, BASE_CSP, newNonce, usesNonce } from "@/lib/csp";
 
 const APP_ORIGIN = "https://app.juanteavisa.com";
+const OLD_HOST = "h2b-fronted.vercel.app";
 
 export async function proxy(request: NextRequest) {
   // mapa.juanteavisa.com muestra directo el Mapa H2B público (abierto, sin cuenta)
   const host = request.headers.get("host") || "";
+  // El dominio antiguo manda todo a app.juanteavisa.com. La página de la masterclass se queda: lo que alguien
+  // guardó allí vive en el navegador de ese dominio y se perdería con la redirección.
+  if (host === OLD_HOST && request.nextUrl.pathname !== "/masterclass.html") {
+    const target = new URL(request.nextUrl.pathname + request.nextUrl.search, APP_ORIGIN);
+    return NextResponse.redirect(target.origin === APP_ORIGIN ? target : new URL("/", APP_ORIGIN), 308);
+  }
   if (host.startsWith("mapa.")) {
     const p = request.nextUrl.pathname;
     if (p === "/") return NextResponse.rewrite(new URL("/mapa", request.url));
@@ -20,9 +28,19 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // Nonce de esta visita: Next lo lee del CSP de la petición y lo pone en sus scripts; el layout lo pasa al script
+  // del tema. La misma política va en la respuesta para que el navegador la aplique.
+  const csp = usesNonce(request.nextUrl.pathname) ? appCsp(newNonce()) : BASE_CSP;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("Content-Security-Policy", csp);
+  const withCsp = (res: NextResponse) => {
+    res.headers.set("Content-Security-Policy", csp);
+    return res;
+  };
+
   let response = NextResponse.next({
     request: {
-      headers: request.headers,
+      headers: requestHeaders,
     },
   });
 
@@ -38,8 +56,10 @@ export async function proxy(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
+          // request.cookies.set actualiza la cabecera cookie de la petición: se copia para que la página la vea
+          requestHeaders.set("cookie", request.headers.get("cookie") || "");
           response = NextResponse.next({
-            request,
+            request: { headers: requestHeaders },
           });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
@@ -85,7 +105,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  return response;
+  return withCsp(response);
 }
 
 export const config = {
