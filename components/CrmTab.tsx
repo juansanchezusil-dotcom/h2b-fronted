@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction, ReactNode } from 'react'
-import { Briefcase, Send, CheckCircle2, Plus, Trash2, MoveRight, XCircle, CheckCircle } from 'lucide-react'
+import { Briefcase, Send, CheckCircle2, Plus, Trash2, MoveRight, XCircle, CheckCircle, Mail } from 'lucide-react'
 import EmptyState from '@/components/EmptyState'
 import { CRM_COLUMNS, crmColumnOf, type CRMItem, type CrmColumn } from '@/lib/h2b'
 
@@ -29,7 +29,9 @@ interface CrmTabProps {
   setEditingNotesId: Dispatch<SetStateAction<string | null>>
   tempNotes: string
   setTempNotes: Dispatch<SetStateAction<string>>
-  setIsManualModalOpen: Dispatch<SetStateAction<boolean>>
+  setIsManualModalOpen: (open: boolean) => void
+  // Abre el formulario corto "Postulé por correo" (entra como Postulado)
+  openAppliedByEmail: () => void
   setShowInterviewSimulator: Dispatch<SetStateAction<boolean>>
   setSimulatorJob: Dispatch<SetStateAction<{ company: string; role: string } | null>>
   goToJobs: () => void
@@ -55,6 +57,7 @@ export default function CrmTab({
   tempNotes,
   setTempNotes,
   setIsManualModalOpen,
+  openAppliedByEmail,
   setShowInterviewSimulator,
   setSimulatorJob,
   goToJobs,
@@ -89,6 +92,15 @@ export default function CrmTab({
               Gestiona tus postulaciones, seguimiento de 7-14-21 días, entrevistas y estados finales de forma visual.
             </p>
           </div>
+          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <button
+            type="button"
+            onClick={openAppliedByEmail}
+            className="relative z-10 cursor-pointer w-full md:w-auto justify-center min-h-11 md:min-h-0 border border-[#0B4079] text-[#0B4079] dark:border-blue-400 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 font-bold text-sm md:text-xs px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+          >
+            <Mail className="w-4 h-4" />
+            Postulé por correo
+          </button>
           <button
             type="button"
             onClick={() => setIsManualModalOpen(true)}
@@ -97,6 +109,7 @@ export default function CrmTab({
             <Plus className="w-4 h-4" />
             Agregar Postulación Manual
           </button>
+          </div>
         </div>
         <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="space-y-1 w-full sm:w-auto">

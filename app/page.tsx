@@ -22,6 +22,7 @@ import {
   Check,
   Plane,
   Compass,
+  Mail,
 } from 'lucide-react'
 import { EmailAssistantTab } from '../components/EmailAssistantTab'
 import H2BMap from '@/components/H2BMap';
@@ -401,6 +402,14 @@ export default function Home() {
   const [manualRole, setManualRole] = useState('')
   const [manualState, setManualState] = useState('')
   const [manualStatus, setManualStatus] = useState<CRMItem['status']>('guardadas')
+  // "Postulé por correo": el mismo formulario, corto, que ya entra como Postulado. Así cuenta para el Reto y el radar
+  // aunque la postulación se haya hecho fuera de la app.
+  const [manualByEmail, setManualByEmail] = useState(false)
+  const openManual = (byEmail: boolean) => {
+    setManualByEmail(byEmail)
+    setManualStatus(byEmail ? 'postulado' : 'guardadas')
+    setIsManualModalOpen(true)
+  }
 
   const handleSaveManualItem = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -415,7 +424,7 @@ export default function Home() {
         job_title: manualRole.trim() || 'Vacante H2B',
         state: manualState.trim() || 'US',
         status: manualStatus || 'guardadas',
-        notes: '',
+        notes: manualByEmail ? 'Postulé por correo.' : '',
       })
       .select()
       .single()
@@ -437,7 +446,7 @@ export default function Home() {
       dateLabel: labelForStatus(data.status),
       lastUpdated: new Date(data.created_at).getTime(),
     createdAt: new Date(data.created_at).getTime(),
-      notes: '',
+      notes: data.notes || '',
     }
 
     setCrmItems(prev => [newItem, ...prev])
@@ -447,6 +456,7 @@ export default function Home() {
   setManualRole('')
   setManualState('')
   setManualStatus('guardadas')
+  setManualByEmail(false)
   setIsManualModalOpen(false)
 }
 useEffect(() => {
@@ -1432,6 +1442,19 @@ return (
             ])}
           />
 
+          {/* Postulaciones hechas fuera de la app: sin esto, quien postula por correo parece inactivo */}
+          <button
+            type="button"
+            onClick={() => openManual(true)}
+            className="w-full flex items-center gap-3 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 text-left hover:border-[#0B4079] dark:hover:border-blue-400 transition-colors"
+          >
+            <Mail className="w-5 h-5 shrink-0 text-[#0B4079] dark:text-blue-300" aria-hidden="true" />
+            <span className="flex-1 text-sm text-slate-700 dark:text-slate-200">
+              <b>¿Postulaste por correo?</b> Anótala aquí en un toque para que cuente en tu Reto.
+            </span>
+            <span className="shrink-0 text-xs font-bold text-[#0B4079] dark:text-blue-300">Postulé por correo</span>
+          </button>
+
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm space-y-3">
             <div className="flex justify-between items-center">
               <h2 className="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
@@ -1562,7 +1585,8 @@ return (
           setEditingNotesId={setEditingNotesId}
           tempNotes={tempNotes}
           setTempNotes={setTempNotes}
-          setIsManualModalOpen={setIsManualModalOpen}
+          setIsManualModalOpen={(open: boolean) => (open ? openManual(false) : setIsManualModalOpen(false))}
+          openAppliedByEmail={() => openManual(true)}
           setShowInterviewSimulator={setShowInterviewSimulator}
           setSimulatorJob={setSimulatorJob}
           goToJobs={() => setActiveTab('jobs')}
@@ -1633,7 +1657,7 @@ return (
         <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl relative border border-slate-100 dark:border-slate-800 animate-in fade-in zoom-in duration-200">
 
           <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 flex justify-between items-center px-6 pt-6 pb-2 border-b border-slate-100 dark:border-slate-800">
-            <h3 className="text-lg font-bold text-slate-800 dark:text-white">Agregar Postulación Manual</h3>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-white">{manualByEmail ? 'Postulé por correo' : 'Agregar Postulación Manual'}</h3>
             <button
               type="button"
               onClick={() => setIsManualModalOpen(false)}
@@ -1645,6 +1669,11 @@ return (
           </div>
 
           <form onSubmit={handleSaveManualItem} className="space-y-4 px-6 pb-6 pt-4">
+            {manualByEmail && (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Anota aquí cada empresa a la que escribiste por tu cuenta. Entra como Postulado, cuenta para tu Reto y te recuerda el seguimiento a los 7, 14 y 21 días.
+              </p>
+            )}
             <div>
               <label htmlFor="manual-company" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Empresa *</label>
               <input
@@ -1670,6 +1699,7 @@ return (
               />
             </div>
 
+            {!manualByEmail && (<>
             <div>
               <label htmlFor="manual-state" className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Estado / Ubicación</label>
               <input
@@ -1698,6 +1728,7 @@ return (
                 <option value="no_respondido">No respondido / Rechazado</option>
               </select>
             </div>
+            </>)}
 
             <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
               <button
