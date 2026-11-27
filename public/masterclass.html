@@ -57,6 +57,7 @@ label.chk.done span{color:var(--muted);text-decoration:line-through}
 .btn.gold{background:var(--gold);color:var(--gold-ink);border-color:transparent}
 .btn[disabled]{opacity:.55;cursor:default}
 .link{color:var(--gold-text);font-weight:700;text-underline-offset:3px}
+button.link{background:none;border:0;padding:0;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline}
 select,input[type="text"],input[type="url"]{background:var(--surface-2);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px;font:600 14px/1.3 var(--sans);max-width:100%;min-width:0}
 input[type="text"],input[type="url"]{flex:1 1 180px}
 .fu{font-size:13px;color:var(--muted)}
@@ -118,6 +119,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
   <nav class="tabs" role="tablist" aria-label="Secciones">
     <button type="button" class="tab" role="tab" id="tab-plan" aria-controls="p-plan" aria-selected="true" data-tab="plan">Mi plan</button>
     <button type="button" class="tab" role="tab" id="tab-ofertas" aria-controls="p-ofertas" aria-selected="false" data-tab="ofertas">Mis ofertas</button>
+    <button type="button" class="tab" role="tab" id="tab-postulaciones" aria-controls="p-postulaciones" aria-selected="false" data-tab="postulaciones">Mis postulaciones</button>
     <button type="button" class="tab" role="tab" id="tab-empresas" aria-controls="p-empresas" aria-selected="false" data-tab="empresas">Empresas</button>
     <button type="button" class="tab" role="tab" id="tab-agencias" aria-controls="p-agencias" aria-selected="false" data-tab="agencias">Agencias DOL</button>
   </nav>
@@ -130,7 +132,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
 
   <!-- MIS OFERTAS -->
   <section class="panel" id="p-ofertas" role="tabpanel" aria-labelledby="tab-ofertas" hidden>
-    <p class="lead"><b>Las ofertas que vas a trabajar.</b> Cada una pasa por 4 puntos antes de postular. "Verificada" significa que pasó los 4 puntos. <b>No significa que te vayan a responder.</b></p>
+    <p class="lead"><b>Las ofertas que vas a trabajar.</b> Cada una pasa por 4 puntos antes de postular. "Verificada" significa que pasó los 4 puntos. <b>No significa que te vayan a responder.</b> Cuando postules, toca "Ya postulé" y la oferta pasa a Mis postulaciones.</p>
     <p class="row"><a class="link" href="https://seasonaljobs.dol.gov" target="_blank" rel="noopener">Buscar en SeasonalJobs (DOL) ↗</a></p>
 
     <section class="box clase" id="clase" aria-labelledby="clase-t" hidden>
@@ -150,6 +152,13 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
     </form>
 
     <div class="grid" id="ofertas"></div>
+  </section>
+
+  <!-- MIS POSTULACIONES -->
+  <section class="panel" id="p-postulaciones" role="tabpanel" aria-labelledby="tab-postulaciones" hidden>
+    <p class="lead"><b>Las ofertas a las que ya postulaste.</b> Marca cada seguimiento cuando lo hagas: a los 7, 14 y 21 días de postular.</p>
+    <div class="box" id="postulaciones"></div>
+    <p class="fu" style="margin:0">En la app tienes el CRM completo, con correos de seguimiento listos y aviso cuando la empresa responde.</p>
   </section>
 
   <!-- EMPRESAS -->
@@ -305,7 +314,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
       }else if(w.tools==='ofertas'){
         tools='<div class="row"><a class="btn" href="https://seasonaljobs.dol.gov" target="_blank" rel="noopener">SeasonalJobs ↗</a><button type="button" class="btn gold" data-tab="ofertas">Ir a Mis ofertas</button></div>';
       }else{
-        tools='<p class="fu" style="margin:0">Según Mis ofertas, llevas <b>'+s.distintas+'</b> '+(s.distintas===1?'empresa':'empresas')+' postuladas de '+META+'. Esta es tu primera meta: tu meta del mes es distinta para cada puesto y en la app se calcula para ti. Estos pasos se marcan solos con lo que haces en el dashboard.</p>';
+        tools='<p class="fu" style="margin:0">Según Mis ofertas, llevas <b>'+s.distintas+'</b> '+(s.distintas===1?'empresa':'empresas')+' postuladas de '+META+'. Esta es tu primera meta: tu meta del mes es distinta para cada puesto y en la app se calcula para ti. Estos pasos se marcan solos con lo que haces en el dashboard.</p><div class="row"><button type="button" class="btn gold" data-tab="postulaciones">Ir a Mis postulaciones</button></div>';
       }
       return '<div class="box'+(i===curW?' cur':'')+'"><h3>'+esc(w.t)+'<span>'+done+' de '+w.items.length+'</span></h3>'+
         w.items.map(function(it){
@@ -336,23 +345,37 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
       fetch(API).then(function(r){return r.ok?r.json():{ofertas:[]}}).then(function(d){clase=Array.isArray(d.ofertas)?d.ofertas:[];renderClase()}).catch(function(){});
     }catch(e){}
   }
+  function applied(o){return o.estado==='postulada'||o.estado==='seguimiento'||o.estado==='entrevista'}
   function renderOfertas(){
-    if(!st.offers.length){$('ofertas').innerHTML='<div class="card" style="grid-column:1/-1"><p class="lead" style="margin:0">Aún no tienes ofertas. Agrega la primera con el formulario de arriba.</p></div>';return}
-    $('ofertas').innerHTML=st.offers.map(function(o){
+    var list=st.offers.filter(function(o){return o.estado==='guardada'||!o.estado});
+    var sent=st.offers.filter(function(o){return o.estado!=='guardada'&&o.estado}).length;
+    if(!list.length){$('ofertas').innerHTML='<div class="card" style="grid-column:1/-1"><p class="lead" style="margin:0">'+(sent?'No tienes ofertas por verificar. Las que ya postulaste están en <button type="button" class="link" data-tab="postulaciones">Mis postulaciones</button>.':'Aún no tienes ofertas. Agrega la primera con el formulario de arriba.')+'</p></div>';return}
+    $('ofertas').innerHTML=list.map(function(o){
       var v=verified(o),pill=v===4?'<span class="pill ok">Verificada 4/4</span>':'<span class="pill '+(v===0?'none':'mid')+'">Verificando '+v+'/4</span>';
+      var u=safeUrl(o.url);
+      return '<article class="card"><h3>'+esc(o.puesto)+'</h3><div class="fu">Empresa: <b>'+esc(o.empresa)+'</b></div>'+pill+
+        '<div style="display:flex;flex-direction:column;gap:8px">'+CHECKS4.map(function(s,k){return '<label class="chk"><input type="checkbox" data-oc="'+o.id+'" data-k="'+k+'"'+((o.c&&o.c[k])?' checked':'')+'><span>'+esc(s)+'</span></label>'}).join('')+'</div>'+
+        (v<4?'<p class="fu" style="margin:0">Antes de postular, completa los 4 puntos.</p>':'')+
+        '<div class="row"><button type="button" class="btn'+(v===4?' gold':'')+'" data-post="'+o.id+'">Ya postulé</button>'+
+        (u?'<a class="link" href="'+esc(u)+'" target="_blank" rel="noopener">Ver oferta ↗</a>':'')+
+        '<button type="button" class="rm" data-rmo="'+o.id+'">Quitar</button></div></article>';
+    }).join('');
+  }
+  function renderPostulaciones(){
+    var list=st.offers.filter(function(o){return o.estado&&o.estado!=='guardada'});
+    if(!list.length){$('postulaciones').innerHTML='<p class="lead" style="margin:0">Aún no marcaste ninguna postulación. En <button type="button" class="link" data-tab="ofertas">Mis ofertas</button>, toca "Ya postulé" cuando envíes tu CV.</p>';return}
+    $('postulaciones').innerHTML='<h3>Postulaciones<span>'+list.length+'</span></h3>'+list.map(function(o){
       var u=safeUrl(o.url),fu='';
-      if(o.estado==='postulada'||o.estado==='seguimiento'){
-        fu='<div class="fu">Postulaste el <b>'+fdate(o.fecha)+'</b>. Seguimiento: '+fuList(o).map(function(f){
+      if(applied(o)&&o.fecha){
+        fu='<div class="fu" style="flex-basis:100%">Postulaste el <b>'+fdate(o.fecha)+'</b>. Seguimiento: '+fuList(o).map(function(f){
           var late=!f.done&&f.at<Date.now();
           return '<label class="chk" style="display:inline-flex;margin-right:10px"><input type="checkbox" data-fu="'+o.id+'" data-n="'+f.n+'"'+(f.done?' checked':'')+'><span class="'+(late?'late':'')+'">día '+f.n+' · '+fdate(f.at)+'</span></label>';
         }).join('')+'</div>';
       }
-      return '<article class="card"><h3>'+esc(o.puesto)+'</h3><div class="fu">Empresa: <b>'+esc(o.empresa)+'</b></div>'+pill+
-        '<div style="display:flex;flex-direction:column;gap:8px">'+CHECKS4.map(function(s,k){return '<label class="chk"><input type="checkbox" data-oc="'+o.id+'" data-k="'+k+'"'+((o.c&&o.c[k])?' checked':'')+'><span>'+esc(s)+'</span></label>'}).join('')+'</div>'+
-        (v<4&&o.estado==='guardada'?'<p class="fu" style="margin:0">Antes de postular, completa los 4 puntos.</p>':'')+fu+
-        '<div class="row"><label class="fu" for="es-'+o.id+'">Estado</label><select id="es-'+o.id+'" data-es="'+o.id+'">'+ESTADOS.map(function(e){return '<option value="'+e[0]+'"'+(o.estado===e[0]?' selected':'')+'>'+e[1]+'</option>'}).join('')+'</select>'+
+      return '<div class="it"><div class="t"><b>'+esc(o.puesto)+'</b><span>'+esc(o.empresa)+'</span></div>'+
+        '<div class="row"><label class="fu" for="es-'+o.id+'">Estado</label><select id="es-'+o.id+'" data-es="'+o.id+'">'+ESTADOS.map(function(e){return '<option value="'+e[0]+'"'+(o.estado===e[0]?' selected':'')+'>'+(e[0]==='guardada'?'Volver a Mis ofertas':e[1])+'</option>'}).join('')+'</select>'+
         (u?'<a class="link" href="'+esc(u)+'" target="_blank" rel="noopener">Ver oferta ↗</a>':'')+
-        '<button type="button" class="rm" data-rmo="'+o.id+'">Quitar</button></div></article>';
+        '<button type="button" class="rm" data-rmo="'+o.id+'">Quitar</button></div>'+fu+'</div>';
     }).join('');
   }
   function findOffer(id){return st.offers.filter(function(o){return o.id===id})[0]}
@@ -402,12 +425,12 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
   }
   function showTab(t){
     st.tab=t;
-    ['plan','ofertas','empresas','agencias'].forEach(function(k){
+    ['plan','ofertas','postulaciones','empresas','agencias'].forEach(function(k){
       var on=k===t;$('p-'+k).hidden=!on;$('tab-'+k).setAttribute('aria-selected',on?'true':'false');
     });
   }
-  function all(){renderPlan();renderOfertas();renderClase();renderEmpresas();renderAgencias();summary();showTab(st.tab)}
-  function refresh(){renderPlan();renderOfertas();renderClase();summary()}
+  function all(){renderPlan();renderOfertas();renderPostulaciones();renderClase();renderEmpresas();renderAgencias();summary();showTab(st.tab)}
+  function refresh(){renderPlan();renderOfertas();renderPostulaciones();renderClase();summary()}
 
   // ---------- eventos ----------
   document.addEventListener('click',function(e){
@@ -420,6 +443,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
       }
       return;
     }
+    var po=e.target.closest('[data-post]'); if(po){var op=findOffer(po.getAttribute('data-post'));if(op){op.estado='postulada';if(!op.fecha){op.fecha=Date.now();op.fu={}}save();refresh()}return}
     var tf=e.target.closest('[data-toof]'); if(tf){
       var tid=tf.getAttribute('data-toof');
       st.groups.forEach(function(g){g.items.forEach(function(c){
