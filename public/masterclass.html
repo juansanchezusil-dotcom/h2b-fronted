@@ -160,8 +160,8 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
       <h3>Cómo revisar una empresa en el Hub</h3>
       <ol class="q">
         <li>Escribe el nombre de la empresa en el filtro de empleador (petitioner).</li>
-        <li>Mira en qué años fiscales presentó peticiones y cuántas aprobaciones tiene.</li>
-        <li>Busca su sitio web oficial y su contacto. El correo debe usar el dominio de la empresa.</li>
+        <li>Busca su sitio web oficial.</li>
+        <li>Encuentra su correo o formulario para postular. El correo debe usar el dominio de la empresa.</li>
       </ol>
     </div>
     <form class="box" id="g-form">
@@ -230,7 +230,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
     {id:'ag4',name:'MTL INTERNATIONAL',loc:'US',url:'https://mtlint.com/'}
   ];
   var SUGERENCIAS=['Housekeeper','Cocina','Construcción','Jardinería','Front desk','Lavaplatos'];
-  var PASOS_EMP=['La busqué en el Employer Data Hub','Vi su historial: años y peticiones','Encontré su sitio web y contacto oficiales'];
+  var PASOS_EMP=['La busqué en el Employer Data Hub','Encontré su sitio web oficial','Encontré su correo o formulario para postular'];
   var CHECKS4=['Aparece en SeasonalJobs (fuente oficial)','El correo usa el dominio de la empresa','No piden dinero por darme el trabajo','Me dan toda la información por escrito'];
   var ESTADOS=[['guardada','Guardada'],['postulada','Postulada'],['seguimiento','En seguimiento'],['entrevista','Entrevista'],['descartada','Descartada']];
   var PLAN=[
@@ -358,6 +358,8 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
   function findOffer(id){return st.offers.filter(function(o){return o.id===id})[0]}
 
   // ---------- Empresas por puesto ----------
+  // Una empresa de esta pestaña pasa a Mis ofertas con el puesto del grupo, para verificarla y postular
+  function inOffers(g,c){return st.offers.some(function(o){return (o.empresa||'').toLowerCase()===c.name.toLowerCase()&&(o.puesto||'').toLowerCase()===g.name.toLowerCase()})}
   function cnt(c){var n=0;for(var k=0;k<3;k++){if(c.cs&&c.cs[k])n++}return n}
   function renderEmpresas(){
     var usados={};st.groups.forEach(function(g){usados[g.name.toLowerCase()]=1});
@@ -370,7 +372,9 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
           var n=cnt(c),u=safeUrl(c.url);
           return '<div class="company"><div class="head"><span class="nm">'+esc(c.name)+'</span>'+(n===0?'<span class="pill none">Por revisar</span>':(n===3?'<span class="pill ok">Revisada 3/3</span>':'<span class="pill mid">En revisión '+n+'/3</span>'))+'</div>'+
             '<div class="opts">'+PASOS_EMP.map(function(s,k){return '<label class="chk"><input type="checkbox" data-c="'+c.id+'" data-k="'+k+'"'+((c.cs&&c.cs[k])?' checked':'')+'><span>'+esc(s)+'</span></label>'}).join('')+'</div>'+
-            '<div class="row">'+(u?'<a class="link" href="'+esc(u)+'" target="_blank" rel="noopener">Ver sitio ↗</a>':'')+'<button type="button" class="rm" data-rmc="'+c.id+'">Quitar empresa</button></div></div>';
+            '<div class="row">'+(u?'<a class="link" href="'+esc(u)+'" target="_blank" rel="noopener">Ver sitio ↗</a>':'')+
+            (inOffers(g,c)?'<button type="button" class="btn" disabled>Ya está en Mis ofertas</button>':'<button type="button" class="btn gold" data-toof="'+c.id+'">Agregar a Mis ofertas</button>')+
+            '<button type="button" class="rm" data-rmc="'+c.id+'">Quitar empresa</button></div></div>';
         }).join('')+
         '<form class="row" data-addc="'+g.id+'"><input type="text" maxlength="80" required placeholder="Empresa" aria-label="Empresa de '+esc(g.name)+'" autocomplete="off"><input type="url" maxlength="300" placeholder="Link (opcional)" aria-label="Link de la empresa" autocomplete="off"><button class="btn gold" type="submit">Agregar empresa</button></form>'+
         '<div><button type="button" class="rm" data-rmg="'+g.id+'">Quitar este puesto</button></div></div>';
@@ -416,7 +420,14 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
       }
       return;
     }
-    var ro=e.target.closest('[data-rmo]'); if(ro){var id=ro.getAttribute('data-rmo');st.offers=st.offers.filter(function(x){return x.id!==id});save();refresh();return}
+    var tf=e.target.closest('[data-toof]'); if(tf){
+      var tid=tf.getAttribute('data-toof');
+      st.groups.forEach(function(g){g.items.forEach(function(c){
+        if(c.id===tid&&!inOffers(g,c))st.offers.unshift({id:uid('o'),puesto:g.name.slice(0,80),empresa:c.name.slice(0,80),url:safeUrl(c.url).slice(0,300),c:[false,false,false,false],estado:'guardada'});
+      })});
+      save();refresh();renderEmpresas();return;
+    }
+    var ro=e.target.closest('[data-rmo]'); if(ro){var id=ro.getAttribute('data-rmo');st.offers=st.offers.filter(function(x){return x.id!==id});save();refresh();renderEmpresas();return}
     var sg=e.target.closest('[data-sug]'); if(sg){addGroup(sg.getAttribute('data-sug'));return}
     var rg=e.target.closest('[data-rmg]'); if(rg){var gid=rg.getAttribute('data-rmg');st.groups=st.groups.filter(function(g){return g.id!==gid});save();renderEmpresas();return}
     var rc=e.target.closest('[data-rmc]'); if(rc){var cid=rc.getAttribute('data-rmc');st.groups.forEach(function(g){g.items=g.items.filter(function(c){return c.id!==cid})});save();renderEmpresas();return}
