@@ -17,7 +17,8 @@ const PLAN_KEY = 'jta-mapa-plan-v1'
 // El Mapa se activa el día de la masterclass. Antes, la página solo invita a reservar el lugar.
 const ACTIVATION = Date.parse('2026-11-25T19:00:00-05:00')
 const MASTERCLASS_URL = 'https://juanteavisa.com/masterclass-h2b/'
-const SKOOL_URL = 'https://www.skool.com/busca-tu-patrocinador-h2b-2085/about'
+// juanteavisa.com/pro lleva a la página para unirse (hoy, Skool); si cambia el destino, no hay que tocar el código
+const SKOOL_URL = 'https://juanteavisa.com/pro'
 const DONE_KEY = 'jta-mapa-respuestas-v1'
 
 type Experience = 'directa' | 'parecida' | 'informal' | 'ninguna' | ''

@@ -220,6 +220,13 @@ export default function LoginPage() {
           Al continuar aceptas el uso de tus datos según nuestra{" "}
           <a href="/privacidad" className="underline">política de privacidad</a>.
         </p>
+
+        <p className="mt-4 text-center text-sm text-slate-600">
+          ¿Aún no eres miembro?{" "}
+          <a href="https://juanteavisa.com/pro" target="_blank" rel="noopener noreferrer" className="font-bold text-[#0B4079] underline underline-offset-2">
+            Únete a PRO
+          </a>
+        </p>
       </div>
     </div>
   );

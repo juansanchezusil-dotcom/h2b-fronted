@@ -90,9 +90,13 @@ details.note>summary{cursor:pointer;font-weight:700;color:var(--gold-text)}
 details.note ul{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .cta{border-color:var(--gold-text)}
 .cta p{margin:0;color:var(--muted);max-width:62ch}
+.pro{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;border:1px dashed var(--gold-text);border-radius:12px;padding:12px 14px;background:var(--warn-bg)}
+.pro p{margin:0;flex:1 1 260px;font-size:14px;color:var(--fg)}
+.pro p b{color:var(--gold-text)}
+.member{margin:0;font-size:13px;color:var(--muted)}
 #cerrado{display:none}
 body.cerrado #cerrado{display:flex}
-body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{display:none}
+body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool,body.cerrado #pro-top{display:none}
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
 </head>
@@ -116,6 +120,11 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
     <div class="tile"><span class="k">Postulaciones</span><span class="v" id="t-ap">0 <small>de 10</small></span></div>
   </section>
 
+  <section class="pro" id="pro-top" aria-label="Juan Te Avisa PRO">
+    <p><b>¿Quieres el control total de tu búsqueda?</b> En PRO tienes la app completa: ofertas oficiales actualizadas cada día, más de 7.000 empresas con historial H-2B, tu CV con un asistente y un CRM con tus seguimientos. <a class="link" href="https://app.juanteavisa.com/">¿Ya eres miembro? Entra a la app</a></p>
+    <a class="btn gold" href="https://juanteavisa.com/pro" target="_blank" rel="noopener">Quiero PRO</a>
+  </section>
+
   <nav class="tabs" role="tablist" aria-label="Secciones">
     <button type="button" class="tab" role="tab" id="tab-plan" aria-controls="p-plan" aria-selected="true" data-tab="plan">Mi plan</button>
     <button type="button" class="tab" role="tab" id="tab-ofertas" aria-controls="p-ofertas" aria-selected="false" data-tab="ofertas">Mis ofertas</button>
@@ -134,6 +143,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
   <section class="panel" id="p-ofertas" role="tabpanel" aria-labelledby="tab-ofertas" hidden>
     <p class="lead"><b>Las ofertas que vas a trabajar.</b> Cada una pasa por 4 puntos antes de postular. "Verificada" significa que pasó los 4 puntos. <b>No significa que te vayan a responder.</b> Cuando postules, toca "Ya postulé" y la oferta pasa a Mis postulaciones.</p>
     <p class="row"><a class="link" href="https://seasonaljobs.dol.gov" target="_blank" rel="noopener">Buscar en SeasonalJobs (DOL) ↗</a></p>
+    <div class="pro"><p><b>PRO:</b> las ofertas oficiales del DOL ya vienen cargadas y se actualizan cada día, con filtros por puesto y temporada. Las guardas en tu CRM con un toque.</p><a class="btn gold" href="https://juanteavisa.com/pro" target="_blank" rel="noopener">Ver ofertas en PRO</a></div>
 
     <section class="box clase" id="clase" aria-labelledby="clase-t" hidden>
       <h3 id="clase-t">Ofertas de la clase</h3>
@@ -158,13 +168,14 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
   <section class="panel" id="p-postulaciones" role="tabpanel" aria-labelledby="tab-postulaciones" hidden>
     <p class="lead"><b>Las ofertas a las que ya postulaste.</b> Marca cada seguimiento cuando lo hagas: a los 7, 14 y 21 días de postular.</p>
     <div class="box" id="postulaciones"></div>
-    <p class="fu" style="margin:0">En la app tienes el CRM completo, con correos de seguimiento listos y aviso cuando la empresa responde.</p>
+    <div class="pro"><p><b>PRO:</b> el CRM completo, con correos de seguimiento listos en inglés y recordatorios a los 7, 14 y 21 días.</p><a class="btn gold" href="https://juanteavisa.com/pro" target="_blank" rel="noopener">Llevar mis postulaciones a PRO</a></div>
   </section>
 
   <!-- EMPRESAS -->
   <section class="panel" id="p-empresas" role="tabpanel" aria-labelledby="tab-empresas" hidden>
     <p class="lead"><b>Empresas con historial H-2B.</b> Agrega el puesto o la industria a la que vas a postular, y dentro agrega las empresas que encuentres en el Employer Data Hub de USCIS. Que una empresa aparezca ahí significa que presentó peticiones antes. <b>No significa que esté contratando hoy ni que vaya a responder.</b></p>
     <p class="row"><a class="link" href="https://www.uscis.gov/tools/reports-and-studies/h-2b-employer-data-hub" target="_blank" rel="noopener">Abrir el H-2B Employer Data Hub (USCIS) ↗</a></p>
+    <div class="pro"><p><b>PRO:</b> más de 7.000 empresas con historial H-2B ya revisadas, con filtros por estado, temporada y puesto, y sus vacantes actuales.</p><a class="btn gold" href="https://juanteavisa.com/pro" target="_blank" rel="noopener">Ver empresas en PRO</a></div>
     <div class="box">
       <h3>Cómo revisar una empresa en el Hub</h3>
       <ol class="q">
@@ -190,6 +201,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
     <p class="lead">Las agencias legítimas son una opción válida, pero pasiva: das tus datos y esperas. En el Método H2B postulas tú. Aparecer en este listado no es un aval. No tengo relación comercial con ninguna agencia. Las pongo como ejemplos para que aprendas a leer el listado y a verificar.</p>
     <p class="row"><a class="link" href="https://www.dol.gov/agencies/eta/foreign-labor/recruiter-list" target="_blank" rel="noopener">Abrir el listado oficial del DOL ↗</a></p>
     <div class="grid" id="agencias"></div>
+    <div class="pro"><p><b>PRO:</b> el detector de estafas: sube la foto de un contrato, un chat o un correo y te digo qué señales de alerta tiene.</p><a class="btn gold" href="https://juanteavisa.com/pro" target="_blank" rel="noopener">Revisar con el detector</a></div>
     <form class="box" id="a-form">
       <h3>Agregar otra agencia</h3>
       <div class="row">
@@ -213,6 +225,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
     <h3 id="skool-t">Lleva tu búsqueda a la app completa</h3>
     <p>Este dashboard es la versión base. En la comunidad de Juan Te Avisa en Skool tienes acceso a la app completa: las empresas con historial, las ofertas actualizadas, el listado oficial del DOL como recurso de consulta, tu Mapa personal, el Reto de 30 días y un CRM exclusivo para llevar tus postulaciones con el seguimiento a los 7, 14 y 21 días.</p>
     <div class="row"><a class="btn gold" id="skool-btn" href="#" target="_blank" rel="noopener" hidden>Unirme a la comunidad</a></div>
+    <p class="member">¿Ya eres miembro? <a class="link" href="https://app.juanteavisa.com/">Entra a la app</a></p>
   </section>
 
   <footer class="foot">
@@ -229,7 +242,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
   // El dashboard se activa el día de la masterclass. Con ?preview=1 se puede ver antes (para revisarlo).
   var ACTIVACION=Date.parse('2026-11-25T19:00:00-05:00');
   // Pega aquí el enlace de la comunidad de Skool (https://...) y el botón aparece solo
-  var SKOOL_URL='https://www.skool.com/busca-tu-patrocinador-h2b-2085/about';
+  var SKOOL_URL='https://juanteavisa.com/pro';
   var LINKS={plantilla:'https://juanteavisa.com/recursos/plantillas/',video:'https://www.youtube.com/live/y4xJkCegXjE'};
   // Agencias del listado del DOL que das tú en la clase: nombre y ubicación
   var AGENCIAS=[
@@ -311,6 +324,7 @@ body.cerrado .tiles,body.cerrado .tabs,body.cerrado .panel,body.cerrado #skool{d
       if(w.tools==='cv'){
         var u1=safeUrl(LINKS.plantilla),u2=safeUrl(LINKS.video);
         tools=(u1||u2)?'<div class="row">'+(u1?'<a class="btn" href="'+esc(u1)+'" target="_blank" rel="noopener">Plantilla de CV ↗</a>':'')+(u2?'<a class="btn" href="'+esc(u2)+'" target="_blank" rel="noopener">Video: cómo armar tu CV ↗</a>':'')+'</div>':'';
+        tools+='<div class="pro"><p><b>PRO:</b> un asistente te hace preguntas y arma tu CV en inglés, en formato americano, listo para descargar en Word.</p><a class="btn gold" href="https://juanteavisa.com/pro" target="_blank" rel="noopener">Hacer mi CV con el asistente</a></div>';
       }else if(w.tools==='ofertas'){
         tools='<div class="row"><a class="btn" href="https://seasonaljobs.dol.gov" target="_blank" rel="noopener">SeasonalJobs ↗</a><button type="button" class="btn gold" data-tab="ofertas">Ir a Mis ofertas</button></div>';
       }else{
