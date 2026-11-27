@@ -143,6 +143,9 @@ export default function Home() {
   useEffect(() => {
     if (prevTab.current === activeTab) return
     setJobFiltersOpen(false)
+    // El filtro "solo vacantes de esta empresa" (llegado desde Empresas) vale solo
+    // para esa visita: al salir de Ofertas se quita, y al volver se ven todas
+    if (prevTab.current === 'jobs') setSponsorFilter(null)
     setHeaderHidden(false)
     const forward = SWIPE_ORDER.indexOf(activeTab) > SWIPE_ORDER.indexOf(prevTab.current)
     prevTab.current = activeTab

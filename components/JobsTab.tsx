@@ -96,7 +96,7 @@ export default function JobsTab({
               onClick={() => { setSponsorFilter(null); setJobPage(1) }}
               className="text-xs font-bold text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 shrink-0"
             >
-              Quitar ✕
+              Ver todas las ofertas ✕
             </button>
           </div>
         )}
@@ -151,7 +151,7 @@ export default function JobsTab({
                 <button
                   onClick={() => {
                     setSelectedSeason('ALL'); setSelectedJobState('ALL'); setSelectedJobSector('ALL')
-                    setOnlyHiresAbroad(false); setJobSortBy('recent'); setJobPage(1)
+                    setOnlyHiresAbroad(false); setSponsorFilter(null); setJobSortBy('recent'); setJobPage(1)
                   }}
                   className="text-xs font-bold text-blue-700 dark:text-blue-400 min-h-11 px-2"
                 >
@@ -165,6 +165,7 @@ export default function JobsTab({
             value={selectedSeason}
             onChange={(e) => {
               setSelectedSeason(e.target.value)
+              setSponsorFilter(null)
               setJobPage(1)
             }}
             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
@@ -180,6 +181,7 @@ export default function JobsTab({
             value={selectedJobState}
             onChange={(e) => {
               setSelectedJobState(e.target.value)
+              setSponsorFilter(null)
               setJobPage(1)
             }}
             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
@@ -196,6 +198,7 @@ export default function JobsTab({
             value={selectedJobSector}
             onChange={(e) => {
               setSelectedJobSector(e.target.value)
+              setSponsorFilter(null)
               setJobPage(1)
             }}
             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
@@ -218,6 +221,7 @@ export default function JobsTab({
             checked={onlyHiresAbroad}
             onChange={(e) => {
               setOnlyHiresAbroad(e.target.checked)
+              setSponsorFilter(null)
               setJobPage(1)
             }}
             className="mt-0.5 w-4 h-4 accent-[#0B4079]"
