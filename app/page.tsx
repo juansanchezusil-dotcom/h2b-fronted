@@ -217,15 +217,9 @@ export default function Home() {
   const [jobSearch, setJobSearch] = useState('')
   const [selectedJobState, setSelectedJobState] = useState('ALL')
   const [selectedJobSector, setSelectedJobSector] = useState('ALL')
-  // La contratación H-2B va adelantada a la temporada: en abr-sep se publican y se
-  // llenan las vacantes que EMPIEZAN en octubre (Invierno), y en oct-mar las que
-  // empiezan en abril (Verano). Lo confirmé contra datos reales: en septiembre hay
-  // 1087 vacantes de Invierno por solo 2 de Verano. Por eso el mapeo es al revés
-  // del calendario: se arranca en la temporada que SÍ tiene vacantes activas ahora.
-  const [selectedSeason, setSelectedSeason] = useState(() => {
-    const month = new Date().getMonth() // 0=enero
-    return month >= 3 && month <= 8 ? 'WINTER' : 'SUMMER'
-  })
+  // Arranca con todas las fechas: antes arrancaba en la temporada "activa" y escondía
+  // vacantes (por ejemplo, la que se abre desde Empresas). La persona filtra si quiere.
+  const [selectedSeason, setSelectedSeason] = useState('ALL')
   const [onlyHiresAbroad, setOnlyHiresAbroad] = useState(false)
   const [jobSortBy, setJobSortBy] = useState<'recent' | 'match'>('recent')
   // Cuando se llega a Ofertas desde "Ver sus vacantes" en Empresas: filtro exacto
@@ -927,6 +921,11 @@ const applyJobToCrm = async (job: { title: string; employerName: string; locatio
 // empresa.
 const viewJobsFor = (sponsorId: number, employerName: string) => {
   setJobSearch('')
+  // Sin otros filtros: la vacante de esa empresa tiene que aparecer siempre
+  setSelectedSeason('ALL')
+  setSelectedJobState('ALL')
+  setSelectedJobSector('ALL')
+  setOnlyHiresAbroad(false)
   setSponsorFilter({ id: sponsorId, name: employerName })
   setJobPage(1)
   setActiveTab('jobs')

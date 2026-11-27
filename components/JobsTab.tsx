@@ -88,15 +88,15 @@ export default function JobsTab({
         </div>
 
         {sponsorFilter && (
-          <div className="flex items-center justify-between gap-2 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl px-3.5 py-2">
-            <span className="text-xs text-blue-900 dark:text-blue-300">
-              Mostrando solo vacantes de <strong>{sponsorFilter.name}</strong>
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-xl px-4 py-3">
+            <p className="text-sm text-blue-900 dark:text-blue-200">
+              Estás viendo solo las vacantes de <strong>{sponsorFilter.name}</strong>
+            </p>
             <button
               onClick={() => { setSponsorFilter(null); setJobPage(1) }}
-              className="text-xs font-bold text-blue-700 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 shrink-0"
+              className="shrink-0 inline-flex items-center justify-center gap-1.5 min-h-10 px-4 rounded-xl bg-[#0B4079] hover:bg-[#08305c] text-white text-sm font-bold transition-colors"
             >
-              Ver todas las ofertas ✕
+              ← Ver todas las ofertas
             </button>
           </div>
         )}
@@ -215,25 +215,6 @@ export default function JobsTab({
             <option value="Fábrica">Fábricas y Manufactura</option>
           </select>
 
-        <label className="md:col-span-4 flex items-start gap-2.5 cursor-pointer bg-sky-50 dark:bg-sky-500/10 border border-sky-200 dark:border-sky-500/30 rounded-xl px-3.5 py-2.5">
-          <input
-            type="checkbox"
-            checked={onlyHiresAbroad}
-            onChange={(e) => {
-              setOnlyHiresAbroad(e.target.checked)
-              setSponsorFilter(null)
-              setJobPage(1)
-            }}
-            className="mt-0.5 w-4 h-4 accent-[#0B4079]"
-          />
-          <span className="text-xs text-sky-900 dark:text-sky-300">
-            <strong>🌎 Solo empresas que contratan desde el extranjero</strong>
-            <span className="block text-[11px] text-sky-800/80 dark:text-sky-400/80">
-              Empresas que en 2026 trajeron trabajadores con visa tramitada en un consulado fuera de EE. UU.
-            </span>
-          </span>
-        </label>
-
         <div className="md:col-span-4 flex flex-wrap items-center gap-2">
           <label htmlFor="job-sort" className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0">Ordenar por:</label>
           <select
@@ -244,6 +225,21 @@ export default function JobsTab({
           >
             <option value="recent">Más recientes</option>
             <option value="match">Mejor compatible con tu perfil</option>
+          </select>
+          <label htmlFor="job-abroad" className="text-xs font-semibold text-slate-500 dark:text-slate-400 shrink-0 sm:ml-3">Empresas:</label>
+          <select
+            id="job-abroad"
+            value={onlyHiresAbroad ? 'abroad' : 'all'}
+            onChange={(e) => {
+              setOnlyHiresAbroad(e.target.value === 'abroad')
+              setSponsorFilter(null)
+              setJobPage(1)
+            }}
+            title="Empresas que en 2026 trajeron trabajadores con visa tramitada en un consulado fuera de EE. UU."
+            className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          >
+            <option value="all">Todas</option>
+            <option value="abroad">🌎 Solo las que contratan desde el extranjero</option>
           </select>
           {jobSortBy === 'match' && !profileCompleted && (
             <span className="text-[11px] text-amber-700 dark:text-amber-400">Completa tu perfil para ver esto ordenado de verdad.</span>
@@ -404,6 +400,15 @@ export default function JobsTab({
             </div>
           ))}
         </div>
+      )}
+
+      {sponsorFilter && !isLoading && (
+        <button
+          onClick={() => { setSponsorFilter(null); setJobPage(1); window.scrollTo({ top: 0 }) }}
+          className="w-full sm:w-auto sm:mx-auto sm:flex sm:px-8 min-h-12 rounded-xl border-2 border-[#0B4079] dark:border-blue-400 text-[#0B4079] dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-500/10 text-sm font-bold items-center justify-center transition-colors"
+        >
+          Ver todas las ofertas →
+        </button>
       )}
 
       <Pagination
