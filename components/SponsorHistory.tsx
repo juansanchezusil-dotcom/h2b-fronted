@@ -17,15 +17,18 @@ export type SponsorMatch = 'exacta' | 'probable' | 'ambigua' | 'otro_estado' | '
 const CAP_LABELS: Record<string, { label: string; detail: string }> = {
   '1st Half': { label: 'Invierno', detail: 'temporadas que empiezan entre octubre y marzo' },
   '2nd Half': { label: 'Verano', detail: 'temporadas que empiezan entre abril y septiembre' },
-  Supplemental: { label: 'Visas suplementarias', detail: 'visas adicionales que el gobierno libera cuando se agota el cupo' },
-  Exempt: { label: 'Exenta del cupo', detail: 'peticiones que no cuentan para el límite anual, como extensiones o cambios de empleador' },
+  // Supplemental y Exempt se muestran juntas como "Suplementarias" para no confundir
+  Supplemental: { label: 'Suplementarias', detail: 'visas fuera del cupo normal de la temporada' },
+  Exempt: { label: 'Suplementarias', detail: 'visas fuera del cupo normal de la temporada' },
 };
 
 const capList = (capType: string | null) =>
   (capType || '')
     .split(',')
     .map((c) => c.trim())
-    .filter((c) => CAP_LABELS[c]);
+    .filter((c) => CAP_LABELS[c])
+    // Supplemental y Exempt comparten etiqueta: no repetirla
+    .filter((c, i, all) => all.findIndex((o) => CAP_LABELS[o].label === CAP_LABELS[c].label) === i);
 
 const hiresAbroad = (s: SponsorData) => (s.consular_processed || '').toLowerCase() === 'yes';
 

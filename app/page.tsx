@@ -645,7 +645,10 @@ useEffect(() => {
       const stateCode = match ? match[1] : selectedCompanyState.trim()
       countQuery = countQuery.or(`worksite_states.ilike.%${stateCode}%,state.ilike.%${stateCode}%`)
     }
-    if (selectedCapType && selectedCapType !== 'ALL') {
+    if (selectedCapType === 'SUPLEMENTARIAS') {
+      // "Suplementarias" junta Supplemental y Exempt: para quien postula son lo mismo (visas fuera del cupo normal)
+      countQuery = countQuery.or('cap_type.ilike.%Supplement%,cap_type.ilike.%Exempt%')
+    } else if (selectedCapType && selectedCapType !== 'ALL') {
       countQuery = countQuery.ilike('cap_type', `%${selectedCapType}%`)
     }
     if (selectedCompanySector && selectedCompanySector !== 'ALL') {
@@ -691,7 +694,10 @@ useEffect(() => {
       const stateCode = match ? match[1] : selectedCompanyState.trim()
       query = query.or(`worksite_states.ilike.%${stateCode}%,state.ilike.%${stateCode}%`)
     }
-    if (selectedCapType && selectedCapType !== 'ALL') {
+    if (selectedCapType === 'SUPLEMENTARIAS') {
+      // "Suplementarias" junta Supplemental y Exempt: para quien postula son lo mismo (visas fuera del cupo normal)
+      query = query.or('cap_type.ilike.%Supplement%,cap_type.ilike.%Exempt%')
+    } else if (selectedCapType && selectedCapType !== 'ALL') {
       query = query.ilike('cap_type', `%${selectedCapType}%`)
     }
     if (selectedCompanySector && selectedCompanySector !== 'ALL') {

@@ -39,6 +39,17 @@ interface EmployersTabProps {
   addToCRM: (company?: string, role?: string, stateStr?: string) => Promise<boolean>
 }
 
+// Etiqueta en español del tipo de cupo USCIS. Supplemental y Exempt se muestran juntas
+// como "Suplementarias" para no confundir a quien postula.
+const capLabel = (capType: string | null | undefined) => {
+  const caps = capType || ''
+  const labels: string[] = []
+  if (caps.includes('1st Half')) labels.push('❄️ Invierno')
+  if (caps.includes('2nd Half')) labels.push('☀️ Verano')
+  if (caps.includes('Supplement') || caps.includes('Exempt')) labels.push('⚡ Suplementarias')
+  return labels.join(' · ') || 'General'
+}
+
 export default function EmployersTab({
   employers,
   isLoading,
@@ -120,11 +131,10 @@ export default function EmployersTab({
             }}
             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-slate-700 dark:text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs"
           >
-            <option value="ALL">Todas las Temporadas / Cap Type</option>
-            <option value="1st Half">❄️ Invierno (1st Half)</option>
-            <option value="2nd Half">☀️ Verano (2nd Half)</option>
-            <option value="Exempt">🛡️ Exempt (Exentas)</option>
-            <option value="Supplement">⚡ Supplement (Suplementarias)</option>
+            <option value="ALL">Todas las temporadas</option>
+            <option value="1st Half">❄️ Invierno</option>
+            <option value="2nd Half">☀️ Verano</option>
+            <option value="SUPLEMENTARIAS">⚡ Suplementarias</option>
           </select>
           {/* SELECTOR COMPLETO DE ESTADOS PARA EMPRESAS */}
           <select
@@ -204,12 +214,8 @@ export default function EmployersTab({
                 <div key={comp.id || idx} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm space-y-2.5">
                   <h3 className="font-bold text-slate-900 dark:text-white text-sm leading-snug">{comp.employer_name || 'Sin Nombre'}</h3>
                   <div className="flex flex-wrap gap-1.5">
-                    <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] border ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
-                        comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' :
-                          comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/30' :
-                            'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
-                      }`}>
-                      {comp.cap_type || 'General'}
+                    <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] border ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' : comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' : 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'}`}>
+                      {capLabel(comp.cap_type)}
                     </span>
                     <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] border ${abroad ? 'bg-sky-50 text-sky-800 border-sky-200 dark:bg-sky-500/10 dark:text-sky-300 dark:border-sky-500/30' : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'}`}>
                       {abroad ? '🌎 Contrata desde el extranjero' : 'Solo contrató dentro de EE. UU.'}
@@ -248,7 +254,7 @@ export default function EmployersTab({
                 <thead className="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-200 dark:border-slate-700 uppercase tracking-wider text-xs sm:text-[10px]">
                   <tr>
                     <th className="p-4">Empresa Patrocinadora</th>
-                    <th className="p-4">Tipo de Cupo (Cap)</th>
+                    <th className="p-4">Temporada</th>
                     <th className="p-4">Ubicación</th>
                     <th className="p-4">Consular Processed</th>
                     <th className="p-4">Visas Aprobadas</th>
@@ -260,12 +266,8 @@ export default function EmployersTab({
                     <tr key={comp.id || idx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="p-4 font-bold text-slate-900 dark:text-white">{comp.employer_name || 'Sin Nombre'}</td>
                       <td className="p-4">
-                        <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' :
-                            comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' :
-                              comp.cap_type?.includes('Exempt') ? 'bg-purple-50 text-purple-800 border border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/30' :
-                                'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'
-                          }`}>
-                          {comp.cap_type || 'General'}
+                        <span className={`font-bold px-2 py-0.5 rounded text-xs sm:text-[10px] ${comp.cap_type?.includes('1st Half') ? 'bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/30' : comp.cap_type?.includes('2nd Half') ? 'bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/30' : 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/30'}`}>
+                          {capLabel(comp.cap_type)}
                         </span>
                       </td>
                       <td className="p-4">{comp.worksite_states || comp.state || '-'}</td>
