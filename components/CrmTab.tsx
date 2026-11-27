@@ -6,6 +6,10 @@ import { Briefcase, Send, CheckCircle2, Plus, Trash2, MoveRight, XCircle, CheckC
 import EmptyState from '@/components/EmptyState'
 import { CRM_COLUMNS, crmColumnOf, type CRMItem, type CrmColumn } from '@/lib/h2b'
 
+// Formulario oficial DS-160 (Departamento de Estado) y video guía de Juan Te Avisa
+const DS160_URL = 'https://ceac.state.gov/genniv/'
+const DS160_VIDEO_URL = 'https://youtu.be/-j3oN66-bzs'
+
 interface CrmTabProps {
   crmItems: CRMItem[]
   crmError: boolean
@@ -496,6 +500,26 @@ export default function CrmTab({
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.role}</p>
                 <div className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 text-xs sm:text-[9px] font-bold p-1.5 rounded-lg text-center">
                   🎉 ¡Proceso USCIS iniciado!
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-snug">
+                    Siguiente paso: llena tu formulario <span className="font-bold">DS-160</span> para la cita en la embajada.
+                  </p>
+                  <a
+                    href={DS160_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-[10px] font-bold py-1.5 rounded-lg"
+                  >
+                    Hacer mi DS-160 →
+                  </a>
+                  <p className="text-[11px] sm:text-[10px] text-slate-500 dark:text-slate-400 leading-snug text-center">
+                    ¿No sabes cómo llenarlo?{' '}
+                    <a href={DS160_VIDEO_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-700 dark:text-emerald-400 underline">
+                      Mira el video de Juan Te Avisa
+                    </a>{' '}
+                    y guíate paso a paso.
+                  </p>
                 </div>
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-end">
                   <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
