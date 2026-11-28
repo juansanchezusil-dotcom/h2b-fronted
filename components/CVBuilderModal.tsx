@@ -12,6 +12,7 @@ import { errorMessage } from '@/lib/errors';
 import { useDictation } from '@/hooks/useDictation';
 import { puestoOf, type Puesto } from '@/lib/puestos';
 import type { CvBData, CvSlot } from '@/lib/cvSlots';
+import { fetchJobDuties } from '@/lib/jobDuties';
 
 interface CVBuilderModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ interface CVBuilderModalProps {
   onSaved?: () => void;
   // Oferta a la que se adapta el CV (null/undefined = CV general)
   job?: JobTarget | null;
+  // Ofertas guardadas en el CRM, para elegir la de la carta en vez de escribirla a mano
+  savedOffers?: { company: string; role: string }[];
 }
 
 interface JobTarget {
@@ -138,7 +141,7 @@ const inputClass =
 const errorClass =
   'text-xs text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 rounded-lg px-3 py-2';
 
-export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job, slot: initialSlot = 'A' }: CVBuilderModalProps) {
+export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job, slot: initialSlot = 'A', savedOffers = [] }: CVBuilderModalProps) {
   // La ruta se puede cambiar con los botones Ruta A / Ruta B de la pantalla de inicio
   const [chosenSlot, setChosenSlot] = useState<CvSlot | null>(null);
   const slot: CvSlot = chosenSlot ?? initialSlot;
@@ -180,6 +183,26 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job, 
   const [letterRole, setLetterRole] = useState(job?.title || '');
   const [letterContactName, setLetterContactName] = useState('');
   const [letterDuties, setLetterDuties] = useState(job?.duties || '');
+  // Oferta guardada elegida para la carta ('-1' = escribir manualmente)
+  const [letterOfferIdx, setLetterOfferIdx] = useState('-1');
+  const [letterOfferLoading, setLetterOfferLoading] = useState(false);
+  const letterPickSeq = useRef(0);
+  const pickLetterOffer = async (value: string) => {
+    setLetterOfferIdx(value);
+    const offer = savedOffers[Number(value)];
+    if (!offer) return;
+    const seq = ++letterPickSeq.current;
+    setLetterCompany(offer.company);
+    setLetterRole(offer.role);
+    setLetterContactName('');
+    setLetterDuties('');
+    // El CRM no guarda las funciones: se buscan en el catálogo de ofertas
+    setLetterOfferLoading(true);
+    const duties = await fetchJobDuties(offer.company, offer.role).catch(() => '');
+    if (seq !== letterPickSeq.current) return; // eligió otra mientras tanto
+    setLetterDuties(duties.slice(0, 1500));
+    setLetterOfferLoading(false);
+  };
   const [downloading, setDownloading] = useState<'cv' | 'letter' | 'cv-pdf' | 'letter-pdf' | null>(null);
 
   // Cada vez que se abre: vuelve al inicio y precarga lo que ya haya guardado
@@ -590,6 +613,22 @@ export default function CVBuilderModal({ isOpen, userId, onClose, onSaved, job, 
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Opcional: con el nombre de la empresa y del contacto, la carta sale personalizada. Si no los tienes, déjalos vacíos.
             </p>
+            {savedOffers.length > 0 && (
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+                Elegir de tus ofertas guardadas
+                <select
+                  value={letterOfferIdx}
+                  onChange={(e) => pickLetterOffer(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-base sm:text-sm font-normal text-slate-800 dark:text-slate-100"
+                >
+                  <option value="-1">Escribir manualmente...</option>
+                  {savedOffers.map((o, i) => (
+                    <option key={`${o.company}-${o.role}-${i}`} value={i}>{o.company} — {o.role}</option>
+                  ))}
+                </select>
+                {letterOfferLoading && <span className="mt-1 block font-normal text-slate-500 dark:text-slate-400">Buscando las funciones de la oferta...</span>}
+              </label>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
                 { label: 'Empresa', value: letterCompany, set: setLetterCompany, ph: 'Ej. Sugar Bowl Resort', max: 120 },

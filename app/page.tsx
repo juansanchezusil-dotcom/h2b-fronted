@@ -1825,6 +1825,7 @@ return (
       userId={onboardingUserId}
       job={cvJob}
       slot={cvSlot}
+      savedOffers={crmItems.map((i) => ({ company: i.company, role: i.role }))}
       onClose={() => {
         setShowCvBuilder(false)
         setCvJob(null)
