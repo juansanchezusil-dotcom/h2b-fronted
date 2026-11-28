@@ -32,11 +32,29 @@ interface EmailAssistantProps {
   onMoveToInterview?: (company: string, role: string) => Promise<boolean> | boolean | void;
   // Se llama cuando la persona confirma que ya envió un seguimiento, para que el CRM lo registre
   onFollowupSent?: (company: string, role: string, type: 'followup_7d' | 'followup_14d') => Promise<boolean> | boolean | void;
+  // Se llama al abrir el correo inicial en Gmail o en la app de correo, para pasar la tarjeta guardada a Postulado
+  onInitialSent?: (company: string, role: string) => void;
   // Se llama cuando falta el CV, para que quien lo use abra el constructor de CV
   onOpenCvBuilder?: (slot?: CvSlot) => void;
 }
 
 type EmailType = 'initial' | 'followup_7d' | 'followup_14d' | 'reply';
+
+// El CRM no guarda el correo del reclutador ni las funciones; se buscan en el catálogo por empresa y puesto.
+async function lookupOffer(company: string, role: string): Promise<{ email: string; duties: string }> {
+  const [{ data }, duties] = await Promise.all([
+    supabase
+      .from('jobs')
+      .select('email_to_apply')
+      .eq('employer_name', company)
+      .eq('title', role)
+      .not('email_to_apply', 'is', null)
+      .limit(1)
+      .maybeSingle(),
+    fetchJobDuties(company, role),
+  ]);
+  return { email: data?.email_to_apply ? String(data.email_to_apply).trim() : '', duties };
+}
 type Lang = 'en' | 'es';
 
 interface GeneratedEmail {
@@ -67,6 +85,7 @@ export function EmailAssistantTab({
   onOpenCvBuilder,
   onFollowupSent,
   onMoveToInterview,
+  onInitialSent,
 }: EmailAssistantProps) {
   const [movedToInterview, setMovedToInterview] = useState(false);
   const [followupDone, setFollowupDone] = useState<Record<string, boolean>>({});
@@ -86,6 +105,24 @@ export function EmailAssistantTab({
   // Para ignorar la respuesta de una búsqueda vieja si la persona elige otra oferta antes de que llegue
   const pickSeq = useRef(0);
   const [selectedOfferIdx, setSelectedOfferIdx] = useState<string>('-1');
+  // Abierto desde una tarjeta del CRM: busca primero las funciones y el correo de la oferta, para que el
+  // correo salga igual que el de "Postular" desde la oferta (el mismo pedido, con los mismos datos).
+  const [prefilling, setPrefilling] = useState(!!(initialCompanyName && initialJobTitle));
+  useEffect(() => {
+    if (!initialCompanyName || !initialJobTitle) return;
+    let alive = true;
+    lookupOffer(initialCompanyName, initialJobTitle)
+      .then(({ email, duties }) => {
+        if (!alive) return;
+        if (email && !initialContactEmail) setContactEmail(email);
+        setJobDuties(duties);
+      })
+      .catch(() => {})
+      .finally(() => alive && setPrefilling(false));
+    return () => {
+      alive = false;
+    };
+  }, [initialCompanyName, initialJobTitle, initialContactEmail]);
 
   const handlePickOffer = async (value: string) => {
     setSelectedOfferIdx(value);
@@ -94,23 +131,12 @@ export function EmailAssistantTab({
     const offer = savedOffers[idx];
     if (!offer) return;
     const seq = ++pickSeq.current;
-    // El CRM no guarda el correo del reclutador ni las funciones; se buscan en el catálogo por empresa y puesto.
     // Se esperan ANTES de cambiar empresa y puesto: al cambiarlos el correo se genera solo y debe nacer con las funciones.
-    const [{ data }, duties] = await Promise.all([
-      supabase
-        .from('jobs')
-        .select('email_to_apply')
-        .eq('employer_name', offer.company)
-        .eq('title', offer.role)
-        .not('email_to_apply', 'is', null)
-        .limit(1)
-        .maybeSingle(),
-      fetchJobDuties(offer.company, offer.role),
-    ]);
+    const { email, duties } = await lookupOffer(offer.company, offer.role);
     if (seq !== pickSeq.current) return; // eligió otra oferta mientras tanto
     // Datos de la oferta anterior no deben quedar
     setContactName('');
-    setContactEmail(data?.email_to_apply ? String(data.email_to_apply).trim() : '');
+    setContactEmail(email);
     setJobDuties(duties);
     setLocation(offer.state || '');
     // Los correos ya generados eran de la oferta anterior: se descartan para que se redacten con la nueva
@@ -196,9 +222,9 @@ export function EmailAssistantTab({
     // La respuesta a la empresa no se genera sola: hace falta pegar primero su mensaje.
     // Generar es la reacción buscada al cambiar de tipo de correo, empresa o puesto
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (hasCv && !current && !loading && emailType !== 'reply') generate(emailType);
+    if (hasCv && !prefilling && !current && !loading && emailType !== 'reply') generate(emailType);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [emailType, hasCv, companyName, jobTitle, location]);
+  }, [emailType, hasCv, companyName, jobTitle, location, prefilling]);
 
   // Un seguimiento no corresponde cuando la empresa ya respondió o hubo un avance
   const pickedStatus = Number(selectedOfferIdx) >= 0 ? savedOffers[Number(selectedOfferIdx)]?.status : undefined;
@@ -231,13 +257,19 @@ export function EmailAssistantTab({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const notifyInitialSent = () => {
+    if (emailType === 'initial' && companyName && jobTitle) onInitialSent?.(companyName, jobTitle);
+  };
+
   const handleMailto = () => {
     if (!subject || !body) return;
+    notifyInitialSent();
     window.location.href = mailtoHref(contactEmail, { subject, body });
   };
 
   const handleOpenWebmail = (provider: 'gmail' | 'outlook') => {
     if (!subject || !body) return;
+    notifyInitialSent();
     const url =
       provider === 'gmail'
         ? `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(contactEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
@@ -491,7 +523,7 @@ export function EmailAssistantTab({
               </p>
             )}
 
-            {loading && !current ? (
+            {(loading || prefilling) && !current ? (
               <div className="flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400 min-h-[220px]">
                 <Loader2 className="w-4 h-4 animate-spin" /> Escribiendo tu correo...
               </div>

@@ -274,7 +274,7 @@ export default function Home() {
   // Oferta a la que se adapta el CV (null = CV general)
   const [cvJob, setCvJob] = useState<{ title: string; employerName: string; location?: string; duties?: string } | null>(null)
   // Empresa/puesto que precargan el redactor cuando se abre desde una tarjeta del CRM
-  const [emailDraftFor, setEmailDraftFor] = useState<{ company: string; role: string; type: 'initial' | 'followup_7d' | 'followup_14d' } | null>(null)
+  const [emailDraftFor, setEmailDraftFor] = useState<{ company: string; role: string; state?: string; type: 'initial' | 'followup_7d' | 'followup_14d' } | null>(null)
   // Día real en que cada postulación pasó a "postulado" (historial de estados); sin historial se usa la creación de la tarjeta
   const [appliedAtById, setAppliedAtById] = useState<Record<string, number>>({})
   useEffect(() => {
@@ -1039,7 +1039,7 @@ const renderReplyControl = (item: CRMItem) =>
   )
 
 const openEmailFor = (item: CRMItem) => {
-  setEmailDraftFor({ company: item.company, role: item.role, type: emailTypeFor(item) })
+  setEmailDraftFor({ company: item.company, role: item.role, state: item.state, type: emailTypeFor(item) })
   setShowEmailAssistant(true)
 }
 
@@ -1774,6 +1774,15 @@ return (
         initialCompanyName={emailDraftFor?.company || ''}
         initialJobTitle={emailDraftFor?.role || ''}
         initialEmailType={emailDraftFor?.type || 'initial'}
+        initialLocation={emailDraftFor?.state || ''}
+        onInitialSent={(company, role) => {
+          // Abrir el correo inicial de una oferta guardada la pasa a Postulado
+          const item = crmItems.find((i) => crmKey(i.company, i.role) === crmKey(company, role))
+          if (item?.status === 'guardadas') {
+            changeCrmStatus(item.id, 'postulado')
+            showToast(`✅ "${item.company}" pasó a Postulado en tu CRM.`)
+          }
+        }}
         onMoveToInterview={async (company, role) => {
           const item = crmItems.find((i) => crmKey(i.company, i.role) === crmKey(company, role))
           if (!item) {

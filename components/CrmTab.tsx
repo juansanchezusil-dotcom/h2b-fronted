@@ -244,6 +244,13 @@ export default function CrmTab({
                     </div>
                   )}
                 </div>
+                {/* Abre el redactor con el correo inicial de esta empresa; la tarjeta se mueve a Postulado solo cuando la persona lo marca */}
+                <button
+                  onClick={() => openEmailFor(item)}
+                  className="w-full text-xs sm:text-[10px] font-bold text-white bg-blue-600 hover:bg-blue-700 flex items-center justify-center gap-1 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg"
+                >
+                  ✉️ Redactar correo de postulación
+                </button>
                 <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
                   <span className="text-xs sm:text-[9px] text-slate-500 dark:text-slate-400">{item.dateLabel}</span>
                   <button onClick={() => changeCrmStatus(item.id, 'postulado')} className="text-xs sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 flex items-center gap-0.5 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-2.5 py-2 min-h-11 sm:min-h-0 rounded-lg">

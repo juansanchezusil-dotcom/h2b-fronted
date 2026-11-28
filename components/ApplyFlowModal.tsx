@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Mail, ExternalLink, Copy, Check, Loader2, FileText, Sparkles, Target } from 'lucide-react';
+import { X, Mail, ExternalLink, Copy, Check, Loader2, FileText, Sparkles, Target, Download } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import { useBackToClose } from '@/hooks/useBackToClose';
 import { aiFetch } from '@/lib/aiFetch';
@@ -9,6 +9,8 @@ import { errorMessage } from '@/lib/errors';
 import { mailtoHref } from '@/lib/mailto';
 import { cvTextOf, hasCvText, skillsOf, slotForJob, type CvSlot } from '@/lib/cvSlots';
 import { puestoOf } from '@/lib/puestos';
+import { buildLetterDocx, docxFileName, downloadBlob } from '@/lib/cvDocx';
+import { buildLetterPdf, pdfFileName } from '@/lib/cvPdf';
 
 // Flujo único de postulación: genera el correo con el CV real del candidato,
 // lo abre listo para enviar al contacto real de la oferta, y al confirmar que
@@ -40,6 +42,15 @@ interface ApplyFlowModalProps {
 }
 
 type Lang = 'en' | 'es';
+
+// Lo que la carta necesita del perfil guardado por el constructor de CV (el servidor valida el resto)
+interface LetterProfile {
+  fullName?: string;
+  phone?: string;
+  email?: string;
+  city?: string;
+  [key: string]: unknown;
+}
 
 interface GeneratedEmail {
   subject_en: string;
@@ -101,6 +112,12 @@ export default function ApplyFlowModal({
   const [marking, setMarking] = useState(false);
   const [marked, setMarked] = useState(false);
   const canAdaptCv = !!onAdaptCv;
+  // Cover letter de esta oferta: se genera solo si la persona la pide
+  const [letterProfile, setLetterProfile] = useState<LetterProfile | null>(null);
+  const [letter, setLetter] = useState<{ letter: string; notes_es?: string } | null>(null);
+  const [letterLoading, setLetterLoading] = useState(false);
+  const [letterError, setLetterError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState<'docx' | 'pdf' | null>(null);
 
   useEffect(() => {
     if (!isOpen || !userId) return;
@@ -112,13 +129,18 @@ export default function ApplyFlowModal({
     setSent(false);
     setMarked(false);
     setError(null);
+    setLetter(null);
+    setLetterError(null);
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, base_cv_text, skills, english_level, nivel_ingles, target_role, industry, experiencia_industria, experiencia_industria_b, cv_b')
+        .select('full_name, base_cv_text, skills, english_level, nivel_ingles, target_role, industry, experiencia_industria, experiencia_industria_b, cv_b, cv_draft')
         .eq('id', userId)
         .maybeSingle();
       const s = slotForJob(job?.title || '', data);
+      // Perfil completo del constructor de CV (de la ruta de esta oferta): la carta se arma con él
+      const draft = s === 'B' ? data?.cv_b?.cv_draft : data?.cv_draft;
+      setLetterProfile(draft?.profile && typeof draft.profile === 'object' ? (draft.profile as LetterProfile) : null);
       const cv = cvTextOf(data, s);
       const role = s === 'B' ? data?.cv_b?.target_role || puestoOf(data?.experiencia_industria_b)?.role || '' : data?.target_role || '';
       setSlot(s);
@@ -148,8 +170,9 @@ export default function ApplyFlowModal({
           body: JSON.stringify({
             emailType: 'initial',
             jobTitle: job.title || 'the H-2B position',
+            // Mismo pedido que el redactor de correos (sin número de referencia en el asunto),
+            // para que los dos caminos escriban el mismo tipo de correo
             jobDuties: job.duties || '',
-            jobReference: job.reference || '',
             companyName: job.employerName || 'your company',
             location: job.location || '',
             candidateName: candidate.fullName || '[Tu nombre]',
@@ -212,6 +235,53 @@ export default function ApplyFlowModal({
         ? `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(contactEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
         : `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(contactEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(url, '_blank');
+  };
+
+  const handleLetter = async () => {
+    if (!letterProfile) return;
+    setLetterError(null);
+    setLetterLoading(true);
+    try {
+      const res = await aiFetch('/api/cv/cover-letter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          profile: letterProfile,
+          job: { title: job.title, employer_name: job.employerName, job_duties: job.duties || '' },
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo generar la carta.');
+      setLetter(data);
+    } catch (err) {
+      setLetterError(errorMessage(err, 'No se pudo generar la carta. Intenta de nuevo.'));
+    } finally {
+      setLetterLoading(false);
+    }
+  };
+
+  const downloadLetter = async (kind: 'docx' | 'pdf') => {
+    if (!letter) return;
+    const fullName = letterProfile?.fullName || candidate?.fullName || '';
+    const contact = {
+      targetRole: job.title,
+      company: job.employerName,
+      phone: letterProfile?.phone,
+      email: letterProfile?.email,
+      city: letterProfile?.city,
+    };
+    setDownloading(kind);
+    setLetterError(null);
+    try {
+      const name = docxFileName(fullName, 'Cover_Letter');
+      if (kind === 'pdf') downloadBlob(await buildLetterPdf(letter.letter, fullName, contact), pdfFileName(name));
+      else downloadBlob(await buildLetterDocx(letter.letter, fullName, contact), name);
+    } catch (err) {
+      console.error('No se pudo crear el archivo de la carta:', err);
+      setLetterError(kind === 'pdf' ? 'No se pudo crear el PDF. Prueba con Word.' : 'No se pudo crear el Word. Prueba con PDF.');
+    } finally {
+      setDownloading(null);
+    }
   };
 
   const handleConfirmSent = async () => {
@@ -393,6 +463,54 @@ export default function ApplyFlowModal({
                     )}
                   </>
                 )}
+              </div>
+
+              {/* Cover letter para esta oferta: el correo dice que va adjunta */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[#C89B3C]" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100">Cover Letter para esta oferta</span>
+                </div>
+                {!letterProfile ? (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Para armar tu carta necesitamos tu perfil del constructor de CV.{' '}
+                    <button type="button" onClick={() => onOpenCvBuilder(slot)} className="font-semibold text-[#0B4079] dark:text-[#C89B3C] underline">
+                      Abrir mi CV
+                    </button>
+                  </p>
+                ) : !letter ? (
+                  <>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      Se escribe con tu experiencia real y los datos de {job.employerName}. La descargas y la adjuntas al correo.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleLetter}
+                      disabled={letterLoading}
+                      className="w-full flex items-center justify-center gap-2 bg-[#C89B3C] hover:bg-[#b08833] disabled:opacity-50 text-[#08131F] font-bold text-xs py-2.5 rounded-xl"
+                    >
+                      {letterLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Escribiendo tu carta...</> : <><Sparkles className="w-4 h-4" /> Crear Cover Letter</>}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-white dark:bg-slate-900 p-3 rounded-xl text-[11px] text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed border border-slate-100 dark:border-slate-700 max-h-40 overflow-y-auto">
+                      {letter.letter}
+                    </div>
+                    {letter.notes_es && (
+                      <p className="text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg px-2.5 py-1.5">{letter.notes_es}</p>
+                    )}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button type="button" onClick={() => downloadLetter('docx')} disabled={!!downloading} className="flex items-center justify-center gap-1.5 bg-[#0B4079] hover:bg-[#08305c] disabled:opacity-50 text-white font-bold text-xs py-2.5 rounded-xl">
+                        {downloading === 'docx' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Word
+                      </button>
+                      <button type="button" onClick={() => downloadLetter('pdf')} disabled={!!downloading} className="flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold text-xs py-2.5 rounded-xl">
+                        {downloading === 'pdf' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} PDF
+                      </button>
+                    </div>
+                  </>
+                )}
+                {letterError && <p className="text-[11px] text-rose-600 dark:text-rose-400">{letterError}</p>}
               </div>
 
               <p className="text-[11px] text-slate-500 dark:text-slate-400">Estos botones abren tu correo con el mensaje listo. Tú lo revisas y lo envías.</p>
